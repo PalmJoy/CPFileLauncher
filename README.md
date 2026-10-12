@@ -1,0 +1,24 @@
+# CPFileLauncher
+
+ホットキーやマウスで呼び出す、ネオンの盤面のファイル / アプリランチャー（Windows / macOS）。
+A cyberpunk file & app launcher for Windows and macOS, summoned with a hotkey or a mouse click.
+
+- 配布サイト / Website: https://palmjoy.github.io/CPFileLauncher/
+- ダウンロード / Download: [最新のリリース / Latest release](https://github.com/PalmJoy/CPFileLauncher/releases/latest)（Windows x64 / ARM64、macOS Apple シリコン）
+- ライセンス / License: GPL-3.0-only（[LICENSE](LICENSE)）。Copyright © 2026 PalmJoy。第三者の部品 / Third-party components: [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt)
+
+## 開発者向け
+
+フォルダ構成
+- spec
+  - アプリ仕様のドキュメント。常に最新のものだけの状態にし、古いものは残さない。
+- issue
+  - 進行中の課題ドキュメント。終了したタスクは消していく。
+- src
+  - ソースコード等の実装環境。
+- docs
+  - 配布サイト（GitHub Pages の公開元）。仕様ではない。
+- bin
+  - ビルドされたarch毎の実行ファイル（`bin/release/` は配布用の zip）
+
+リリースビルド: Windows は `build-release.bat`、Mac は `./build-release.sh`（`-Zip` / `--zip` で zip も作る）。

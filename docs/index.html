@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CPFileLauncher — cyberpunk launcher for Windows &amp; macOS</title>
+<meta name="description" content="CPFileLauncher is a free cyberpunk file and app launcher for Windows and macOS. Summon a neon board with a hotkey or a mouse click, then launch files, folders, apps and URLs.">
+<script>
+  // 日本語のブラウザなら日本語のページへ（言語を明示的に選んでいないときだけ。読み込み前のちらつきを防ぐためインライン）
+  (function () {
+    try {
+      if (localStorage.getItem('cpfl.lang')) return;
+      var l = (navigator.languages && navigator.languages[0]) || navigator.language || '';
+      if (/^ja\b/i.test(l)) location.replace('ja/' + location.hash);
+    } catch (e) {}
+  })();
+</script>
+<link rel="alternate" hreflang="en" href="https://palmjoy.github.io/CPFileLauncher/">
+<link rel="alternate" hreflang="ja" href="https://palmjoy.github.io/CPFileLauncher/ja/">
+<link rel="alternate" hreflang="x-default" href="https://palmjoy.github.io/CPFileLauncher/">
+<meta name="theme-color" content="#0B0F1A">
+<meta property="og:type" content="website">
+<meta property="og:title" content="CPFileLauncher">
+<meta property="og:description" content="A cyberpunk file &amp; app launcher for Windows and macOS. Free, GPL-3.0.">
+<meta property="og:url" content="https://palmjoy.github.io/CPFileLauncher/">
+<meta property="og:image" content="https://palmjoy.github.io/CPFileLauncher/assets/apple-touch-icon.png">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="preload" href="assets/fonts/ChakraPetch-SemiBold.ttf" as="font" type="font/ttf" crossorigin>
+<link rel="stylesheet" href="assets/site.css">
+<script src="assets/site.js" defer></script>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-term" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16"/><path d="M7 9l3 3-3 3M12 15h5"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 6h7l2 2h9v11H3z"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/></symbol>
+  <symbol id="i-doc" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6zM14 3v4h4M9 12h6M9 16h6"/></symbol>
+  <symbol id="i-music" viewBox="0 0 24 24"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></symbol>
+  <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-9 9"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14"/><path d="M3 6l9 7 9-7"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol>
+  <symbol id="i-code" viewBox="0 0 24 24"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5M14 4l-4 16"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 4h16v12H9l-5 4z"/></symbol>
+  <symbol id="i-pen" viewBox="0 0 24 24"><path d="M4 20l4-1 11-11-3-3L5 16zM14 6l3 3"/></symbol>
+  <symbol id="i-calc" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18"/><path d="M8 7h8M8 12h2M14 12h2M8 16h2M14 16h2"/></symbol>
+  <symbol id="i-server" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="7"/><rect x="4" y="13" width="16" height="7"/><path d="M8 7.5h.01M8 16.5h.01"/></symbol>
+  <symbol id="i-game" viewBox="0 0 24 24"><path d="M6 8h12a3 3 0 013 3v3a3 3 0 01-5 2l-1-1H9l-1 1a3 3 0 01-5-2v-3a3 3 0 013-3zM8 11v3M6.5 12.5h3M16 12h.01M18 13h.01"/></symbol>
+  <symbol id="i-box" viewBox="0 0 24 24"><path d="M3 7l9-4 9 4v10l-9 4-9-4zM3 7l9 4 9-4M12 11v10"/></symbol>
+  <symbol id="i-video" viewBox="0 0 24 24"><rect x="3" y="6" width="13" height="12"/><path d="M16 10l5-3v10l-5-3"/></symbol>
+</svg>
+
+<header class="topbar">
+  <div class="wrap">
+    <a class="brand" href="#top"><img src="assets/icon.svg" alt="" width="28" height="28">CPFileLauncher</a>
+    <nav class="nav" aria-label="Sections">
+      <a href="#download">Download</a>
+      <a href="#features">Features</a>
+      <a href="#setup">Setup</a>
+      <a href="#license">License</a>
+    </nav>
+    <div class="langs"><a href="./" aria-current="page" data-lang="en" lang="en">EN</a><span aria-hidden="true">|</span><a href="ja/" data-lang="ja" lang="ja">JA</a></div>
+    <a class="gh" href="https://github.com/PalmJoy/CPFileLauncher" aria-label="GitHub"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38v-1.33c-2.23.48-2.7-1.07-2.7-1.07-.36-.92-.89-1.17-.89-1.17-.73-.5.05-.49.05-.49.8.06 1.23.83 1.23.83.72 1.23 1.88.87 2.34.67.07-.52.28-.87.5-1.07-1.78-.2-3.65-.89-3.65-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.6 7.6 0 014 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48v2.2c0 .21.15.46.55.38A8 8 0 0016 8c0-4.42-3.58-8-8-8z"/></svg><span>GitHub</span></a>
+  </div>
+</header>
+
+<main id="top">
+
+<section class="hero">
+  <div class="wrap">
+    <div>
+      <span class="tag">CyberPunk FileLauncher</span>
+      <h1 class="glitch-once">CP<span class="accent">File</span>Launcher</h1>
+      <p class="lead">A neon board of your files, folders, apps and URLs — summoned with a hotkey or a mouse click. For Windows and macOS.</p>
+      <div class="console" aria-hidden="true"><span class="p">&gt;</span> fetch cpfilelauncher --target <span data-console-target>all</span> <span class="cursor"></span></div>
+      <div class="actions">
+        <a class="btn" href="#download" data-hero-download><span class="cut"><svg aria-hidden="true"><use href="#i-down"/></svg><span data-hero-label>Download</span></span></a>
+        <a class="alt" href="#download" data-hero-other hidden>Other platforms</a>
+      </div>
+      <div class="chips">
+        <span class="chip" data-version hidden></span>
+        <span class="chip c2">GPL-3.0</span>
+        <span class="chip">Free</span>
+        <span class="chip">Windows · macOS</span>
+      </div>
+    </div>
+
+    <div>
+      <div class="board-wrap brackets">
+        <div class="board cut" role="img" aria-label="A model of the CPFileLauncher board: a 4 by 6 grid of launcher items with page tabs and a status line">
+          <div class="beam"></div>
+          <div class="board-tabs"><span class="on">01 Work</span><span>02 Media</span><span>03 Tools</span></div>
+          <div class="slots">
+            <div class="slot sel"><svg><use href="#i-term"/></svg><span class="lbl">Terminal</span><span class="key">T</span></div>
+            <div class="slot band"><svg><use href="#i-folder"/></svg><span class="lbl">Projects</span></div>
+            <div class="slot"><svg><use href="#i-globe"/></svg><span class="lbl">Browser</span></div>
+            <div class="slot"><svg><use href="#i-code"/></svg><span class="lbl">Editor</span><span class="key">E</span></div>
+            <div class="slot"><svg><use href="#i-doc"/></svg><span class="lbl">Notes</span></div>
+            <div class="slot"><svg><use href="#i-mail"/></svg><span class="lbl">Mail</span></div>
+            <div class="slot"><svg><use href="#i-cal"/></svg><span class="lbl">Calendar</span></div>
+            <div class="slot band"><svg><use href="#i-folder"/></svg><span class="lbl">Downloads</span></div>
+            <div class="slot"><svg><use href="#i-chat"/></svg><span class="lbl">Chat</span></div>
+            <div class="slot"><svg><use href="#i-pen"/></svg><span class="lbl">Sketch</span></div>
+            <div class="slot empty"></div>
+            <div class="slot"><svg><use href="#i-server"/></svg><span class="lbl">Server</span></div>
+            <div class="slot"><svg><use href="#i-music"/></svg><span class="lbl">Music</span></div>
+            <div class="slot"><svg><use href="#i-image"/></svg><span class="lbl">Photos</span></div>
+            <div class="slot"><svg><use href="#i-video"/></svg><span class="lbl">Videos</span></div>
+            <div class="slot empty"></div>
+            <div class="slot"><svg><use href="#i-calc"/></svg><span class="lbl">Calculator</span></div>
+            <div class="slot"><svg><use href="#i-box"/></svg><span class="lbl">Archive</span></div>
+            <div class="slot"><svg><use href="#i-gear"/></svg><span class="lbl">Settings</span></div>
+            <div class="slot empty"></div>
+            <div class="slot"><svg><use href="#i-game"/></svg><span class="lbl">Games</span></div>
+            <div class="slot empty"></div>
+            <div class="slot empty"></div>
+            <div class="slot empty"></div>
+          </div>
+          <div class="status"><span>PAGE 01/03</span><span class="mid">ITEMS 18</span><span data-clock>2026/10/12 00:00</span></div>
+        </div>
+      </div>
+      <div class="swatches" role="group" aria-label="Color presets">
+        <span>Colors</span>
+        <button class="swatch" type="button" style="--s1:#00E5FF;--s2:#FF2BD6" data-c1="#00E5FF" data-c2="#FF2BD6" aria-pressed="true" aria-label="Cyan"></button>
+        <button class="swatch" type="button" style="--s1:#FF2E4D;--s2:#37EBF3" data-c1="#FF2E4D" data-c2="#37EBF3" aria-pressed="false" aria-label="Red"></button>
+        <button class="swatch" type="button" style="--s1:#4D8BFF;--s2:#C77DFF" data-c1="#4D8BFF" data-c2="#C77DFF" aria-pressed="false" aria-label="Blue"></button>
+        <button class="swatch" type="button" style="--s1:#39FF88;--s2:#FF4FD8" data-c1="#39FF88" data-c2="#FF4FD8" aria-pressed="false" aria-label="Green"></button>
+        <button class="swatch" type="button" style="--s1:#B967FF;--s2:#00E5FF" data-c1="#B967FF" data-c2="#00E5FF" aria-pressed="false" aria-label="Purple"></button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="block" id="download">
+  <div class="wrap">
+    <div class="sec-head"><span class="num">01 // Download</span><h2>Get CPFileLauncher</h2><p>Download the zip for your computer, extract it and run. There is no installer.</p></div>
+    <div class="grid-3">
+      <div class="dl-item" data-asset="win-x64">
+        <div class="dl-card cut">
+          <div class="chips"><span class="chip">x64</span><span class="chip c2 rec">Recommended</span></div>
+          <h3>Windows</h3>
+          <div class="file">CPFileLauncher-win-x64.zip <span data-size="CPFileLauncher-win-x64.zip" hidden></span></div>
+          <p class="req">Windows 10 (1809 or later) / Windows 11 on Intel or AMD PCs.</p>
+          <a class="btn" href="https://github.com/PalmJoy/CPFileLauncher/releases/latest/download/CPFileLauncher-win-x64.zip"><span class="cut"><svg aria-hidden="true"><use href="#i-down"/></svg>Download</span></a>
+        </div>
+      </div>
+      <div class="dl-item" data-asset="win-arm64">
+        <div class="dl-card cut">
+          <div class="chips"><span class="chip">ARM64</span><span class="chip c2 rec">Recommended</span></div>
+          <h3>Windows on ARM</h3>
+          <div class="file">CPFileLauncher-win-arm64.zip <span data-size="CPFileLauncher-win-arm64.zip" hidden></span></div>
+          <p class="req">Windows 11 on ARM PCs (Snapdragon and others).</p>
+          <a class="btn" href="https://github.com/PalmJoy/CPFileLauncher/releases/latest/download/CPFileLauncher-win-arm64.zip"><span class="cut"><svg aria-hidden="true"><use href="#i-down"/></svg>Download</span></a>
+        </div>
+      </div>
+      <div class="dl-item" data-asset="macos-arm64">
+        <div class="dl-card cut">
+          <div class="chips"><span class="chip">Apple silicon</span><span class="chip c2 rec">Recommended</span></div>
+          <h3>macOS</h3>
+          <div class="file">CPFileLauncher-macos-arm64.zip <span data-size="CPFileLauncher-macos-arm64.zip" hidden></span></div>
+          <p class="req">macOS 15 Sequoia or later. <strong>Apple silicon (M1 or later) only</strong> — Intel Macs are not supported.</p>
+          <a class="btn" href="https://github.com/PalmJoy/CPFileLauncher/releases/latest/download/CPFileLauncher-macos-arm64.zip"><span class="cut"><svg aria-hidden="true"><use href="#i-down"/></svg>Download</span></a>
+        </div>
+      </div>
+    </div>
+    <div class="dl-notes">
+      <span>Unsigned build — see <a href="#setup">first launch</a> before opening.</span>
+      <a href="https://github.com/PalmJoy/CPFileLauncher/releases">All releases &amp; changelog</a>
+      <a href="https://github.com/PalmJoy/CPFileLauncher/releases/latest/download/SHA256SUMS.txt">SHA256SUMS.txt</a>
+      <span data-date-wrap hidden>Released <span data-date></span></span>
+    </div>
+  </div>
+</section>
+
+<section class="block" id="features">
+  <div class="wrap">
+    <div class="sec-head"><span class="num">02 // Features</span><h2>Built for fast hands</h2></div>
+    <div class="grid-4">
+      <div class="glow"><div class="feat cut">
+        <div class="specimen"><kbd>Ctrl</kbd><span class="plus">+</span><kbd>Alt</kbd><span class="plus">+</span><kbd>Space</kbd></div>
+        <div class="body"><h3>Summon anywhere</h3><p>Press <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Space</kbd> (<kbd>⌃</kbd><kbd>⌥</kbd><kbd>Space</kbd> on Mac) or Ctrl(⌃)+middle-click. Triggers are configurable.</p></div>
+      </div></div>
+      <div class="glow"><div class="feat cut">
+        <div class="specimen">
+          <div><div class="mini-board"><i></i><i class="on"></i><i></i><i></i><i></i><i></i></div><div class="mini-label">POPUP</div></div>
+          <div><div class="mini-board dock"><i></i><i></i><i class="on"></i><i></i><i></i><i></i></div><div class="mini-label">PINNED</div></div>
+        </div>
+        <div class="body"><h3>Two display modes</h3><p>Pop up at the cursor and vanish after launching, or keep the board pinned on your desktop.</p></div>
+      </div></div>
+      <div class="glow"><div class="feat cut">
+        <div class="specimen"><div class="mini-tabs"><span class="on">01</span><span>02</span><span>03</span><span>+</span></div></div>
+        <div class="body"><h3>Drag, drop, organize</h3><p>Drop files, folders and apps from Explorer or Finder. Group them into pages, move and swap with drag &amp; drop.</p></div>
+      </div></div>
+      <div class="glow"><div class="feat cut">
+        <div class="specimen"><div class="file-chip"><svg><use href="#i-doc"/></svg></div><span class="plus">→</span><div class="drop-target"><svg><use href="#i-code"/></svg></div></div>
+        <div class="body"><h3>Drop to open</h3><p>Drop a file onto an app item to open it with that app.</p></div>
+      </div></div>
+      <div class="glow"><div class="feat cut">
+        <div class="specimen"><div class="finder-tabs"><div class="row"><span>Documents</span><span class="new">Projects</span></div><div class="pane"></div></div></div>
+        <div class="body"><h3>Folders open in tabs</h3><p>Folders open as a new tab in the Explorer or Finder window you already have.</p></div>
+      </div></div>
+      <div class="glow"><div class="feat cut">
+        <div class="specimen"><div class="dots"><i style="--s1:#00E5FF;--s2:#FF2BD6"></i><i style="--s1:#FF2E4D;--s2:#37EBF3"></i><i style="--s1:#4D8BFF;--s2:#C77DFF"></i><i style="--s1:#39FF88;--s2:#FF4FD8"></i><i style="--s1:#B967FF;--s2:#00E5FF"></i></div></div>
+        <div class="body"><h3>Two colors, full HUD</h3><p>Pick a primary and a secondary color. Glitch transitions, scanlines, a status line and optional ambient effects.</p></div>
+      </div></div>
+      <div class="glow"><div class="feat cut">
+        <div class="specimen"><div class="json">{ <b>"pages"</b>: [
+  { <b>"name"</b>: <s>"Work"</s>,
+    <b>"items"</b>: [ … ] } ] }</div></div>
+        <div class="body"><h3>Your data, readable</h3><p>Plain JSON files with automatic backups. Export and import everything as one zip.</p></div>
+      </div></div>
+      <div class="glow"><div class="feat cut">
+        <div class="specimen"><div class="lang-pair"><span>EN</span><span>日本語</span></div></div>
+        <div class="body"><h3>English &amp; Japanese</h3><p>The whole UI is available in both languages.</p></div>
+      </div></div>
+    </div>
+  </div>
+</section>
+
+<section class="block" id="screenshots" hidden>
+  <div class="wrap">
+    <div class="sec-head"><span class="num">03 // Screenshots</span><h2>In action</h2></div>
+    <div class="shots"></div>
+  </div>
+</section>
+
+<section class="block" id="requirements">
+  <div class="wrap">
+    <div class="sec-head"><span class="num">04 // Requirements</span><h2>System requirements</h2></div>
+    <div class="table-wrap">
+      <table class="req">
+        <thead><tr><th></th><th scope="col">Windows</th><th scope="col">macOS</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">OS</th><td>Windows 10 (1809 or later), Windows 11</td><td>macOS 15 Sequoia or later</td></tr>
+          <tr><th scope="row">CPU</th><td>x64, ARM64</td><td>Apple silicon only (Intel Macs are not supported)</td></tr>
+          <tr><th scope="row">Permissions</th><td>None</td><td>Accessibility (for hotkeys and mouse triggers). Automation of Finder, only to open folders in Finder tabs.</td></tr>
+          <tr><th scope="row">Disk</th><td>About 130–150 MB after extracting</td><td>About 120 MB</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section class="block" id="setup">
+  <div class="wrap">
+    <div class="sec-head"><span class="num">05 // Setup</span><h2>First launch</h2><p>CPFileLauncher is not code-signed by Apple or Microsoft yet, so your OS will warn you the first time. Here is how to open it.</p></div>
+    <div class="os-tabs">
+      <input type="radio" name="os" id="os-win" checked>
+      <input type="radio" name="os" id="os-mac">
+      <div class="tablist"><label for="os-win">Windows</label><label for="os-mac">macOS</label></div>
+
+      <div class="panel panel-win">
+        <ol class="steps">
+          <li>Extract the zip to any folder (it does not have to be <code>Program Files</code>).
+            <p>Keep the whole <code>CPFileLauncher</code> folder together — <code>uiohook.dll</code> must stay next to <code>CPFileLauncher.exe</code>, or hotkeys and mouse triggers will not work.</p></li>
+          <li>Open <code>CPFileLauncher.exe</code>. If SmartScreen shows “Windows protected your PC”, click <strong>More info</strong> → <strong>Run anyway</strong>.
+            <p>To avoid the warning, right-click the zip → Properties → check <strong>Unblock</strong> before extracting.</p></li>
+          <li>The icon appears in the notification area. Press <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Space</kbd> to show the board.</li>
+          <li>To start it automatically, turn on <strong>Start at login</strong> in Settings.</li>
+        </ol>
+        <div class="callout"><h4>Known limitations</h4><ul>
+          <li>PCs with <strong>Smart App Control</strong> turned on cannot run unsigned apps, and there is no way around it.</li>
+          <li>Because the app uses a global keyboard and mouse hook, some antivirus software may flag it by mistake.</li>
+        </ul></div>
+      </div>
+
+      <div class="panel panel-mac">
+        <ol class="steps">
+          <li>Double-click the zip to extract it (Safari extracts it automatically).</li>
+          <li>Move <code>CPFileLauncher.app</code> to the <strong>Applications</strong> folder first.
+            <p>Opening it from Downloads runs it from a temporary read-only location, and permissions will not stick after you move it.</p></li>
+          <li>Open it. macOS says “CPFileLauncher” Not Opened — click <strong>Done</strong>.</li>
+          <li>Open <strong>System Settings → Privacy &amp; Security</strong>, scroll down and click <strong>Open Anyway</strong>, enter your password, then open the app again.
+            <p>Or run this in Terminal:</p>
+            <div class="copy-line"><code>xattr -dr com.apple.quarantine /Applications/CPFileLauncher.app</code><button class="copy-btn" type="button" data-copy="xattr -dr com.apple.quarantine /Applications/CPFileLauncher.app" hidden>Copy</button></div></li>
+          <li>Click the menu bar icon → <strong>Permissions…</strong> and allow <strong>Accessibility</strong>. <kbd>⌃</kbd><kbd>⌥</kbd><kbd>Space</kbd> works once it is allowed.</li>
+          <li>The first time a folder opens in a Finder tab, macOS asks to let CPFileLauncher control Finder — allow it.</li>
+        </ol>
+      </div>
+    </div>
+
+    <h3 class="sub-h">Updating</h3>
+    <p>Quit CPFileLauncher and replace it with the new version. Your items and settings are kept in the data folder.</p>
+    <div class="callout"><h4>macOS: permissions reset on every update</h4><p>Because the app is not signed with an Apple Developer ID, macOS treats each version as a new app. After updating, repeat steps 3–4, remove the old CPFileLauncher from the Accessibility list with “−”, and allow it again (step 5).</p></div>
+
+    <h3 class="sub-h">Uninstalling</h3>
+    <p>Turn off <strong>Start at login</strong> in Settings, quit the app and delete it. Then delete the data folder — <code>%APPDATA%\CPFileLauncher\</code> on Windows, <code>~/Library/Application Support/CPFileLauncher/</code> on macOS. On macOS, also remove CPFileLauncher from Accessibility and Automation in Privacy &amp; Security.</p>
+
+    <h3 class="sub-h">Troubleshooting</h3>
+    <dl class="faq">
+      <dt>macOS says the app “is damaged and can’t be opened”.</dt>
+      <dd>Run the <code>xattr</code> command from step 4, then open it again.</dd>
+      <dt>The hotkey does nothing on macOS.</dt>
+      <dd>Remove CPFileLauncher from the Accessibility list with “−” and allow it again.</dd>
+      <dt>“You can’t open the application because it is not supported on this Mac.”</dt>
+      <dd>That Mac has an Intel processor. CPFileLauncher runs on Apple silicon only.</dd>
+    </dl>
+  </div>
+</section>
+
+<section class="block" id="license">
+  <div class="wrap">
+    <div class="sec-head"><span class="num">06 // License</span><h2>Free and open source</h2></div>
+    <div class="glow"><div class="license-card cut">
+      <p><strong>CPFileLauncher</strong> — Copyright © 2026 PalmJoy — <span class="chip c2">GPL-3.0-only</span></p>
+      <p>Distributed under the <a href="https://github.com/PalmJoy/CPFileLauncher/blob/main/LICENSE">GNU General Public License v3</a>, without any warranty. The source code is on <a href="https://github.com/PalmJoy/CPFileLauncher">GitHub</a>. Using the app is free for anyone; the GPL only applies when you redistribute it.</p>
+      <ul class="license-list">
+        <li><span>Avalonia, SharpHook, SkiaSharp, HarfBuzzSharp, .NET</span><span class="lic">MIT</span></li>
+        <li><span>Skia, ANGLE</span><span class="lic">BSD-3-Clause</span></li>
+        <li><span>libuiohook (source: <code>libuiohook-source.zip</code> in every release)</span><span class="lic">LGPL-3.0</span></li>
+        <li><span>Chakra Petch, Share Tech Mono, Inter</span><span class="lic">OFL-1.1</span></li>
+      </ul>
+      <p>Full texts: <a href="https://github.com/PalmJoy/CPFileLauncher/blob/main/THIRD-PARTY-NOTICES.txt">THIRD-PARTY-NOTICES.txt</a> (also included in the download). This website uses Chakra Petch and Share Tech Mono under the SIL Open Font License (<a href="assets/fonts/OFL-ChakraPetch.txt">OFL-ChakraPetch.txt</a>, <a href="assets/fonts/OFL-ShareTechMono.txt">OFL-ShareTechMono.txt</a>).</p>
+      <p class="small">Windows is a trademark of Microsoft. macOS and Finder are trademarks of Apple.</p>
+    </div></div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>© 2026 PalmJoy</span>
+    <nav aria-label="Footer">
+      <a href="https://github.com/PalmJoy/CPFileLauncher">GitHub</a>
+      <a href="https://github.com/PalmJoy/CPFileLauncher/issues">Issues</a>
+      <a href="https://github.com/PalmJoy/CPFileLauncher/blob/main/LICENSE">License</a>
+      <a href="https://github.com/PalmJoy/CPFileLauncher/blob/main/THIRD-PARTY-NOTICES.txt">Third-party notices</a>
+    </nav>
+  </div>
+</footer>
+
+</body>
+</html>

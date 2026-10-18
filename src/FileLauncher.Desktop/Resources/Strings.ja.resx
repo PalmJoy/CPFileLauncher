@@ -1260,4 +1260,12 @@
   <data name="Enum_CursorAnchor_BottomRight" xml:space="preserve">
     <value>右下</value>
   </data>
+  <data name="StartupGuide_Title" xml:space="preserve"><value>アイコンをドロップして登録</value></data>
+  <data name="StartupGuide_Description" xml:space="preserve"><value>ファイル・フォルダ・アプリ等のアイコンを、ランチャーの空きマスへドラッグ＆ドロップすると、アイテムを登録できます。</value></data>
+  <data name="StartupGuide_OpenBoard" xml:space="preserve"><value>現在設定されているショートカット{0}で、ランチャーを呼び出せます。</value></data>
+  <data name="StartupGuide_DoNotShowAgain" xml:space="preserve"><value>次回以降表示しない</value></data>
+  <data name="StartupGuide_ShortcutDisabled" xml:space="preserve"><value>現在、キーボードとマウスのショートカットは無効です。トレイまたはメニューバーのアイコンからランチャーを呼び出せます。</value></data>
+  <data name="StartupGuide_MouseButton" xml:space="preserve"><value>{0}ボタン{1}</value></data>
+  <data name="StartupGuide_DesktopOnly" xml:space="preserve"><value>{0}（デスクトップ上のみ）</value></data>
+  <data name="StartupGuide_Shortcut" xml:space="preserve"><value>「{0}」</value></data>
 </root>

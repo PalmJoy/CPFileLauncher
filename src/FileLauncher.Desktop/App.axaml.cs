@@ -105,7 +105,8 @@ public partial class App : Application
             SetDisplayMode = mode => _hub?.Update(s => s.General.DisplayMode = mode, SettingsChange.DisplayMode),
             OpenSettings = OpenSettings,
             Quit = () => Quit(desktop),
-            ShowAbout = () => AboutWindow.Show(_platform.Shell, store.Paths.Root, _hub!.Current.General.FolderOpenTarget),
+            ShowAbout = () => AboutWindow.Show(_platform.Shell, store.Paths.Root, _hub!.Current.General.FolderOpenTarget,
+                _hub.Current.Appearance, store.Paths, _platform),
         };
         editor.Attach();
         _board.SettingsRequested += OpenSettings;
@@ -122,6 +123,10 @@ public partial class App : Application
         _platform.InputHook.Start();
         SwitchMode(settings.General.DisplayMode);
         desktop.Exit += (_, _) => Cleanup();
+        if (!settings.General.HideStartupGuide)
+            Dispatcher.UIThread.Post(() =>
+                WindowActivation.ShowAndActivate(new StartupGuideWindow(hub, store.Paths, _platform), _platform),
+                DispatcherPriority.ApplicationIdle);
         // 起動時間（SPEC §11）: プロセス開始からトリガーを受け付けられるまで。最初の描画が落ち着いた時点も出す
         AppLog.Info($"起動完了: {StartupMs():F0} ms（トレイ・入力フック・盤面の準備まで）");
         Dispatcher.UIThread.Post(() => AppLog.Info($"起動後の最初のアイドル: {StartupMs():F0} ms"), DispatcherPriority.ApplicationIdle);

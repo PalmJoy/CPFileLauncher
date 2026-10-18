@@ -12,9 +12,12 @@ public sealed class AboutWindowTests
     public void バージョンとデータフォルダとフォントのライセンスを出し_二度開いても1枚だけ()
     {
         var platform = new FakePlatform();
-        var w = AboutWindow.Show(platform.Shell, "/data/FileLauncher");
+        var w = AboutWindow.Show(platform.Shell, "/data/FileLauncher",
+            appearance: new FileLauncher.Core.Model.AppearanceSettings { Animation = false, Opacity = 65 });
         try
         {
+            Assert.Equal(0.65, w.Opacity);
+            Assert.Contains(w.GetVisualDescendants(), c => c is BackdropLayer);
             var texts = w.GetVisualDescendants().OfType<TextBlock>().Select(t => t.Text).ToList();
             Assert.Contains(texts, t => t?.StartsWith(Strings.FormatAbout_Version("")) == true);
             Assert.Contains(w.GetVisualDescendants().OfType<TextBox>(), t => t.Text == "/data/FileLauncher");

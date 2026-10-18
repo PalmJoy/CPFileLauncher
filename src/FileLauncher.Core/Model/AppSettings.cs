@@ -64,6 +64,7 @@ public sealed class GeneralSettings
 {
     public DisplayMode DisplayMode { get; set; } = DisplayMode.Popup;
     public bool AutoStart { get; set; }
+    public bool HideStartupGuide { get; set; }
 
     /// <summary>"system" / "ja" / "en"</summary>
     public string Language { get; set; } = "system";

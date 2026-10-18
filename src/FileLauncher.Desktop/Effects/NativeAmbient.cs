@@ -16,7 +16,8 @@ namespace FileLauncher.App;
 /// </summary>
 internal sealed class NativeAmbient : IDisposable
 {
-    private readonly BoardWindow _window;
+    private readonly Window _window;
+    private readonly FrameChrome _chrome;
     private readonly IAmbientLayerService _service;
     private readonly PulseLayer _pulse;
     private IAmbientLayerHost? _host;
@@ -25,7 +26,11 @@ internal sealed class NativeAmbient : IDisposable
     private object? _sentPulseImage; // 最後に PNG にして渡した焼き込み（同じなら渡し直さない）
 
     public NativeAmbient(BoardWindow window, IAmbientLayerService service, PulseLayer pulse)
+        : this(window, window.Chrome, service, pulse) { }
+
+    public NativeAmbient(Window window, FrameChrome chrome, IAmbientLayerService service, PulseLayer pulse)
     {
+        _chrome = chrome;
         _window = window;
         _service = service;
         _pulse = pulse;
@@ -47,7 +52,7 @@ internal sealed class NativeAmbient : IDisposable
             AppLog.Info("常時の演出: OS の層に取り付けられない → Avalonia の層で描く");
             return false;
         }
-        var frame = _window.Chrome.Frame;
+        var frame = _chrome.Frame;
         frame.SizeChanged += (_, _) => UpdateGeometry();
         _window.SizeChanged += (_, _) => UpdateGeometry();
         _window.ScalingChanged += (_, _) => UpdateGeometry();
@@ -87,7 +92,7 @@ internal sealed class NativeAmbient : IDisposable
     private bool UpdateGeometry()
     {
         if (_host is null) return false;
-        var chrome = _window.Chrome;
+        var chrome = _chrome;
         var size = chrome.Frame.Bounds.Size;
         if (size.Width < 1 || size.Height < 1) return false;
         var origin = chrome.Frame.TranslatePoint(default, _window) ?? default;
@@ -105,7 +110,7 @@ internal sealed class NativeAmbient : IDisposable
     {
         if (_host is null) return;
         if (!_pulseSpec.IsActive) { _host.SetPulse(null); _sentPulseImage = null; return; }
-        var size = _window.Chrome.Frame.Bounds.Size;
+        var size = _chrome.Frame.Bounds.Size;
         if (size.Width < 1 || size.Height < 1) return; // 大きさが決まったら UpdateGeometry から来る
         _pulse.Refresh(size);
         if (_pulse.BakedImage is not { } image) return;

@@ -32,6 +32,10 @@ internal class ChromeWindow : Window
     public static Core.Effects.EffectSpec ShowEffect { get; set; } = Core.Effects.EffectSpec.None;
     public static Core.Effects.EffectSpec HideEffect { get; set; } = Core.Effects.EffectSpec.None;
     public static Core.Effects.GlitchLook GlitchLook { get; set; } = Core.Effects.GlitchLook.Base;
+    internal Core.Effects.EffectSpec? WindowShowEffect { get; set; }
+    internal Core.Effects.EffectSpec? WindowHideEffect { get; set; }
+    private Core.Effects.EffectSpec EffectiveShowEffect => WindowShowEffect ?? ShowEffect;
+    private Core.Effects.EffectSpec EffectiveHideEffect => WindowHideEffect ?? HideEffect;
 
     private readonly Canvas _glitchLayer;
     private readonly GlitchPlayer _glitch = new();
@@ -44,15 +48,20 @@ internal class ChromeWindow : Window
 
     private void PlayShowGlitch()
     {
-        if (!UsesGlitch(ShowEffect)) { _chrome.Opacity = 1; return; }
-        var task = _glitch.Start(_chrome, _chrome.Frame, _glitchLayer, ShowEffect, GlitchLook, Token("FlAccent"), Token("FlAccent2"), CancellationToken.None);
+        if (!UsesGlitch(EffectiveShowEffect))
+        {
+            if (WindowShowEffect is { } spec) _ = EffectRunner.ShowAsync(_chrome, spec);
+            else _chrome.Opacity = 1;
+            return;
+        }
+        var task = _glitch.Start(_chrome, _chrome.Frame, _glitchLayer, EffectiveShowEffect, GlitchLook, Token("FlAccent"), Token("FlAccent2"), CancellationToken.None);
         if (task is null) _chrome.Opacity = 1; // 静止画が撮れなければそのまま出す
     }
 
     /// <summary>閉じるときは一度止めてグリッチで消し、終わってから同じ結果で閉じ直す。</summary>
     private async void OnClosingGlitch(object? sender, WindowClosingEventArgs e)
     {
-        if (_hideGlitchDone || !UsesGlitch(HideEffect) || !IsVisible
+        if (_hideGlitchDone || !(UsesGlitch(EffectiveHideEffect) || WindowHideEffect?.IsActive == true) || !IsVisible
             || e.CloseReason is WindowCloseReason.ApplicationShutdown or WindowCloseReason.OSShutdown) return;
         e.Cancel = true;
         if (_hideGlitchStarted) return;
@@ -61,7 +70,9 @@ internal class ChromeWindow : Window
         object? result = typeof(Window).GetField("_dialogResult", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)?.GetValue(this);
         IsHitTestVisible = false;
         GlitchPlayer.Finish(_chrome.Frame, _glitchLayer);
-        var task = _glitch.Start(_chrome, _chrome.Frame, _glitchLayer, HideEffect, GlitchLook, Token("FlAccent"), Token("FlAccent2"), CancellationToken.None, appearing: false);
+        var task = UsesGlitch(EffectiveHideEffect)
+            ? _glitch.Start(_chrome, _chrome.Frame, _glitchLayer, EffectiveHideEffect, GlitchLook, Token("FlAccent"), Token("FlAccent2"), CancellationToken.None, appearing: false)
+            : EffectRunner.HideAsync(_chrome, EffectiveHideEffect);
         try { if (task is not null) await task; }
         catch (OperationCanceledException) { }
         _hideGlitchDone = true;

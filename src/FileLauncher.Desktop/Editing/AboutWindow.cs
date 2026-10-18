@@ -14,7 +14,8 @@ internal static class AboutWindow
 {
     private static Window? _open; // 開いていれば前に出すだけ
 
-    internal static Window Show(IShellService shell, string dataRoot, FolderOpenTarget folderTarget = FolderOpenTarget.System)
+    internal static Window Show(IShellService shell, string dataRoot, FolderOpenTarget folderTarget = FolderOpenTarget.System,
+        AppearanceSettings? appearance = null, DataPaths? paths = null, IPlatformServices? platform = null)
     {
         if (_open is { } existing) { existing.Activate(); return existing; }
 
@@ -94,10 +95,12 @@ internal static class AboutWindow
                 },
             },
         };
+        if (appearance is not null) _ = new BoardWindowAppearance(window, appearance, paths, platform);
         ok.Click += (_, _) => window.Close();
         window.Closed += (_, _) => _open = null;
         _open = window;
-        window.Show();
+        if (platform is not null) WindowActivation.ShowAndActivate(window, platform);
+        else window.Show();
         return window;
     }
 

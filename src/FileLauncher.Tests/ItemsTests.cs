@@ -138,6 +138,188 @@ public class ItemFactoryTests : IDisposable
         Assert.Equal(file, _factory.FromText(new Uri(file).AbsoluteUri)!.Target);
         Assert.Null(_factory.FromText("ただの文章"));
     }
+
+    // ---- テキストの「パス + 引数」（SPEC §6.1「テキストの解釈」） ----
+
+    private string TouchIn(string folder, string name)
+    {
+        var dir = Directory.CreateDirectory(_dir.File(folder)).FullName;
+        var path = Path.Combine(dir, name);
+        File.WriteAllText(path, "");
+        return path;
+    }
+
+    [Fact]
+    public void 引用符付きのパスと引数に分ける_リンク先欄の形()
+    {
+        var exe = TouchIn("My Games", "game.exe");
+
+        var item = _factory.FromText($"\"{exe}\" -game=token")!;
+
+        Assert.Equal((ItemKind.App, exe, "-game=token", "game"), (item.Kind, item.Target, item.Args, item.Name));
+        Assert.Null(item.WorkingDir);
+    }
+
+    [Fact]
+    public void 閉じる引用符の直後に空白が無くても分ける()
+    {
+        var exe = Touch("a.exe");
+
+        Assert.Equal("-x", _factory.FromText($"\"{exe}\"-x")!.Args);
+    }
+
+    [Fact]
+    public void 引用符付きのパスが無ければ空白で区切り直さない()
+    {
+        TouchIn("Games", "x.exe");
+
+        // 引用符の中 "…/Games x.exe" は実在しない。"…/Games" と "x.exe" に分け直したりはしない
+        Assert.Null(_factory.FromText($"\"{_dir.File("Games")} x.exe\" -y"));
+    }
+
+    [Fact]
+    public void 引用符なしは空白の位置で前から伸ばし_最初に実在したファイルで分ける()
+    {
+        var exe = TouchIn("Program Files", "app.exe");
+
+        var item = _factory.FromText($"{exe} -x --name \"a b\"")!;
+
+        Assert.Equal((exe, "-x --name \"a b\""), (item.Target, item.Args));
+    }
+
+    [Fact]
+    public void 引用符なしで行全体が実在すれば引数なし()
+    {
+        var exe = TouchIn("Program Files", "app.exe");
+
+        var item = _factory.FromText(exe)!;
+
+        Assert.Equal((exe, ""), (item.Target, item.Args));
+    }
+
+    [Fact]
+    public void 閉じる引用符が無ければ従来どおり行全体をパスとして扱う()
+    {
+        var exe = Touch("a.exe");
+
+        Assert.Equal(exe, _factory.FromText($"\"{exe}")!.Target);
+        Assert.Null(_factory.FromText($"\"{exe} -x"));
+    }
+
+    [Fact]
+    public void ただのフォルダは引数と組まない_空白を含むフォルダ名で誤って分けない()
+    {
+        var folder = Directory.CreateDirectory(_dir.File("Games")).FullName;
+        var exe = TouchIn("Games Steam", "x.exe");
+
+        Assert.Null(_factory.FromText($"\"{folder}\" -x"));
+        Assert.Null(_factory.FromText($"{folder} -x"));
+        Assert.Equal((exe, "-y"), (_factory.FromText($"{exe} -y")!.Target, _factory.FromText($"{exe} -y")!.Args));
+        Assert.Equal(ItemKind.Folder, _factory.FromText(folder)!.Kind);
+    }
+
+    [Fact]
+    public void appバンドルは引数と組める()
+    {
+        var app = Directory.CreateDirectory(_dir.File("Tool.app")).FullName;
+
+        var item = _factory.FromText($"{app} --flag")!;
+
+        Assert.Equal((ItemKind.App, app, "--flag"), (item.Kind, item.Target, item.Args));
+    }
+
+    [Fact]
+    public void lnkに引数を付けて貼るとlnk側の引数を上書きし_作業フォルダはlnk側()
+    {
+        var target = Touch("app.exe");
+        var lnk = Touch("アプリ.lnk");
+        _links[lnk] = new ShortcutInfo(target, "--old", _dir.Path);
+
+        var pasted = _factory.FromText($"\"{lnk}\" --new")!;
+        var plain = _factory.FromText($"\"{lnk}\"")!;
+
+        Assert.Equal((target, lnk, "--new", _dir.Path), (pasted.Target, pasted.LinkPath, pasted.Args, pasted.WorkingDir));
+        Assert.Equal("--old", plain.Args);
+    }
+
+    [Fact]
+    public void リンク先がフォルダのlnkは貼った引数を捨てて登録する()
+    {
+        var folder = Directory.CreateDirectory(_dir.File("docs")).FullName;
+        var lnk = Touch("docs.lnk");
+        _links[lnk] = new ShortcutInfo(folder, "", "");
+
+        var item = _factory.FromText($"\"{lnk}\" -x")!;
+
+        Assert.Equal((ItemKind.Folder, ""), (item.Kind, item.Args));
+    }
+
+    [Fact]
+    public void シェル項目へのlnkは貼った引数をそのまま持つ()
+    {
+        var lnk = Touch("エクスプローラー.lnk");
+        _links[lnk] = new ShortcutInfo("", "", "");
+
+        var item = _factory.FromText($"\"{lnk}\" /e")!;
+
+        Assert.Equal((lnk, "/e"), (item.Target, item.Args));
+    }
+
+    [Fact]
+    public void ファイル種別の引数はWindowsでは残し_Macでは捨てる()
+    {
+        var doc = Touch("readme.txt");
+        var win = new ItemFactory(_ => null, fileKindTakesArgs: true);
+        var mac = new ItemFactory(_ => null, fileKindTakesArgs: false);
+
+        Assert.Equal((ItemKind.File, "-x"), (win.FromText($"{doc} -x")!.Kind, win.FromText($"{doc} -x")!.Args));
+        Assert.Equal((ItemKind.File, ""), (mac.FromText($"{doc} -x")!.Kind, mac.FromText($"{doc} -x")!.Args));
+    }
+
+    [Fact]
+    public void 環境変数のパスは展開して確かめ_保存は展開前のまま()
+    {
+        var exe = TouchIn("Env Dir", "tool.exe");
+        var name = "FL_TEST_" + Guid.NewGuid().ToString("N");
+        Environment.SetEnvironmentVariable(name, Path.GetDirectoryName(exe));
+        try
+        {
+            var raw = $"%{name}%{Path.DirectorySeparatorChar}tool.exe";
+
+            var quoted = _factory.FromText($"\"{raw}\" -x")!;
+            var bare = _factory.FromText($"{raw} -x")!;
+
+            Assert.Equal((ItemKind.App, raw, "-x", "tool"), (quoted.Kind, quoted.Target, quoted.Args, quoted.Name));
+            Assert.Equal((raw, "-x"), (bare.Target, bare.Args));
+        }
+        finally { Environment.SetEnvironmentVariable(name, null); }
+    }
+
+    [Fact]
+    public void 環境変数のlnkはLinkPathを展開前のまま保存する()
+    {
+        var target = Touch("app.exe");
+        var lnk = Touch("app.lnk");
+        _links[lnk] = new ShortcutInfo(target, "", "");
+        var name = "FL_TEST_" + Guid.NewGuid().ToString("N");
+        Environment.SetEnvironmentVariable(name, _dir.Path);
+        try
+        {
+            var raw = $"%{name}%{Path.DirectorySeparatorChar}app.lnk";
+
+            var item = _factory.FromText($"\"{raw}\" -x")!;
+
+            Assert.Equal((target, raw, "-x"), (item.Target, item.LinkPath, item.Args));
+        }
+        finally { Environment.SetEnvironmentVariable(name, null); }
+    }
+
+    [Fact]
+    public void 引数付きでも実在しなければ登録しない()
+    {
+        Assert.Null(_factory.FromText($"\"{_dir.File("nope.exe")}\" -x"));
+        Assert.Null(_factory.FromText($"{_dir.File("nope.exe")} -x"));
+    }
 }
 
 public class BoardEditingTests

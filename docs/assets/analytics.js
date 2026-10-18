@@ -16,11 +16,19 @@ try {
     const app = initializeApp(firebaseConfig);
     const analytics = getAnalytics(app);
 
-    document.querySelectorAll('.dl-item[data-asset] a.btn').forEach((link) => {
+    document.querySelectorAll('.dl-item[data-asset] a.btn, [data-hero-download]').forEach((link) => {
       link.addEventListener('click', () => {
+        const card = link.closest('.dl-item');
+        const href = link.href || '';
+        const platform = card?.dataset.asset ||
+          Object.keys({ 'win-x64': 1, 'win-arm64': 1, 'macos-arm64': 1 })
+            .find((name) => href.includes(name));
+        if (!platform) return;
+
         logEvent(analytics, 'download_click', {
-          platform: link.closest('.dl-item').dataset.asset,
-          language: document.documentElement.lang || 'en'
+          platform,
+          language: document.documentElement.lang || 'en',
+          placement: card ? 'platform_card' : 'hero'
         });
       });
     });

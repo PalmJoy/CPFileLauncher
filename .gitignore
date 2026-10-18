@@ -1,5 +1,7 @@
 # CPFileLauncher（旧 FileLauncher）
 
+issue/
+
 # ---- ビルド出力（dotnet） ----
 [Bb]in/
 [Oo]bj/

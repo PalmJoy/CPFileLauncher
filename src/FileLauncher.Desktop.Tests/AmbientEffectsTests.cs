@@ -161,7 +161,7 @@ public sealed class AmbientEffectsTests
         var (board, _) = Board();
         var overlays = board.GetVisualDescendants().OfType<FrameChrome>().Single().Overlays;
         var names = overlays.Children.Select(c => c is Grid g && g.Children.Contains(board.Orbs) ? "ambient" : c.Name).ToList();
-        Assert.Equal(["ambient", "GlitchLayer", "DragLayer"], names);
+        Assert.Equal(["FrameMarkings", "ambient", "GlitchLayer", "DragLayer"], names);
         Close(board);
     }
 

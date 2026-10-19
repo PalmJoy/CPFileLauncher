@@ -109,7 +109,11 @@ public sealed class HudTests
         Assert.Equal((4.0, 0.1), (wide.ScanlineLayer.Pitch, Math.Round(wide.ScanlineLayer.Opacity, 3)));
         // グリッドの上・タブとスロットの下
         var surface = (Grid)on.ScanlineLayer.Parent!;
-        Assert.Equal(surface.Children.IndexOf(surface.Children.OfType<GridLayer>().Single()) + 1, surface.Children.IndexOf(on.ScanlineLayer));
+        var gridIndex = surface.Children.IndexOf(surface.Children.OfType<GridLayer>().Single());
+        var circuitIndex = surface.Children.IndexOf(surface.Children.OfType<CircuitLayer>().Single());
+        var hologramIndex = surface.Children.IndexOf(surface.Children.OfType<HologramEdges>().Single());
+        Assert.True(gridIndex < hologramIndex && hologramIndex < circuitIndex);
+        Assert.True(circuitIndex < surface.Children.IndexOf(on.ScanlineLayer));
         Assert.True(surface.Children.IndexOf(on.ScanlineLayer) < surface.Children.IndexOf(surface.Children.OfType<DockPanel>().Single()));
         foreach (var w in new[] { on, off, wide }) { w.AllowClose = true; w.Close(); }
     }

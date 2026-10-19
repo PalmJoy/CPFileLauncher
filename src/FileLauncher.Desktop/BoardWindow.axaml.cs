@@ -118,6 +118,7 @@ public partial class BoardWindow : Window
         {
             if (_ambient.IsRunning) Avalonia.Threading.Dispatcher.UIThread.Post(_pulseLayer.Refresh, Avalonia.Threading.DispatcherPriority.Loaded);
         };
+        Chrome.Overlays.Children.Add(_markings);
         Chrome.Overlays.Children.Add(_ambientRoot);
         Chrome.Overlays.Children.Add(GlitchLayer);
         Chrome.Overlays.Children.Add(DragLayer);
@@ -451,7 +452,16 @@ public partial class BoardWindow : Window
         // 隠れている間に描き直したときは大きさが決まらずスクロールできないので、出たときにもう一度
         if (change.Property == IsVisibleProperty && IsVisible)
             Avalonia.Threading.Dispatcher.UIThread.Post(ScrollSelectedTabIntoView, Avalonia.Threading.DispatcherPriority.Loaded);
-        if (change.Property == IsVisibleProperty) UpdateAmbient();
+        if (change.Property == IsVisibleProperty)
+        {
+            UpdateAmbient();
+            if (!IsVisible)
+            {
+                PageSweep?.Stop();
+                foreach (var signal in _signals.Values) signal.Stop();
+                foreach (var scan in _registrationScans.Values) scan.Stop();
+            }
+        }
     }
 
     /// <summary>選択中のタブがヘッダーの見える範囲に入るように横スクロールする（隣のタブが少し見える余白付き）。</summary>
@@ -476,20 +486,43 @@ public partial class BoardWindow : Window
         Render(_board, _appearance, index);
         _pageCts?.Cancel();
         _pageCts = new CancellationTokenSource();
-        if (direction != 0) _ = EffectRunner.PageInAsync(SlotGrid, _pageEffect, direction, _pageCts.Token);
+        if (direction != 0)
+        {
+            _ = EffectRunner.PageInAsync(SlotGrid, _pageEffect, direction, _pageCts.Token);
+            if (_pageEffect.IsActive)
+            {
+                PageSweep.Reverse = direction < 0;
+                PageSweep.Play(_pageEffect.DurationMs);
+            }
+        }
     }
 
-    /// <summary>起動のフィードバック（演出 itemLaunch）。起動に成功したときに呼ばれる。</summary>
+    private readonly FrameMarkings _markings = new() { Name = "FrameMarkings", [!FrameMarkings.StrokeProperty] = Themed.Res("FlAccent") };
+
+    private readonly Dictionary<LauncherItem, SignalPulse> _signals = new();
+    private readonly Dictionary<LauncherItem, DataSweep> _registrationScans = new();
+
+    internal void PlayRegistration(IEnumerable<LauncherItem> items)
+    {
+        foreach (var item in items)
+            if (_registrationScans.TryGetValue(item, out var scan)) scan.Play(_dropEffect.DurationMs * 2);
+    }
+
+    /// <summary>起動のフィードバック。成功通知に追従し、起動そのものを待たせない。</summary>
     public void PlayLaunch(LauncherItem item)
     {
+        if (_signals.TryGetValue(item, out var signal)) signal.Play(_launchEffect.DurationMs);
         if (_iconHosts.TryGetValue(item, out var host)) _ = EffectRunner.PulseAsync(host, _launchEffect);
     }
 
     private void RenderPage()
     {
+        PageSweep.Stop();
         var page = _board.Pages[_pageIndex];
         int size = page.ButtonSize ?? _appearance.ButtonSize;
         bool label = _appearance.Label != LabelMode.None; // hover もラベルの場所を取っておく（出たときに盤面が動かないように）
+        _registrationScans.Clear();
+        _signals.Clear();
         _iconHosts.Clear();
         _slots.Clear();
         _dropHighlight = null;
@@ -524,11 +557,15 @@ public partial class BoardWindow : Window
         double border = this.TryFindResource("FlBoardBorderThickness", ActualThemeVariant, out var bt) && bt is Thickness t ? t.Left : 1;
         BackgroundGrid.IsVisible = _appearance.Hud.Grid && _appearance.Hud.GridOpacity > 0;
         BackgroundGrid.Opacity = _appearance.Hud.GridOpacity / 100.0;
+        Circuits.IsVisible = BackgroundGrid.IsVisible;
+        Hologram.IsVisible = BackgroundGrid.IsVisible;
+        Circuits.Opacity = Math.Min(0.25, _appearance.Hud.GridOpacity / 100.0 * 4);
         Scanlines.IsVisible = _appearance.Hud.Scanlines && _appearance.Hud.ScanlineOpacity > 0;
         Scanlines.Opacity = _appearance.Hud.ScanlineOpacity / 100.0;
         Scanlines.Pitch = _appearance.Hud.ScanlinePitch;
         bool status = _appearance.Hud.StatusBar;
         StatusBar.IsVisible = status;
+        _markings.IsVisible = status;
         UpdateStatus();
         _boardSize = new Size(page.Cols * _cellW + (FramePadding + border) * 2 + glow,
             page.Rows * _cellH + HeaderHeight + (status ? StatusBarHeight : 0) + (FramePadding + border) * 2 + glow);
@@ -614,6 +651,29 @@ public partial class BoardWindow : Window
             VerticalContentAlignment = VerticalAlignment.Stretch,
         };
         AttachHoverTransitions(button);
+        if (_dropEffect.IsActive)
+        {
+            var scan = new DataSweep { Vertical = true, [!DataSweep.StrokeProperty] = Themed.Res("FlAccent") };
+            cell.Children.Add(scan);
+            _registrationScans[item] = scan;
+        }
+        if (_launchEffect.IsActive)
+        {
+            var signal = new SignalPulse { [!SignalPulse.StrokeProperty] = Themed.Res("FlAccent") };
+            cell.Children.Add(signal);
+            _signals[item] = signal;
+        }
+        if (_hoverEffect.IsActive)
+        {
+            var targetLock = new TargetLock
+            {
+                [!TargetLock.StrokeProperty] = Themed.Res("FlAccent"),
+                Transitions = EffectRunner.StateTransitions(_hoverEffect, TargetLock.ProgressProperty),
+            };
+            cell.Children.Add(targetLock);
+            button.PointerEntered += (_, _) => targetLock.Progress = 1;
+            button.PointerExited += (_, _) => targetLock.Progress = 0;
+        }
 
         if (labelText is not null && _appearance.Label == LabelMode.Hover)
         {

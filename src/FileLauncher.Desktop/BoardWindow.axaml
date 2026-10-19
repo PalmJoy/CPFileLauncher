@@ -121,6 +121,8 @@
               Background="{DynamicResource FlBoardBackground}" CornerRadius="{DynamicResource FlBoardCornerRadius}" />
       <!-- 背景グリッド（HUD 段階 C。SPEC §3.9）: 面・背景画像・覆いの上、タブとスロットの下 -->
       <local:GridLayer x:Name="BackgroundGrid" Stroke="{DynamicResource FlHudGrid}" />
+      <local:HologramEdges x:Name="Hologram" Primary="{DynamicResource FlAccent}" Secondary="{DynamicResource FlAccent2}" Opacity="0.4" />
+      <local:CircuitLayer x:Name="Circuits" Stroke="{DynamicResource FlAccent}" />
       <!-- 静止した走査線（SPEC §3.9 H14）: グリッドの上、タブとスロットの下 -->
       <local:ScanlineLayer x:Name="Scanlines" Stroke="{DynamicResource FlHudScanline}" />
       <DockPanel Margin="6">
@@ -140,7 +142,10 @@
             <TextBlock x:Name="StatusClock" Grid.Column="2" Classes="hud" HorizontalAlignment="Right" />
           </Grid>
         </Border>
-        <Grid x:Name="SlotGrid" />
+        <Grid>
+          <Grid x:Name="SlotGrid" />
+          <local:DataSweep x:Name="PageSweep" Stroke="{DynamicResource FlAccent}" />
+        </Grid>
       </DockPanel>
     </Grid>
   </local:FrameChrome>

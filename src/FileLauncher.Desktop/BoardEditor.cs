@@ -188,6 +188,7 @@ internal sealed class BoardEditor
         result.Col = t.Col;
         page.Items.Add(result);
         Commit($"登録（ダイアログ） '{result.Name}' → {t}");
+        _window.PlayRegistration([result]);
     }
 
     private async Task EditItemAsync(LauncherItem item)
@@ -390,7 +391,11 @@ internal sealed class BoardEditor
         AppLog.Info($"登録 {placed}/{items.Count} 件 → page '{page.Name}' ({row},{col})〜: {string.Join(", ", items.Take(placed).Select(i => $"{i.Kind}:{i.Name}"))}");
         if (placed < items.Count)
             Toast.Show(Loc.Count(items.Count - placed, Strings.Toast_NotAdded_One, Strings.Toast_NotAdded_Other));
-        if (placed > 0) Commit($"登録 {placed} 件");
+        if (placed > 0)
+        {
+            Commit($"登録 {placed} 件");
+            _window.PlayRegistration(items.Take(placed));
+        }
     }
 
     // ---------------- Drop-to-Open（SPEC §5.3） ----------------

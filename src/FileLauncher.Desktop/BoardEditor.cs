@@ -31,6 +31,7 @@ internal sealed class BoardEditor
     public Action<DisplayMode>? SetDisplayMode { get; set; }
     public Action? OpenSettings { get; set; }
     public Action? Quit { get; set; }
+    public Action? CheckForUpdates { get; set; }
     public Action? ShowAbout { get; set; }
 
     /// <summary>元に戻せる編集があるか（メニューの「元に戻す」の有効・無効）。</summary>
@@ -306,6 +307,7 @@ internal sealed class BoardEditor
             SetDisplayMode: mode => SetDisplayMode?.Invoke(mode),
             CurrentMode: _settings.General.DisplayMode,
             OpenSettings: () => Avalonia.Threading.Dispatcher.UIThread.Post(() => OpenSettings?.Invoke()),
+            CheckForUpdates: CheckForUpdates is { } check ? () => Avalonia.Threading.Dispatcher.UIThread.Post(check) : null,
             About: ShowAbout is { } about ? () => Avalonia.Threading.Dispatcher.UIThread.Post(about) : null,
             Quit: () => Quit?.Invoke(),
             OpenNewWindow: item => _controller().Launch(item, null, newWindow: true),

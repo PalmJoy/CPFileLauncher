@@ -29,7 +29,8 @@ internal sealed record MenuActions(
     Action Quit,
     PageActions? Pages = null,
     Action<LauncherItem>? OpenNewWindow = null, // フォルダを新しいウィンドウで（SPEC §6.3）
-    Action<LauncherItem>? OpenTerminal = null); // ターミナルで開く（SPEC §6.3）
+    Action<LauncherItem>? OpenTerminal = null,
+    Action? CheckForUpdates = null); // ターミナルで開く（SPEC §6.3）
 
 /// <summary>ページタブのメニューの処理（ページ番号を受ける）。</summary>
 internal sealed record PageActions(
@@ -103,6 +104,7 @@ internal static class BoardMenus
         resident.Click += (_, _) => a.SetDisplayMode(DisplayMode.Resident);
         items.Add(new MenuItem { Header = Strings.Menu_DisplayMode, ItemsSource = new[] { popup, resident } });
         items.Add(Item(Strings.Common_Settings, a.OpenSettings, new KeyGesture(Key.OemComma, OperatingSystem.IsMacOS() ? KeyModifiers.Meta : KeyModifiers.Control)));
+        items.Add(Item(Strings.Update_Check, a.CheckForUpdates));
         items.Add(Item(Strings.Menu_About, a.About));
         items.Add(new Separator());
         items.Add(Item(Loc.Os(Strings.Tray_Quit_Win, Strings.Tray_Quit_Mac), a.Quit));

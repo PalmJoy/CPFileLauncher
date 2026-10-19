@@ -105,6 +105,7 @@ public partial class App : Application
             SetDisplayMode = mode => _hub?.Update(s => s.General.DisplayMode = mode, SettingsChange.DisplayMode),
             OpenSettings = OpenSettings,
             Quit = () => Quit(desktop),
+            CheckForUpdates = () => _ = CheckForUpdatesAsync(true),
             ShowAbout = () => AboutWindow.Show(_platform.Shell, store.Paths.Root, _hub!.Current.General.FolderOpenTarget,
                 _hub.Current.Appearance, store.Paths, _platform),
         };
@@ -120,6 +121,7 @@ public partial class App : Application
         _instance.Listen(() => Dispatcher.UIThread.Post(() => _current?.ShowFromExternal("2 重起動"/* i18n:ignore ログ用 */)));
 
         CreateTray(desktop);
+        Dispatcher.UIThread.Post(() => _ = CheckForUpdatesAsync(false), DispatcherPriority.ApplicationIdle);
         _platform.InputHook.Start();
         SwitchMode(settings.General.DisplayMode);
         desktop.Exit += (_, _) => Cleanup();
@@ -181,6 +183,8 @@ public partial class App : Application
         settingsItem.Click += (_, _) => OpenSettings();
         _permissionItem = new NativeMenuItem(Strings.Tray_Permissions) { IsVisible = false }; // 未許可のときだけ出す（Mac）
         _permissionItem.Click += (_, _) => ShowPermissionGuide();
+        var update = new NativeMenuItem(Strings.Update_Check);
+        update.Click += (_, _) => _ = CheckForUpdatesAsync(true);
         var quit = new NativeMenuItem(Loc.Os(Strings.Tray_Quit_Win, Strings.Tray_Quit_Mac)) { Gesture = OperatingSystem.IsMacOS() ? new KeyGesture(Key.Q, Avalonia.Input.KeyModifiers.Meta) : null };
         quit.Click += (_, _) => Quit(desktop);
 
@@ -191,14 +195,16 @@ public partial class App : Application
             appSettings.Click += (_, _) => OpenSettings();
             var appQuit = new NativeMenuItem(Strings.Tray_Quit_Mac) { Gesture = new KeyGesture(Key.Q, Avalonia.Input.KeyModifiers.Meta) };
             appQuit.Click += (_, _) => Quit(desktop);
-            NativeMenu.SetMenu(this, new NativeMenu { Items = { appSettings, new NativeMenuItemSeparator(), appQuit } });
+            var appUpdate = new NativeMenuItem(Strings.Update_Check);
+            appUpdate.Click += (_, _) => _ = CheckForUpdatesAsync(true);
+            NativeMenu.SetMenu(this, new NativeMenu { Items = { appSettings, appUpdate, new NativeMenuItemSeparator(), appQuit } });
         }
 
         _tray = new TrayIcon
         {
             Icon = AppIcon.Create(),
             ToolTipText = AppInfo.ProductName,
-            Menu = new NativeMenu { Items = { show, pagesItem, modeItem, new NativeMenuItemSeparator(), settingsItem, _permissionItem, new NativeMenuItemSeparator(), quit } },
+            Menu = new NativeMenu { Items = { show, pagesItem, modeItem, new NativeMenuItemSeparator(), settingsItem, update, _permissionItem, new NativeMenuItemSeparator(), quit } },
             IsVisible = true,
         };
         MacOSProperties.SetIsTemplateIcon(_tray, AppIcon.IsTemplate(warning: false));
@@ -442,6 +448,8 @@ public partial class App : Application
     private void Cleanup()
     {
         AppLog.Info("終了");
+        _updateCts.Cancel();
+        _updateWindow?.Close();
         _backgroundCts?.Cancel();
         _resident?.DeactivateAsync(); // 常駐の位置を保存してから（OS からの終了。演出は待たない）
         _editor?.Flush();

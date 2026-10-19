@@ -1329,4 +1329,13 @@ The current files are kept in backup/.</value>
   <data name="StartupGuide_MouseButton" xml:space="preserve"><value>{0} button: {1}</value></data>
   <data name="StartupGuide_DesktopOnly" xml:space="preserve"><value>{0} (desktop only)</value></data>
   <data name="StartupGuide_Shortcut" xml:space="preserve"><value>“{0}”</value></data>
+  <data name="Update_Check" xml:space="preserve"><value>Check for updates</value></data>
+  <data name="Update_Latest" xml:space="preserve"><value>You are using the latest version ({0}).</value></data>
+  <data name="Update_Failed" xml:space="preserve"><value>Could not check for updates. Please try again later.</value></data>
+  <data name="Update_Available" xml:space="preserve"><value>An update is available.
+Current: {0}
+Latest: {1}
+
+You can download the new version from the website.</value></data>
+  <data name="Update_OpenWebsite" xml:space="preserve"><value>Open download website</value></data>
 </root>

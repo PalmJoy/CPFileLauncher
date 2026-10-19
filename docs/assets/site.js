@@ -9,8 +9,6 @@
     'win-arm64': 'CPFileLauncher-win-arm64.zip',
     'macos-arm64': 'CPFileLauncher-macos-arm64.zip'
   };
-  var CACHE_KEY = 'cpfl.latest';
-  var CACHE_MS = 60 * 60 * 1000;
   var lang = document.documentElement.lang || 'en';
   var T = lang === 'ja'
     ? { for: { 'win-x64': 'Windows 版をダウンロード', 'win-arm64': 'Windows（ARM）版をダウンロード', 'macos-arm64': 'macOS 版をダウンロード' }, copied: 'コピーしました' }
@@ -64,7 +62,7 @@
     if (radio) radio.checked = true;
   });
 
-  // ---------- 最新版（GitHub API。取れなければ何も出さない） ----------
+  // ---------- 最新版（毎回再検証。取得失敗時は HTML のバージョン表示を保つ） ----------
   function showLatest(info) {
     if (!info || !info.tag) return;
     $$('[data-version]').forEach(function (el) { el.textContent = info.tag; el.hidden = false; });
@@ -83,21 +81,18 @@
     });
   }
 
-  var cached = null;
-  try { cached = JSON.parse(store('sessionStorage', CACHE_KEY) || 'null'); } catch (e) { cached = null; }
-  if (cached && Date.now() - cached.at < CACHE_MS) {
-    showLatest(cached);
-  } else if (window.fetch) {
-    fetch('https://api.github.com/repos/' + REPO + '/releases/latest', { headers: { Accept: 'application/vnd.github+json' } })
+  if (window.fetch) {
+    fetch('https://api.github.com/repos/' + REPO + '/releases/latest', {
+      headers: { Accept: 'application/vnd.github+json' }, cache: 'no-store'
+    })
       .then(function (r) { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
       .then(function (rel) {
         var sizes = {};
         (rel.assets || []).forEach(function (a) { sizes[a.name] = a.size; });
-        var info = { at: Date.now(), tag: rel.tag_name, published: rel.published_at, sizes: sizes };
-        store('sessionStorage', CACHE_KEY, JSON.stringify(info));
+        var info = { tag: rel.tag_name, published: rel.published_at, sizes: sizes };
         showLatest(info);
       })
-      .catch(function () { /* リリース前（404）・オフライン・上限 → 表示しないだけ */ });
+      .catch(function () { /* オフライン・API 上限時は HTML の表示とダウンロードリンクを保つ */ });
   }
 
   // ---------- 配色の見本（保存しない） ----------

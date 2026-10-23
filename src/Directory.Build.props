@@ -7,4 +7,9 @@
     <RuntimeIdentifiers>osx-arm64;win-x64;win-arm64</RuntimeIdentifiers>
     <RestoreLockedMode Condition="'$(CI)' == 'true'">true</RestoreLockedMode>
   </PropertyGroup>
+  <ItemGroup>
+    <!-- Single-file publishing adds this SDK tool implicitly. Pin it for every build mode
+         so normal builds and Windows publishing share the same locked dependency graph. -->
+    <PackageReference Include="Microsoft.NET.ILLink.Tasks" Version="10.0.13" PrivateAssets="all" />
+  </ItemGroup>
 </Project>

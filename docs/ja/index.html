@@ -4,16 +4,16 @@
 <meta charset="utf-8">
 <meta name="google-site-verification" content="649lRCFiIbsW4VUTw7Nb8SwQWrcLnBSJbru54mTCPDE" />
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>CPFileLauncher — Windows / macOS のサイバーパンクなランチャー</title>
+<title>CPFileLauncher — Windows・macOS用の無料ファイルランチャー</title>
 <link rel="canonical" href="https://palmjoy.github.io/CPFileLauncher/ja/">
-<meta name="description" content="CPFileLauncher は Windows / macOS 用の無料のサイバーパンクなファイル・アプリランチャー。ホットキーやマウスでネオンの盤面を呼び出し、ファイル・フォルダ・アプリ・URL を起動します。">
+<meta name="description" content="CPFileLauncher は Windows・macOS 用の無料ファイルランチャー。ファイル・フォルダ・アプリ・URL をドラッグ＆ドロップで登録し、ホットキーやマウスで呼び出せるネオンの盤面から起動できます。">
 <link rel="alternate" hreflang="en" href="https://palmjoy.github.io/CPFileLauncher/">
 <link rel="alternate" hreflang="ja" href="https://palmjoy.github.io/CPFileLauncher/ja/">
 <link rel="alternate" hreflang="x-default" href="https://palmjoy.github.io/CPFileLauncher/">
 <meta name="theme-color" content="#0B0F1A">
 <meta property="og:type" content="website">
-<meta property="og:title" content="CPFileLauncher">
-<meta property="og:description" content="Windows / macOS 用のサイバーパンクなファイル・アプリランチャー。無料・GPL-3.0。">
+<meta property="og:title" content="CPFileLauncher — Windows・macOS用の無料ファイルランチャー">
+<meta property="og:description" content="CPFileLauncher は Windows・macOS 用の無料ファイルランチャー。ファイル・フォルダ・アプリ・URL をドラッグ＆ドロップで登録し、ホットキーやマウスで呼び出せるネオンの盤面から起動できます。">
 <meta property="og:url" content="https://palmjoy.github.io/CPFileLauncher/ja/">
 <meta property="og:image" content="https://palmjoy.github.io/CPFileLauncher/assets/apple-touch-icon.png">
 <meta name="twitter:card" content="summary">
@@ -21,8 +21,36 @@
 <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
 <link rel="preload" href="../assets/fonts/ChakraPetch-SemiBold.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="stylesheet" href="../assets/site.css">
-<script src="../assets/site.js?v=2" defer></script>
+<script src="../assets/site.js?v=3" defer></script>
 <script type="module" src="../assets/analytics.js"></script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "@id": "https://palmjoy.github.io/CPFileLauncher/#app",
+  "name": "CPFileLauncher",
+  "alternateName": "CyberPunk FileLauncher",
+  "url": "https://palmjoy.github.io/CPFileLauncher/ja/",
+  "description": "CPFileLauncher は Windows・macOS 用の無料ファイルランチャー。ファイル・フォルダ・アプリ・URL をドラッグ＆ドロップで登録し、ホットキーやマウスで呼び出せるネオンの盤面から起動できます。",
+  "inLanguage": "ja",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "Windows 10 (1809 or later), Windows 11; macOS 15 Sequoia or later (Apple silicon)",
+  "isAccessibleForFree": true,
+  "license": "https://github.com/PalmJoy/CPFileLauncher/blob/main/LICENSE",
+  "author": {
+    "@type": "Organization",
+    "name": "PalmJoy",
+    "url": "https://github.com/PalmJoy"
+  },
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD",
+    "url": "https://palmjoy.github.io/CPFileLauncher/ja/#download"
+  },
+  "image": "https://palmjoy.github.io/CPFileLauncher/assets/apple-touch-icon.png"
+}
+</script>
 </head>
 <body>
 
@@ -68,7 +96,7 @@
     <div>
       <span class="tag">CyberPunk FileLauncher</span>
       <h1 class="glitch-once">CP<span class="accent">File</span>Launcher</h1>
-      <p class="lead">ファイル・フォルダ・アプリ・URL を並べたネオンの盤面を、ホットキーやマウスで呼び出すランチャー。Windows と macOS に対応。</p>
+      <p class="lead">Windows・macOS 用の無料ファイルランチャー。ファイル・フォルダ・アプリ・URL を並べたサイバーパンクなネオンの盤面を、ホットキーやマウスで呼び出せます。</p>
       <div class="console" aria-hidden="true"><span class="p">&gt;</span> fetch cpfilelauncher --target <span data-console-target>all</span> <span class="cursor"></span></div>
       <div class="actions">
         <a class="btn" href="#download" data-hero-download><span class="cut"><svg aria-hidden="true"><use href="#i-down"/></svg><span data-hero-label>ダウンロード</span><span data-version>v1.0.2</span></span></a>
@@ -171,7 +199,7 @@
 
 <section class="block" id="features">
   <div class="wrap">
-    <div class="sec-head"><span class="num">02 // Features</span><h2>すばやく、手元で</h2></div>
+    <div class="sec-head"><span class="num">02 // Features</span><h2>よく使うものをまとめるファイルランチャー</h2><p>CPFileLauncher（CyberPunk FileLauncher）は、よく使うファイルやアプリをアイコンで並べて起動するデスクトップランチャーです。作業用フォルダや Web サイトもページごとに整理でき、Windows では Explorer、macOS では Finder からドラッグ＆ドロップで登録できます。</p></div>
     <div class="grid-4">
       <div class="glow"><div class="feat cut">
         <div class="specimen"><kbd>Ctrl</kbd><span class="plus">+</span><kbd>Alt</kbd><span class="plus">+</span><kbd>Space</kbd></div>
@@ -211,6 +239,15 @@
         <div class="body"><h3>日本語と英語</h3><p>画面はすべて日本語・英語の両方に対応しています。</p></div>
       </div></div>
     </div>
+    <h3 class="sub-h" id="launcher-guide">ファイルランチャーの使い方</h3>
+    <dl class="faq">
+      <dt>ファイルやフォルダを登録するには？</dt>
+      <dd>Explorer や Finder から盤面へドラッグ＆ドロップします。仕事の資料、作業フォルダ、アプリをページごとにまとめ、アイコンから起動できます。</dd>
+      <dt>登録したファイルをすばやく開くには？</dt>
+      <dd>ホットキーやマウス操作で盤面を呼び出し、アイコンを選びます。ファイルをアプリのアイコンへドロップして、そのアプリで開くこともできます。</dd>
+      <dt>Windows と Mac のどちらで使えますか？</dt>
+      <dd>Windows 10（1809 以降）・Windows 11 の x64 / ARM64 と、macOS 15 以降の Apple シリコン Mac に対応します。Intel Mac には対応していません。<a href="#download">OS 別の無料ダウンロード</a>と<a href="#setup">初回起動の手順</a>をご覧ください。</dd>
+    </dl>
   </div>
 </section>
 

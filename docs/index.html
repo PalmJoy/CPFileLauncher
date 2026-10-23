@@ -4,26 +4,16 @@
 <meta charset="utf-8">
 <meta name="google-site-verification" content="649lRCFiIbsW4VUTw7Nb8SwQWrcLnBSJbru54mTCPDE" />
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>CPFileLauncher — cyberpunk launcher for Windows &amp; macOS</title>
+<title>CPFileLauncher — Free File Launcher for Windows &amp; macOS</title>
 <link rel="canonical" href="https://palmjoy.github.io/CPFileLauncher/">
-<meta name="description" content="CPFileLauncher is a free cyberpunk file and app launcher for Windows and macOS. Summon a neon board with a hotkey or a mouse click, then launch files, folders, apps and URLs.">
-<script>
-  // 日本語のブラウザなら日本語のページへ（言語を明示的に選んでいないときだけ。読み込み前のちらつきを防ぐためインライン）
-  (function () {
-    try {
-      if (localStorage.getItem('cpfl.lang')) return;
-      var l = (navigator.languages && navigator.languages[0]) || navigator.language || '';
-      if (/^ja\b/i.test(l)) location.replace('ja/' + location.hash);
-    } catch (e) {}
-  })();
-</script>
+<meta name="description" content="Free file launcher for Windows and macOS. Drag and drop files, folders, apps and URLs onto a cyberpunk board, then launch them with a hotkey or mouse click.">
 <link rel="alternate" hreflang="en" href="https://palmjoy.github.io/CPFileLauncher/">
 <link rel="alternate" hreflang="ja" href="https://palmjoy.github.io/CPFileLauncher/ja/">
 <link rel="alternate" hreflang="x-default" href="https://palmjoy.github.io/CPFileLauncher/">
 <meta name="theme-color" content="#0B0F1A">
 <meta property="og:type" content="website">
-<meta property="og:title" content="CPFileLauncher">
-<meta property="og:description" content="A cyberpunk file &amp; app launcher for Windows and macOS. Free, GPL-3.0.">
+<meta property="og:title" content="CPFileLauncher — Free File Launcher for Windows &amp; macOS">
+<meta property="og:description" content="Free file launcher for Windows and macOS. Drag and drop files, folders, apps and URLs onto a cyberpunk board, then launch them with a hotkey or mouse click.">
 <meta property="og:url" content="https://palmjoy.github.io/CPFileLauncher/">
 <meta property="og:image" content="https://palmjoy.github.io/CPFileLauncher/assets/apple-touch-icon.png">
 <meta name="twitter:card" content="summary">
@@ -31,8 +21,36 @@
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <link rel="preload" href="assets/fonts/ChakraPetch-SemiBold.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="stylesheet" href="assets/site.css">
-<script src="assets/site.js?v=2" defer></script>
+<script src="assets/site.js?v=3" defer></script>
 <script type="module" src="assets/analytics.js"></script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "@id": "https://palmjoy.github.io/CPFileLauncher/#app",
+  "name": "CPFileLauncher",
+  "alternateName": "CyberPunk FileLauncher",
+  "url": "https://palmjoy.github.io/CPFileLauncher/",
+  "description": "Free file launcher for Windows and macOS. Drag and drop files, folders, apps and URLs onto a cyberpunk board, then launch them with a hotkey or mouse click.",
+  "inLanguage": "en",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "Windows 10 (1809 or later), Windows 11; macOS 15 Sequoia or later (Apple silicon)",
+  "isAccessibleForFree": true,
+  "license": "https://github.com/PalmJoy/CPFileLauncher/blob/main/LICENSE",
+  "author": {
+    "@type": "Organization",
+    "name": "PalmJoy",
+    "url": "https://github.com/PalmJoy"
+  },
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD",
+    "url": "https://palmjoy.github.io/CPFileLauncher/#download"
+  },
+  "image": "https://palmjoy.github.io/CPFileLauncher/assets/apple-touch-icon.png"
+}
+</script>
 </head>
 <body>
 
@@ -72,13 +90,14 @@
 </header>
 
 <main id="top">
+<p class="wrap" data-language-suggestion hidden lang="ja">日本語の説明は <a href="ja/" data-lang="ja" hreflang="ja">日本語版のファイルランチャー配布ページ</a>をご覧ください。</p>
 
 <section class="hero">
   <div class="wrap">
     <div>
       <span class="tag">CyberPunk FileLauncher</span>
       <h1 class="glitch-once">CP<span class="accent">File</span>Launcher</h1>
-      <p class="lead">A neon board of your files, folders, apps and URLs — summoned with a hotkey or a mouse click. For Windows and macOS.</p>
+      <p class="lead">A free file launcher for Windows and macOS. Keep files, folders, apps and URLs on a cyberpunk neon board, summoned with a hotkey or a mouse click.</p>
       <div class="console" aria-hidden="true"><span class="p">&gt;</span> fetch cpfilelauncher --target <span data-console-target>all</span> <span class="cursor"></span></div>
       <div class="actions">
         <a class="btn" href="#download" data-hero-download><span class="cut"><svg aria-hidden="true"><use href="#i-down"/></svg><span data-hero-label>Download</span><span data-version>v1.0.2</span></span></a>
@@ -181,7 +200,7 @@
 
 <section class="block" id="features">
   <div class="wrap">
-    <div class="sec-head"><span class="num">02 // Features</span><h2>Built for fast hands</h2></div>
+    <div class="sec-head"><span class="num">02 // Features</span><h2>A file launcher for everyday shortcuts</h2><p>CPFileLauncher (CyberPunk FileLauncher) is a desktop file and app launcher that keeps your everyday shortcuts on a visual board. Organize work folders and websites into pages, and drag files and apps from Windows Explorer or macOS Finder to add them.</p></div>
     <div class="grid-4">
       <div class="glow"><div class="feat cut">
         <div class="specimen"><kbd>Ctrl</kbd><span class="plus">+</span><kbd>Alt</kbd><span class="plus">+</span><kbd>Space</kbd></div>
@@ -221,6 +240,15 @@
         <div class="body"><h3>English &amp; Japanese</h3><p>The whole UI is available in both languages.</p></div>
       </div></div>
     </div>
+    <h3 class="sub-h" id="launcher-guide">How to use the file launcher</h3>
+    <dl class="faq">
+      <dt>How do I add files and folders?</dt>
+      <dd>Drag and drop them onto the board from Windows Explorer or macOS Finder. Group documents, work folders and apps into pages, then launch them from their icons.</dd>
+      <dt>How do I open my shortcuts quickly?</dt>
+      <dd>Summon the board with a hotkey or mouse trigger and select an icon. You can also drop a file onto an app icon to open it with that app.</dd>
+      <dt>Does it work on Windows and Mac?</dt>
+      <dd>It supports Windows 10 (1809 or later) and Windows 11 on x64 / ARM64, and macOS 15 or later on Apple silicon. Intel Macs are not supported. See the <a href="#download">free downloads for each platform</a> and <a href="#setup">first-launch instructions</a>.</dd>
+    </dl>
   </div>
 </section>
 

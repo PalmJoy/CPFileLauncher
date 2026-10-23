@@ -1,4 +1,4 @@
-# リリース: v<Version> のタグ push で両 OS のテスト → zip → 下書きの Release（SPEC §10.4「リリース」、issue/RELEASE_SITE.md）。
+# リリース: v<Version> のタグ push で両 OS のテスト → zip → 下書きの Release（SPEC §10.4「リリース」）。
 # 手動実行（workflow_dispatch）は試運転で、zip を Artifact に置くだけ（Release は作らない）。
 # ビルドオプションは src/build/publish-*.{ps1,sh} に一元化する。ここに dotnet publish を書かない
 name: release

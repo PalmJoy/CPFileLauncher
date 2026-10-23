@@ -21,7 +21,12 @@
   }
   function assetUrl(name) { return 'https://github.com/' + REPO + '/releases/latest/download/' + name; }
 
-  // ---------- 言語の記録（押したら自動の切り替えをやめる） ----------
+  // ---------- 言語の案内（URL ごとの言語を保ち、自動転送しない） ----------
+  var languageSuggestion = $('[data-language-suggestion]');
+  var preferredLanguage = (navigator.languages && navigator.languages[0]) || navigator.language || '';
+  if (languageSuggestion && !store('localStorage', 'cpfl.lang') && /^ja\b/i.test(preferredLanguage)) {
+    languageSuggestion.hidden = false;
+  }
   $$('[data-lang]').forEach(function (a) {
     a.addEventListener('click', function () { store('localStorage', 'cpfl.lang', a.getAttribute('data-lang')); });
   });

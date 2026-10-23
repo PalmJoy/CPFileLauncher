@@ -1,5 +1,5 @@
 #!/bin/zsh
-# macOS 配布物 bin/osx-arm64/CPFileLauncher.app を作る（SPEC §10.4、issue/MAC_SUPPORT.md Mac-4）。
+# macOS 配布物 bin/osx-arm64/CPFileLauncher.app を作る（SPEC §10.4）。
 # 使い方: src/build/publish-mac.sh [--zip]   （CODESIGN_IDENTITY=… で署名に使う証明書を指定できる。- で ad-hoc）
 #   --zip: bin/release/CPFileLauncher-macos-arm64.zip も作る（GitHub Releases のアセット。SPEC §10.4「リリース」）
 set -euo pipefail

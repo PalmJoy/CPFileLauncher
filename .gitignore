@@ -1,6 +1,12 @@
 # CPFileLauncher（旧 FileLauncher）
 
+# 作業情報・調査レポートはローカルで保持し、コミットしない
 issue/
+work/
+/reports/
+/research/
+/notes/
+/scratch/
 
 # ---- ビルド出力（dotnet） ----
 [Bb]in/
@@ -35,8 +41,14 @@ Thumbs.db
 Desktop.ini
 
 # ---- ローカル設定・作業ファイル ----
-# Claude Code の個人設定（エージェント定義 .claude/agents/ は共有するので入れる）
-.claude/settings.local.json
+# エージェントの指示・メモ・ローカル運用設定
+CLAUDE.md
+AGENTS.md
+.claude/
+.agents/
+.codex/
+# 使い捨ての技術検証（製品のソリューションには含めない）
+src/spikes/
 # 実行時のデータフォルダをポータブルモードで実行ファイルの隣に作った場合
 data/
 portable.flag

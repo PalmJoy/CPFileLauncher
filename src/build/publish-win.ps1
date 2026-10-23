@@ -1,4 +1,4 @@
-﻿# Windows 配布物 bin/<rid>/CPFileLauncher.exe を作る（SPEC §10.4、issue/M6_DISTRIBUTION_WINDOWS.md）。
+﻿# Windows 配布物 bin/<rid>/CPFileLauncher.exe を作る（SPEC §10.4）。
 # 使い方: powershell -ExecutionPolicy Bypass -File src\build\publish-win.ps1 [-Rid win-x64|win-arm64]（既定は両方）[-Zip]
 #   -Zip: bin\release\CPFileLauncher-<rid>.zip も作る（GitHub Releases のアセット。SPEC §10.4「リリース」）
 # Windows PowerShell 5.1 で動くように書く（&& / ?? などは使わない）。このファイルは BOM 付き UTF-8 で保存する

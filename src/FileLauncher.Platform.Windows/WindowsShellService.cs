@@ -34,9 +34,7 @@ internal sealed class WindowsShellService : IShellService
                 break;
 
             case ItemKind.Command:
-                // コマンド（シェル実行）: cmd /c で実行する
-                psi.FileName = Environment.GetEnvironmentVariable("ComSpec") ?? "cmd.exe";
-                psi.Arguments = $"/c \"{target} {LaunchArgs.Build(item.Args, droppedPaths)}\"";
+                psi = ShellCommand.Windows(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "cmd.exe"), target, item.Args, droppedPaths);
                 break;
 
             default:
@@ -51,7 +49,10 @@ internal sealed class WindowsShellService : IShellService
                 psi.FileName = target;
                 if (item.Kind != ItemKind.Folder)
                 {
-                    psi.Arguments = LaunchArgs.Build(LaunchArgs.ExpandPath(item.Args), droppedPaths);
+                    if (Path.GetExtension(target).Equals(".bat", StringComparison.OrdinalIgnoreCase)
+                        || Path.GetExtension(target).Equals(".cmd", StringComparison.OrdinalIgnoreCase))
+                        psi = ShellCommand.Windows(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "cmd.exe"), "\"" + target + "\"", LaunchArgs.ExpandPath(item.Args), droppedPaths);
+                    else psi.Arguments = LaunchArgs.Build(LaunchArgs.ExpandPath(item.Args), droppedPaths);
                     psi.WorkingDirectory = item.WorkingDir is { Length: > 0 } wd
                         ? LaunchArgs.ExpandPath(wd)
                         : Path.GetDirectoryName(target) ?? "";
@@ -65,7 +66,14 @@ internal sealed class WindowsShellService : IShellService
             LaunchMode.Maximized => ProcessWindowStyle.Maximized,
             _ => ProcessWindowStyle.Normal,
         };
-        if (item.RunAsAdmin && item.Kind is ItemKind.App or ItemKind.File or ItemKind.Command) psi.Verb = "runas";
+        if (item.RunAsAdmin && item.Kind is ItemKind.App or ItemKind.File or ItemKind.Command)
+        {
+            // ShellExecute elevation cannot carry our per-process environment safely.
+            // Refuse dropped arguments rather than falling back to shell interpolation.
+            if (!psi.UseShellExecute && droppedPaths is { Count: > 0 }) return LaunchResult.Fail(LaunchFailure.ElevatedShellDrop);
+            psi.UseShellExecute = true;
+            psi.Verb = "runas";
+        }
 
         return Start(psi);
     }

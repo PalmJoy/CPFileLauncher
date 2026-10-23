@@ -42,7 +42,6 @@ plutil -lint "$APP/Contents/Info.plist" "$APP/Contents/Resources/"*.lproj/InfoPl
 cp "$ROOT/LICENSE" "$APP/Contents/Resources/LICENSE.txt"
 cp "$ROOT/THIRD-PARTY-NOTICES.txt" "$APP/Contents/Resources/THIRD-PARTY-NOTICES.txt"
 
-# Hardened Runtime（--options runtime）を付けるときは entitlement com.apple.security.automation.apple-events が要る（Finder の制御。SPEC §4.3 / §13.2 T3）。今は付けない
 # 署名: TCC（アクセシビリティの許可）は「証明書 + bundle id」で覚えるので、再ビルドしても同じ証明書で署名する。
 # 指定が無ければ「FileLauncher Dev」、無ければキーチェーンにある最初のコード署名証明書、それも無ければ ad-hoc（再ビルドのたびに許可が外れる）
 IDENTITY=${CODESIGN_IDENTITY:-}
@@ -58,18 +57,34 @@ if [[ -z "$IDENTITY" ]]; then
   IDENTITY=-
 fi
 echo "==> 署名: $IDENTITY"
-# Contents/MacOS の中身はすべて「コード」とみなされるので、.dll などの Mach-O 以外も 1 つずつ署名する（署名は拡張属性に入る）。
+SIGN_OPTIONS=(--timestamp=none)
+if [[ "$IDENTITY" == "Developer ID Application:"* ]]; then
+  SIGN_OPTIONS=(--timestamp --options runtime)
+fi
+if [[ -n "${NOTARYTOOL_PROFILE:-}" && "$IDENTITY" != "Developer ID Application:"* ]]; then
+  echo "公証には Developer ID Application の署名が必要です" >&2
+  exit 1
+fi
+# Contents/MacOS はDLLやJSONもコードとして検証されるので、全ファイルを署名する。
 # --deep には頼らず、中身 → バンドルの順。本体の実行ファイル（CFBundleExecutable）はバンドルの署名に含まれるので最後
 find "$APP/Contents/MacOS" -type f ! -path "$APP/Contents/MacOS/$EXE" | while read -r f; do
-  codesign --force --timestamp=none --sign "$IDENTITY" "$f" 2>&1 | grep -v 'replacing existing signature' || true
+  codesign --force "${SIGN_OPTIONS[@]}" --sign "$IDENTITY" "$f"
 done
-codesign --force --timestamp=none --sign "$IDENTITY" --identifier "$BUNDLE_ID" "$APP"
+codesign --force "${SIGN_OPTIONS[@]}" --entitlements "$PROJECT/macos/entitlements.plist" --sign "$IDENTITY" --identifier "$BUNDLE_ID" "$APP"
 codesign --verify --deep --strict "$APP"
 
 echo "==> 確認"
 file "$APP/Contents/MacOS/$EXE"
 du -sh "$APP"
 echo "完了: $APP"
+
+if [[ -n "${NOTARYTOOL_PROFILE:-}" ]]; then
+  ditto -c -k --keepParent "$APP" "$TMP/notarize.zip"
+  xcrun notarytool submit "$TMP/notarize.zip" --keychain-profile "$NOTARYTOOL_PROFILE" --wait
+  xcrun stapler staple "$APP"
+  xcrun stapler validate "$APP"
+  spctl --assess --type execute --verbose "$APP"
+fi
 
 if (( ZIP )); then
   # ditto で固める（シンボリックリンク・拡張属性 = .dll などの署名を壊さない。zip -r は使わない）

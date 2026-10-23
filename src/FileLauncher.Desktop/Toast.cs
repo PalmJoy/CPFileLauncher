@@ -71,7 +71,7 @@ internal static class Toast
         double glow = Application.Current is { } app ? AppTheme.GlowMargin(app, "FlToastMargin") : 0;
         var window = new Window
         {
-            SystemDecorations = SystemDecorations.None,
+            WindowDecorations = WindowDecorations.None,
             ShowActivated = false,
             ShowInTaskbar = false,
             Topmost = true,

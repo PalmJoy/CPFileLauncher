@@ -26,6 +26,8 @@ public enum LaunchFailure
     LauncherUnavailable,
     /// <summary>OS が返したエラー（Detail = OS のメッセージ）。</summary>
     OsError,
+    /// <summary>Dropped paths cannot be safely passed to an elevated shell.</summary>
+    ElevatedShellDrop,
 }
 
 /// <summary>macOS の権限状態（SPEC §4.3）。Windows は常に Granted。</summary>

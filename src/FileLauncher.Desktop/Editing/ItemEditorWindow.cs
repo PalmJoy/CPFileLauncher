@@ -59,9 +59,9 @@ internal sealed class ItemEditorWindow : ChromeWindow
 
         KindBox = new ComboBox { ItemsSource = Kinds.Select(k => k.Text).ToList(), SelectedIndex = Math.Max(0, Array.FindIndex(Kinds, k => k.Kind == _work.Kind)), MinWidth = 200 };
         TargetBox = new TextBox { Text = _work.Target, MinWidth = 220 };
-        NameBox = new TextBox { Text = _work.Name, MinWidth = 220, Watermark = Strings.ItemEditor_Name_Placeholder };
+        NameBox = new TextBox { Text = _work.Name, MinWidth = 220, PlaceholderText = Strings.ItemEditor_Name_Placeholder };
         ArgsBox = new TextBox { Text = _work.Args, MinWidth = 280 };
-        WorkingDirBox = new TextBox { Text = _work.WorkingDir ?? "", MinWidth = 220, Watermark = Strings.ItemEditor_WorkingDir_Placeholder };
+        WorkingDirBox = new TextBox { Text = _work.WorkingDir ?? "", MinWidth = 220, PlaceholderText = Strings.ItemEditor_WorkingDir_Placeholder };
         HotkeyBox = new TextBox { Text = _work.Hotkey ?? "", MaxLength = 1, Width = 48 };
         HotkeyNote = Themed.Note(new TextBlock { FontSize = 12, TextWrapping = TextWrapping.Wrap });
         OkButton = Dialogs.ActionButton(Strings.Common_OK, isDefault: true);

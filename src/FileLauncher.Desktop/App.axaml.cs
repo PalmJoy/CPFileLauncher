@@ -118,7 +118,7 @@ public partial class App : Application
         // フック開始に失敗しても設定画面・ガイドは勝手に開かない（SPEC §4.3）。トーストとトレイ / メニューバーの警告だけ
         _platform.InputHook.Failed += error => Dispatcher.UIThread.Post(() => OnHookFailed(error));
 
-        _instance.Listen(() => Dispatcher.UIThread.Post(() => _current?.ShowFromExternal("2 重起動"/* i18n:ignore ログ用 */)));
+        _ = _instance.Listen(() => Dispatcher.UIThread.Post(() => _current?.ShowFromExternal("2 重起動"/* i18n:ignore ログ用 */)));
 
         CreateTray(desktop);
         Dispatcher.UIThread.Post(() => _ = CheckForUpdatesAsync(false), DispatcherPriority.ApplicationIdle);
@@ -165,8 +165,8 @@ public partial class App : Application
         show.Click += (_, _) => _current?.ShowFromExternal("トレイメニュー"); // i18n:ignore
 
         // 表示モードの即時切替（SPEC §3.4 / §8）。設定に保存するので設定画面とも同期する
-        _modePopupItem = new NativeMenuItem(EnumNames.Of(DisplayMode.Popup)) { ToggleType = NativeMenuItemToggleType.Radio };
-        _modeResidentItem = new NativeMenuItem(EnumNames.Of(DisplayMode.Resident)) { ToggleType = NativeMenuItemToggleType.Radio };
+        _modePopupItem = new NativeMenuItem(EnumNames.Of(DisplayMode.Popup)) { ToggleType = MenuItemToggleType.Radio };
+        _modeResidentItem = new NativeMenuItem(EnumNames.Of(DisplayMode.Resident)) { ToggleType = MenuItemToggleType.Radio };
         _modePopupItem.Click += (_, _) => _hub?.Update(s => s.General.DisplayMode = DisplayMode.Popup, SettingsChange.DisplayMode);
         _modeResidentItem.Click += (_, _) => _hub?.Update(s => s.General.DisplayMode = DisplayMode.Resident, SettingsChange.DisplayMode);
         var modeItem = new NativeMenuItem(Strings.Tray_DisplayMode) { Menu = new NativeMenu { Items = { _modePopupItem, _modeResidentItem } } };
@@ -237,7 +237,7 @@ public partial class App : Application
             int index = i;
             var item = new NativeMenuItem(_boardData.Pages[i].Name)
             {
-                ToggleType = NativeMenuItemToggleType.Radio,
+                ToggleType = MenuItemToggleType.Radio,
                 IsChecked = i == _board.PageIndex,
             };
             item.Click += (_, _) =>

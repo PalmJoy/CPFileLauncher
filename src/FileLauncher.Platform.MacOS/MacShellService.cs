@@ -36,11 +36,9 @@ internal sealed class MacShellService : IShellService
                 return RunOpen([item.Target]);
 
             case ItemKind.Command:
-                return Start(new ProcessStartInfo("/bin/zsh")
-                {
-                    ArgumentList = { "-lc", $"{target} {LaunchArgs.Build(LaunchArgs.ExpandPath(item.Args), droppedPaths)}".Trim() },
-                    WorkingDirectory = item.WorkingDir is { Length: > 0 } wd ? LaunchArgs.ExpandPath(wd) : Home,
-                });
+                var command = ShellCommand.Posix(target, LaunchArgs.ExpandPath(item.Args), droppedPaths);
+                command.WorkingDirectory = item.WorkingDir is { Length: > 0 } wd ? LaunchArgs.ExpandPath(wd) : Home;
+                return Start(command);
         }
 
         if (!File.Exists(target) && !Directory.Exists(target)) return LaunchResult.Fail(LaunchFailure.NotFound, target);
@@ -168,9 +166,24 @@ internal sealed class MacShellService : IShellService
         var result = new List<string>();
         var cur = new StringBuilder();
         bool quoted = false, any = false;
-        foreach (char c in s)
+        for (int i = 0; i < s.Length; i++)
         {
-            if (c == '"') { quoted = !quoted; any = true; }
+            char c = s[i];
+            if (c == '\\')
+            {
+                int start = i;
+                while (i < s.Length && s[i] == '\\') i++;
+                int slashes = i - start;
+                if (i < s.Length && s[i] == '"')
+                {
+                    cur.Append('\\', slashes / 2);
+                    if (slashes % 2 == 1) cur.Append('"');
+                    else quoted = !quoted;
+                }
+                else { cur.Append('\\', slashes); i--; }
+                any = true;
+            }
+            else if (c == '"') { quoted = !quoted; any = true; }
             else if (char.IsWhiteSpace(c) && !quoted)
             {
                 if (any) { result.Add(cur.ToString()); cur.Clear(); any = false; }

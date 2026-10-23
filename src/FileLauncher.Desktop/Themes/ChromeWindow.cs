@@ -89,7 +89,7 @@ internal class ChromeWindow : Window
 
     public ChromeWindow()
     {
-        SystemDecorations = SystemDecorations.None;
+        WindowDecorations = WindowDecorations.None;
         try { Icon = AppIcon.Window; } catch (Exception ex) when (ex is IOException or InvalidOperationException or FileNotFoundException) { } // テストなど資産が無い環境
         TransparencyLevelHint = [WindowTransparencyLevel.Transparent];
         Background = Brushes.Transparent;

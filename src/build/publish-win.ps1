@@ -5,7 +5,9 @@
 param(
     [ValidateSet('win-x64', 'win-arm64')]
     [string[]]$Rid = @('win-x64', 'win-arm64'),
-    [switch]$Zip
+    [switch]$Zip,
+    [string]$SigningThumbprint = $env:CPFL_SIGNING_THUMBPRINT,
+    [string]$TimestampServer = 'http://timestamp.digicert.com'
 )
 $ErrorActionPreference = 'Stop'
 
@@ -43,6 +45,13 @@ foreach ($r in $Rid) {
 
     if (-not (Test-Path (Join-Path $out 'uiohook.dll'))) {
         throw "uiohook.dll が exe の隣にありません ($r)。csproj の KeepUioHookOutsideSingleFile が効いていません"
+    }
+    if ($SigningThumbprint) {
+        $cert = Get-Item "Cert:\CurrentUser\My\$SigningThumbprint"
+        foreach ($binary in @((Join-Path $out "$Exe.exe"), (Join-Path $out 'uiohook.dll'))) {
+            $signature = Set-AuthenticodeSignature -FilePath $binary -Certificate $cert -HashAlgorithm SHA256 -TimestampServer $TimestampServer
+            if ($signature.Status -ne 'Valid') { throw "Code signing failed: $binary ($($signature.Status))" }
+        }
     }
     $file = Get-Item (Join-Path $out "$Exe.exe")
     $others = Get-ChildItem $out -File | Where-Object { $Allowed -notcontains $_.Name }

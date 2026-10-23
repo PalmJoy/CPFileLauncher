@@ -10,19 +10,21 @@ namespace FileLauncher.App;
 /// </summary>
 internal sealed class SingleInstance : IDisposable
 {
-    private readonly string _name;
+    internal string PipeName { get; }
+    internal static readonly TimeSpan SignalTimeout = TimeSpan.FromSeconds(1);
     private readonly Mutex _mutex;
     private readonly CancellationTokenSource _cts = new();
     private bool _owned;
+    private bool _disposed;
 
     public SingleInstance(string dataRoot)
     {
         var hash = SHA256.HashData(Encoding.UTF8.GetBytes(dataRoot.ToLowerInvariant()));
-        _name = $"{AppInfo.ProductName}-{Environment.UserName}-{Convert.ToHexString(hash, 0, 6)}";
+        PipeName = $"{AppInfo.ProductName}-{Environment.UserName}-{Convert.ToHexString(hash, 0, 6)}";
         // Global\ を付ける: 付けないと Unix（macOS）ではログインセッションごとの名前になり、Finder（LaunchServices）から起動したものと
         // ターミナルから起動したものが互いを見つけられない（2026-10-04 に .app で発生）。名前にユーザー名を含むので他のユーザーとはぶつからない。
         // パイプは Global\ を付けない（Unix ではユーザーごとの一時フォルダのソケットなので、どの起動元からも同じ）
-        _mutex = new Mutex(false, @"Global\" + _name);
+        _mutex = new Mutex(false, @"Global\" + PipeName);
     }
 
     public bool TryAcquire()
@@ -37,7 +39,7 @@ internal sealed class SingleInstance : IDisposable
     {
         try
         {
-            using var client = new NamedPipeClientStream(".", _name, PipeDirection.Out);
+            using var client = new NamedPipeClientStream(".", PipeName, PipeDirection.Out, PipeOptions.CurrentUserOnly);
             client.Connect(1000);
             client.WriteByte(1);
             return true;
@@ -49,19 +51,23 @@ internal sealed class SingleInstance : IDisposable
     }
 
     /// <summary>2 つ目のインスタンスからの通知を待ち受ける（バックグラウンド）。onSignal はスレッドプールから呼ばれる。</summary>
-    public void Listen(Action onSignal)
+    public Task Listen(Action onSignal)
     {
-        _ = Task.Run(async () =>
+        return Task.Run(async () =>
         {
             while (!_cts.IsCancellationRequested)
             {
                 try
                 {
-                    await using var server = new NamedPipeServerStream(_name, PipeDirection.In, 1,
-                        PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
+                    await using var server = new NamedPipeServerStream(PipeName, PipeDirection.In, 1,
+                        PipeTransmissionMode.Byte, PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly);
                     await server.WaitForConnectionAsync(_cts.Token);
-                    if (server.ReadByte() == 1) onSignal();
+                    using var deadline = CancellationTokenSource.CreateLinkedTokenSource(_cts.Token);
+                    deadline.CancelAfter(SignalTimeout);
+                    byte[] message = new byte[1];
+                    if (await server.ReadAsync(message, deadline.Token) == 1 && message[0] == 1) onSignal();
                 }
+                catch (OperationCanceledException) when (!_cts.IsCancellationRequested) { /* Idle client: accept the next one. */ }
                 catch (OperationCanceledException) { return; }
                 catch (IOException) { await Task.Delay(200); }
             }
@@ -70,6 +76,8 @@ internal sealed class SingleInstance : IDisposable
 
     public void Dispose()
     {
+        if (_disposed) return;
+        _disposed = true;
         _cts.Cancel();
         if (_owned) _mutex.ReleaseMutex();
         _mutex.Dispose();

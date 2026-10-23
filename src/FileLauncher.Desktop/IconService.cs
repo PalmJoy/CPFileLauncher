@@ -40,7 +40,7 @@ internal sealed class IconService
         {
             try
             {
-                var bmp = new Bitmap(path);
+                var bmp = SafeBitmapLoader.Load(path, px);
                 _memory[path] = bmp;
                 return bmp;
             }
@@ -85,7 +85,7 @@ internal sealed class IconService
     {
         try
         {
-            using var original = new Bitmap(file);
+            using var original = SafeBitmapLoader.Load(file, px);
             double scale = Math.Min((double)px / original.PixelSize.Width, (double)px / original.PixelSize.Height);
             var size = new PixelSize(Math.Max(1, (int)(original.PixelSize.Width * scale)), Math.Max(1, (int)(original.PixelSize.Height * scale)));
             return original.CreateScaledBitmap(size, BitmapInterpolationMode.HighQuality);

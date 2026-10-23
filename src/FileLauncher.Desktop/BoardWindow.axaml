@@ -3,7 +3,7 @@
         xmlns:local="clr-namespace:FileLauncher.App"
         x:Class="FileLauncher.App.BoardWindow"
         Title="FileLauncher"
-        SystemDecorations="None"
+        WindowDecorations="None"
         ShowInTaskbar="False"
         CanResize="False"
         ShowActivated="True"

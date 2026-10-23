@@ -64,17 +64,8 @@ internal sealed class BoardBackgroundLoader : IDisposable
         return loaded;
     }
 
-    /// <summary>原寸を見て、長辺が上限以下ならそのまま、超えていれば縮小デコード（拡大はしない）。</summary>
-    internal static Bitmap Decode(string path)
-    {
-        using var fs = File.OpenRead(path);
-        var full = new Bitmap(fs);
-        var size = full.PixelSize;
-        if (Math.Max(size.Width, size.Height) <= MaxEdgePx) return full;
-        full.Dispose();
-        fs.Position = 0;
-        return size.Width >= size.Height ? Bitmap.DecodeToWidth(fs, MaxEdgePx) : Bitmap.DecodeToHeight(fs, MaxEdgePx);
-    }
+    /// <summary>寸法を検査し、原寸の画素を確保する前に縮小デコードする。</summary>
+    internal static Bitmap Decode(string path) => SafeBitmapLoader.Load(path, MaxEdgePx);
 
     private void Replace(Bitmap? bitmap, string? path, DateTime writeTime)
     {

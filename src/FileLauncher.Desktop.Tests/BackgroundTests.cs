@@ -233,4 +233,31 @@ public sealed class BackgroundTests : IDisposable
         Assert.True(Text(Strings.Common_None).IsVisible);
         w.Close();
     }
+    [AvaloniaFact]
+    public void Oversized_encoded_image_is_rejected_before_decoding()
+    {
+        string path = Path.Combine(_dir, "huge.png");
+        using (var file = File.Create(path)) file.SetLength(SafeBitmapLoader.MaxFileBytes + 1);
+        Assert.Throws<InvalidDataException>(() => BoardBackgroundLoader.Decode(path));
+    }
+
+    [AvaloniaFact]
+    public void Huge_pixel_dimensions_are_rejected_from_header()
+    {
+        string path = Png("huge-header.png", 1, 1);
+        byte[] bytes = File.ReadAllBytes(path);
+        System.Buffers.Binary.BinaryPrimitives.WriteInt32BigEndian(bytes.AsSpan(16, 4), 16_000);
+        System.Buffers.Binary.BinaryPrimitives.WriteInt32BigEndian(bytes.AsSpan(20, 4), 16_000);
+        uint crc = uint.MaxValue;
+        foreach (byte value in bytes.AsSpan(12, 17))
+        {
+            crc ^= value;
+            for (int bit = 0; bit < 8; bit++) crc = (crc >> 1) ^ ((crc & 1) == 0 ? 0 : 0xedb88320u);
+        }
+        System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(bytes.AsSpan(29, 4), ~crc);
+        File.WriteAllBytes(path, bytes);
+        var error = Assert.Throws<InvalidDataException>(() => BoardBackgroundLoader.Decode(path));
+        Assert.Contains("dimensions", error.Message);
+    }
+
 }

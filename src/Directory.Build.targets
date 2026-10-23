@@ -1,0 +1,6 @@
+<Project>
+  <Target Name="RequirePatchedRuntime" BeforeTargets="Publish" Condition="'$(SelfContained)' == 'true'">
+    <Error Condition="'$(RuntimeFrameworkVersion)' == ''" Text="Self-contained releases must specify a patched RuntimeFrameworkVersion." />
+    <Error Condition="'$(RuntimeFrameworkVersion)' != '' and $([MSBuild]::VersionLessThan('$(RuntimeFrameworkVersion)', '10.0.13'))" Text="Self-contained releases require .NET runtime 10.0.13 or later." />
+  </Target>
+</Project>

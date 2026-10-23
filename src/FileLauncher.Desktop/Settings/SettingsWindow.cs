@@ -338,7 +338,7 @@ internal sealed class SettingsWindow : ChromeWindow
         void UpdateAnchorEnabled() => anchor.IsEnabled = _hub.Current.Popup.Keyboard.Position == PopupPosition.Cursor
             || _hub.Current.Popup.Mouse.Position == PopupPosition.Cursor;
         _refreshers.Add(() => { anchor.Value = _hub.Current.Popup.CursorAnchor; UpdateAnchorEnabled(); });
-        PositionChanged += UpdateAnchorEnabled;
+        AnchorPositionChanged += UpdateAnchorEnabled;
         p.Children.Add(Row(Strings.Settings_Popup_CursorAnchor, anchor, Strings.Settings_Popup_CursorAnchor_Note));
         p.Children.Add(Themed.Note(new TextBlock
         {
@@ -466,7 +466,7 @@ internal sealed class SettingsWindow : ChromeWindow
 
     /// <summary>表示位置 1 組（表示位置 + 固定座標 + 「今の盤面の位置を使う」）。キーボード用とマウス用で 2 回使う（SPEC §3.3）。</summary>
     /// <summary>ポップアップタブの「表示位置」が変わった（共通の 3 × 3 の有効・無効を追従させる）。</summary>
-    private event Action? PositionChanged;
+    private event Action? AnchorPositionChanged;
 
     private void PlacementGroup(StackPanel p, string title, Func<AppSettings, PopupPlacementSettings> get)
     {
@@ -483,7 +483,7 @@ internal sealed class SettingsWindow : ChromeWindow
         var position = Combo(
             EnumNames.Options(PopupPosition.Cursor, PopupPosition.LastPosition, PopupPosition.ScreenCenter, PopupPosition.Fixed),
             s => get(s).Position, (s, v) => get(s).Position = v, SettingsChange.Popup);
-        position.SelectionChanged += (_, _) => { UpdateEnabled(); PositionChanged?.Invoke(); };
+        position.SelectionChanged += (_, _) => { UpdateEnabled(); AnchorPositionChanged?.Invoke(); };
         p.Children.Add(Row(title, position));
 
         x = Number(-100000, 100000, s => get(s).X ?? 0, (s, v) => get(s).X = v, SettingsChange.Popup);
@@ -690,7 +690,7 @@ internal sealed class SettingsWindow : ChromeWindow
         try
         {
             await using var stream = await files[0].OpenReadAsync();
-            contents = DataArchive.Read(stream);
+            contents = await Task.Run(() => DataArchive.Read(stream));
         }
         catch (Exception ex) when (ex is ArchiveException or IOException or UnauthorizedAccessException)
         {
@@ -917,6 +917,7 @@ internal sealed class SettingsWindow : ChromeWindow
     private static string ArchiveMessage(ArchiveException ex) => ex.Kind switch
     {
         ArchiveError.NotZip => Strings.Archive_NotZip,
+        ArchiveError.TooLarge => Strings.Archive_TooLarge,
         ArchiveError.NoKnownEntries => Strings.Archive_NoKnownEntries,
         ArchiveError.EntryNotObject => Strings.FormatArchive_EntryNotObject(ex.Entry),
         _ => Strings.FormatArchive_EntryCorrupt(ex.Entry, ex.Detail),

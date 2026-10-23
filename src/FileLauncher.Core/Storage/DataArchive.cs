@@ -10,6 +10,8 @@ public enum ArchiveError
 {
     /// <summary>zip として読めない。</summary>
     NotZip,
+    /// <summary>Archive size, expanded size or entry count exceeds a safety limit.</summary>
+    TooLarge,
     /// <summary>settings.json も board.json も入っていない。</summary>
     NoKnownEntries,
     /// <summary>エントリが JSON のオブジェクトでない（Entry = 名前）。</summary>
@@ -38,6 +40,11 @@ public static class DataArchive
 {
     public const string SettingsEntry = "settings.json";
     public const string BoardEntry = "board.json";
+    public const int MaxEntries = 128;
+    public const int MaxJsonBytes = 4 * 1024 * 1024;
+    public const int MaxFileBytes = 32 * 1024 * 1024;
+    public const int MaxTotalBytes = 64 * 1024 * 1024;
+    public const int MaxArchiveBytes = 64 * 1024 * 1024;
 
     public static string DefaultFileName(DateTime localNow) => $"CPFileLauncher-backup-{localNow:yyyyMMdd-HHmmss}.zip";
 
@@ -73,13 +80,33 @@ public static class DataArchive
     /// <exception cref="ArchiveException">FileLauncher のエクスポートでない・壊れている。</exception>
     public static ArchiveContents Read(Stream source)
     {
+        try { return ReadCore(source); }
+        catch (InvalidDataException) { throw new ArchiveException(ArchiveError.NotZip); }
+    }
+
+    private static ArchiveContents ReadCore(Stream source)
+    {
+        // Bound non-seekable streams too, before ZipArchive buffers the input.
+        using var snapshot = new MemoryStream();
+        CopyLimited(source, snapshot, MaxArchiveBytes);
+        ValidateDirectory(snapshot);
+        snapshot.Position = 0;
         ZipArchive zip;
-        try { zip = new ZipArchive(source, ZipArchiveMode.Read, leaveOpen: true); }
+        try { zip = new ZipArchive(snapshot, ZipArchiveMode.Read, leaveOpen: true); }
         catch (InvalidDataException) { throw new ArchiveException(ArchiveError.NotZip); }
         using (zip)
         {
-            string? settings = ReadEntry(zip, SettingsEntry);
-            string? board = ReadEntry(zip, BoardEntry);
+            if (zip.Entries.Count > MaxEntries) throw new ArchiveException(ArchiveError.TooLarge);
+            long total = 0;
+            foreach (var entry in zip.Entries)
+            {
+                if (entry.Length > MaxFileBytes || entry.Length > MaxTotalBytes - total)
+                    throw new ArchiveException(ArchiveError.TooLarge, entry.Name);
+                total += entry.Length;
+            }
+            int remaining = MaxTotalBytes;
+            string? settings = ReadEntry(zip, SettingsEntry, ref remaining);
+            string? board = ReadEntry(zip, BoardEntry, ref remaining);
             if (settings is null && board is null)
                 throw new ArchiveException(ArchiveError.NoKnownEntries);
             var files = new Dictionary<string, byte[]>(StringComparer.Ordinal);
@@ -90,19 +117,25 @@ public static class DataArchive
                 int at = Array.IndexOf(parts, BackgroundImageStore.Folder);
                 if (at < 0 || at != parts.Length - 2 || parts.Contains("..") || entry.Length == 0) continue;
                 using var ms = new MemoryStream();
-                using (var es = entry.Open()) es.CopyTo(ms);
+                using (var es = entry.Open()) CopyLimited(es, ms, Math.Min(MaxFileBytes, remaining));
+                remaining -= checked((int)ms.Length);
                 files[BackgroundImageStore.Folder + "/" + parts[^1]] = ms.ToArray();
             }
             return new ArchiveContents(settings, board, files);
         }
     }
 
-    private static string? ReadEntry(ZipArchive zip, string name)
+    private static string? ReadEntry(ZipArchive zip, string name, ref int remaining)
     {
         // フォルダごと圧縮された zip でも見つけられるよう、ファイル名で探す
         var entry = zip.GetEntry(name) ?? zip.Entries.FirstOrDefault(e => string.Equals(e.Name, name, StringComparison.OrdinalIgnoreCase));
         if (entry is null) return null;
-        using var reader = new StreamReader(entry.Open(), Encoding.UTF8);
+        if (entry.Length > MaxJsonBytes) throw new ArchiveException(ArchiveError.TooLarge, name);
+        using var bytes = new MemoryStream();
+        using (var stream = entry.Open()) CopyLimited(stream, bytes, Math.Min(MaxJsonBytes, remaining));
+        remaining -= checked((int)bytes.Length);
+        bytes.Position = 0;
+        using var reader = new StreamReader(bytes, Encoding.UTF8);
         string text = reader.ReadToEnd();
         try
         {
@@ -115,4 +148,56 @@ public static class DataArchive
         }
         return text;
     }
+
+    // Inspect the bounded input before ZipArchive allocates an object for every entry.
+    // These small backups never need multi-disk or ZIP64 archives.
+    private static void ValidateDirectory(MemoryStream source)
+    {
+        ReadOnlySpan<byte> bytes = source.GetBuffer().AsSpan(0, checked((int)source.Length));
+        for (int offset = bytes.Length - 22; offset >= Math.Max(0, bytes.Length - 22 - ushort.MaxValue); offset--)
+        {
+            var record = bytes[offset..];
+            if (System.Buffers.Binary.BinaryPrimitives.ReadUInt32LittleEndian(record) != 0x06054b50) continue;
+            if (offset + 22 + System.Buffers.Binary.BinaryPrimitives.ReadUInt16LittleEndian(record[20..]) != bytes.Length)
+                throw new ArchiveException(ArchiveError.NotZip);
+            ushort count = System.Buffers.Binary.BinaryPrimitives.ReadUInt16LittleEndian(record[10..]);
+            uint size = System.Buffers.Binary.BinaryPrimitives.ReadUInt32LittleEndian(record[12..]);
+            uint start = System.Buffers.Binary.BinaryPrimitives.ReadUInt32LittleEndian(record[16..]);
+            if (count > MaxEntries || size > 256 * 1024) throw new ArchiveException(ArchiveError.TooLarge);
+            if (System.Buffers.Binary.BinaryPrimitives.ReadUInt32LittleEndian(record[4..]) != 0
+                || System.Buffers.Binary.BinaryPrimitives.ReadUInt16LittleEndian(record[8..]) != count
+                || (ulong)start + size > (ulong)offset)
+                throw new ArchiveException(ArchiveError.NotZip);
+            int at = checked((int)start), end = checked((int)(start + size)), found = 0;
+            while (at < end)
+            {
+                var header = bytes[at..end];
+                if (header.Length < 46 || System.Buffers.Binary.BinaryPrimitives.ReadUInt32LittleEndian(header) != 0x02014b50)
+                    throw new ArchiveException(ArchiveError.NotZip);
+                int length = 46 + System.Buffers.Binary.BinaryPrimitives.ReadUInt16LittleEndian(header[28..])
+                    + System.Buffers.Binary.BinaryPrimitives.ReadUInt16LittleEndian(header[30..])
+                    + System.Buffers.Binary.BinaryPrimitives.ReadUInt16LittleEndian(header[32..]);
+                if (length > header.Length) throw new ArchiveException(ArchiveError.NotZip);
+                if (++found > MaxEntries) throw new ArchiveException(ArchiveError.TooLarge);
+                at += length;
+            }
+            if (found != count) throw new ArchiveException(ArchiveError.NotZip);
+            return;
+        }
+        throw new ArchiveException(ArchiveError.NotZip);
+    }
+
+    private static void CopyLimited(Stream source, Stream destination, int limit)
+    {
+        byte[] buffer = new byte[81920];
+        int remaining = limit;
+        int read;
+        while ((read = source.Read(buffer, 0, Math.Min(buffer.Length, remaining + 1))) > 0)
+        {
+            if (read > remaining) throw new ArchiveException(ArchiveError.TooLarge);
+            destination.Write(buffer, 0, read);
+            remaining -= read;
+        }
+    }
+
 }

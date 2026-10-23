@@ -940,7 +940,7 @@ src/
 
 | 用途 | ライブラリ |
 |---|---|
-| UI | Avalonia 11.x、Avalonia.Themes.Fluent |
+| UI | Avalonia 12.1.4、Avalonia.Themes.Fluent |
 | フォント | 同梱の Chakra Petch（本文・ラベル）と Share Tech Mono（HUD の数字・コード、§3.9）。いずれも OFL 1.1、§3.6。日本語は OS のフォントへフォールバック。Avalonia.Fonts.Inter はテーマ廃止で不要になるが、`FontFamily.Default` の退避先として残してよい |
 | 色の選択 UI | **Avalonia.Controls.ColorPicker**（Avalonia 公式、同じバージョン。`ColorPicker` / `ColorView`。配色の主色・副色、§3.6「配色」。Fluent 用のスタイル `avares://Avalonia.Controls.ColorPicker/Themes/Fluent/Fluent.xaml` を `App.axaml` と `TestApp` の両方に `StyleInclude` する） |
 | UI テスト | Avalonia.Headless.XUnit（`FileLauncher.Desktop.Tests`、§10.6） |
@@ -1005,21 +1005,21 @@ src/
     ```
     `Environment.ProcessPath` = `Contents/MacOS/CPFileLauncher`、`AppContext.BaseDirectory` = `Contents/MacOS/` となり、`NSBundle.mainBundle`・`LSUIElement`・TCC の権限アイデンティティ・`SMAppService`・「再起動」（§4.3）は通常のバンドルアプリと同じ。arm64 スライスしか無いので Finder の「Rosetta を使用して開く」は表示されず、Intel Mac では起動できない（Finder が「このアプリケーションはこの Mac では使用できません」と出す）。
   - `Info.plist`（`src/FileLauncher.Desktop/macos/Info.plist`）: `CFBundleIdentifier` = **`com.palmjoy.cpfilelauncher`**（仮 id は経由しない。**変えると TCC の権限が付け直しになる**ので、実行ファイル名の変更（それ自体で署名の designated requirement が変わり付け直しになる）と**同じタイミングで 1 回だけ**変える）、`CFBundleName` / `CFBundleDisplayName` / `CFBundleExecutable` = CPFileLauncher、`LSUIElement` = true（Dock・⌘Tab に出さない）、`NSHighResolutionCapable` = true、`LSMinimumSystemVersion` = 15.0（§1.1）、`CFBundleIconFile` = **`AppIcon`**（`Contents/Resources/AppIcon.icns`。§3.9 H13）、**`NSAppleEventsUsageDescription`**（§4.3「自動化」/ §5.2「macOS: Finder のタブ」。Finder のタブにフォルダを開くために Apple Events を送る理由。無いと送信が黙って `errAEEventNotPermitted` になる。英語を `Info.plist` に書き、日本語は `Contents/Resources/ja.lproj/InfoPlist.strings`（`en.lproj/InfoPlist.strings` も置く = 片方だけだとその言語に固定される。`CFBundleDevelopmentRegion` = en。`publish-mac.sh` が `macos/*.lproj/` をコピー）。文言は `spec/TERMS.md` §2.1「権限」）。`LSArchitecturePriority` / `LSRequiresNativeExecution` は単一アーキテクチャなので不要（書かない）。
-  - 署名は**組み立て後**に行う: `Contents/MacOS/` 内の Mach-O（`*.dylib` と apphost `CPFileLauncher`）を先に署名し、最後にバンドル全体を署名する（`--deep` に頼らない）。開発時は Keychain Access で作った自己署名の「コード署名」証明書で署名すると、再ビルドしてもアクセシビリティ権限が保たれる（ad-hoc 署名は毎回アイデンティティが変わる、§4.3）。証明書の名前（既存の「FileLauncher Dev」）は製品名と無関係なので変えなくてよい。配布時の Developer ID 署名・公証は行わない。
+  - 署名は**組み立て後**に行う: `Contents/MacOS/` 内の Mach-O（`*.dylib` と apphost `CPFileLauncher`）を先に署名し、最後にバンドル全体を署名する（`--deep` に頼らない）。開発時は Keychain Access で作った自己署名の「コード署名」証明書で署名すると、再ビルドしてもアクセシビリティ権限が保たれる（ad-hoc 署名は毎回アイデンティティが変わる、§4.3）。証明書の名前（既存の「FileLauncher Dev」）は製品名と無関係なので変えなくてよい。`CODESIGN_IDENTITY` に Developer ID Application の証明書名を指定すると Hardened Runtime とタイムスタンプを使い、`NOTARYTOOL_PROFILE` を指定すると公証・staple を行う。証明書を指定しないCIはad-hoc署名。
 - 出力の配置: `bin/win-x64/`、`bin/win-arm64/`（Windows の単一 exe）、`bin/osx-arm64/CPFileLauncher.app`（macOS の配布物）。CI（GitHub Actions）で Windows 2 RID + macOS arm64 を自動ビルドする（下の「リリース」）。
 - **ライセンス文の同梱**（第三者の表示を追加。 = GPL-3.0-only）: リポジトリ直下の **`LICENSE`（GPL v3 全文）と `THIRD-PARTY-NOTICES.txt`（新規、手で保守）** を配布物に必ず入れる。Windows は `publish-win.ps1` が `bin/<rid>/LICENSE.txt`・`bin/<rid>/THIRD-PARTY-NOTICES.txt` にコピーする（「想定外のファイル」の警告から除外）。macOS は `publish-mac.sh` が**署名の前に** `Contents/Resources/LICENSE.txt`・`Contents/Resources/THIRD-PARTY-NOTICES.txt` へコピーする（署名後に足すと封印が壊れる。`Contents/MacOS/` に置くと Mach-O 以外の署名が拡張属性頼みになる）。フォントの `OFL-*.txt` は従来どおり。
-  - **配布物に入る第三者の部品**（`src/FileLauncher.Desktop/obj/project.assets.json` と NuGet パッケージの中身で確認。テスト用・ビルド時だけのもの（xUnit 一式、`Microsoft.CodeAnalysis.ResxSourceGenerator`、`Avalonia.BuildServices`）は入らない。`Avalonia.Diagnostics` は Debug だけ）:
+  - **配布物に入る第三者の部品**（`src/FileLauncher.Desktop/obj/project.assets.json` と NuGet パッケージの中身で確認。テスト用・ビルド時だけのもの（xUnit 一式、`Microsoft.CodeAnalysis.ResxSourceGenerator`、`Avalonia.BuildServices`）は入らない）:
 
     | 部品 | 版 | ライセンス | 配布物の中の形 |
     |---|---|---|---|
-    | Avalonia 一式（`Avalonia` / `.Desktop` / `.Win32` / `.Native` / `.Skia` / `.Themes.Fluent` / `.Controls.ColorPicker` / `.Fonts.Inter` / `.Remote.Protocol` / `.FreeDesktop` / `.X11`）、MicroCom.Runtime 0.11.0、Tmds.DBus.Protocol 0.21.3（Linux 用だが dll は出力に入る） | 11.3.22 | MIT | dll。Mac は `libAvaloniaNative.dylib`（MIT） |
+    | Avalonia 一式（`Avalonia` / `.Desktop` / `.Win32` / `.Native` / `.Skia` / `.Themes.Fluent` / `.Controls.ColorPicker` / `.Fonts.Inter` / `.Remote.Protocol` / `.FreeDesktop` / `.X11`）、MicroCom.Runtime 0.11.6、Tmds.DBus.Protocol 0.94.1（Linux 用だが dll は出力に入る） | 12.1.4 | MIT | dll。Mac は `libAvaloniaNative.dylib`（MIT） |
     | Inter（`Avalonia.Fonts.Inter` に埋め込まれた書体） | — | SIL OFL 1.1 | dll 内のリソース |
-    | SkiaSharp 2.88.9 / Skia | 2.88.9 | MIT（バインディング）/ BSD-3-Clause（Skia）+ Skia が取り込む部品（libpng・zlib・libjpeg-turbo・libwebp・expat・FreeType 等。SkiaSharp の `THIRD-PARTY-NOTICES.txt` に列挙） | `libSkiaSharp.dll` / `.dylib` |
-    | HarfBuzzSharp 8.3.1.1 / HarfBuzz | 8.3.1.1 | MIT / HarfBuzz の「Old MIT」 | `libHarfBuzzSharp.dll` / `.dylib` |
-    | ANGLE（`Avalonia.Angle.Windows.Natives` 2.1.25547.20250602） | — | BSD-3-Clause（The ANGLE Project Authors） | `av_libglesv2.dll`（Windows のみ） |
+    | SkiaSharp 4.153.1 / Skia | 4.153.1 | MIT（バインディング）/ BSD-3-Clause（Skia）+ Skia が取り込む部品（libpng・zlib・libjpeg-turbo・libwebp・expat・FreeType 等。SkiaSharp の `THIRD-PARTY-NOTICES.txt` に列挙） | `libSkiaSharp.dll` / `.dylib` |
+    | HarfBuzzSharp 8.3.1.3 / HarfBuzz | 8.3.1.3 | MIT / HarfBuzz の「Old MIT」 | `libHarfBuzzSharp.dll` / `.dylib` |
+    | ANGLE（`Avalonia.Angle.Windows.Natives` 2.1.27548.20260419） | — | BSD-3-Clause（The ANGLE Project Authors） | `av_libglesv2.dll`（Windows のみ） |
     | SharpHook | 8.0.0 | MIT | dll |
     | **libuiohook（TolikPylypchuk のフォーク）** | SharpHook 8.0.0 が取り込むコミット **`a41658fb2bef7503a3bcb305ab8bf849755fe906`** | **LGPL-3.0**（フォークの `COPYING.LESSER.md` で確認） | `uiohook.dll` / `libuiohook.dylib` |
-    | .NET ランタイム（self-contained） | 10.0.x | MIT + .NET の `THIRD-PARTY-NOTICES.TXT` | ランタイムの dll 一式 |
+    | .NET ランタイム（self-contained） | 10.0.13以上 | MIT + .NET の `THIRD-PARTY-NOTICES.TXT` | ランタイムの dll 一式 |
     | Chakra Petch / Share Tech Mono | — | SIL OFL 1.1 | フォントファイル + `Resources/Fonts/OFL-*.txt`（従来どおり） |
 
   - **`THIRD-PARTY-NOTICES.txt` の中身**: 冒頭に「CPFileLauncher は GPL-3.0-only。以下の第三者の部品を含む」→ 部品ごとに 名前・版・ライセンス・著作権表示・ソースの入手先（URL、libuiohook はコミットまで）→ 付録に各ライセンスの全文（MIT は著作権者ごとの許諾文、BSD-3-Clause（Skia・ANGLE）、HarfBuzz の Old MIT、SkiaSharp の `THIRD-PARTY-NOTICES.txt` の全文、.NET の `THIRD-PARTY-NOTICES.TXT` の全文、**LGPL-3.0 の全文**（LGPL §4(b)。GPL の全文は `LICENSE.txt` を指す）、OFL は同梱の `OFL-*.txt` を指す）。libuiohook の節には「LGPL-3.0 のライブラリを使っている」旨・ソースの入手先・差し替え方（下）を書く。文字コードは UTF-8、改行は LF でよい（メモ帳は UTF-8 / LF を読める）。依存の版を変えたら必ず直す（`ThirdPartyNoticesTests` が csproj の `PackageReference` の名前・版との食い違いを検出する。）。
@@ -1047,6 +1047,7 @@ src/
 
   zip の出力先は `bin/release/`（`.gitignore` の `[Bb]in/` で除外済み）。Windows の zip に最上位フォルダを付けるのは「ここに展開」で exe とライセンス文が散らばらないため。Mac は Archive Utility で展開すると `.app` がそのまま出る形にする。名前の `macos` は利用者向けの表記で、RID（`osx-arm64`）とは別。
 - **バージョン**: **csproj の `<Version>`（`src/FileLauncher.Desktop/FileLauncher.Desktop.csproj`）が正**で、タグは `v<Version>`。ワークフローは最初にタグと `<Version>` の一致を確かめ、違えば失敗する。形式は **`X.Y.Z` の数字 3 つだけ**（`CFBundleVersion` が数字とドットしか許さないため、`-beta` などの接尾辞は v1 では使わない。ワークフローの起動条件も `v[0-9]+.[0-9]+.[0-9]+`）。手順: `<Version>` を上げてコミット → `git tag vX.Y.Z` → `git push origin main vX.Y.Z`。**最初の公開版は `1.0.0`**。
+- **公開方法**: 注釈付きタグに単独行 `Release-Publish: true` がある場合、Windows / macOS のテスト・ビルドと来歴証明の作成が成功した後、Release を公開して最新版に設定する。この行がないタグでは下書きを作成する。既に公開済みのReleaseのアセットは差し替えない。
 - **ワークフロー**（`.github/workflows/release.yml`）: 起動は `v[0-9]+.[0-9]+.[0-9]+` タグの push と手動（`workflow_dispatch`。手動のときは Release を作らず、zip を Actions の Artifact に置くだけ = CI の試運転用）。ジョブ:
   1. `check-version`（ubuntu）: タグ名の形式と csproj の `<Version>` の一致。
   2. `build-windows`（`windows-latest`）: .NET 10 SDK を入れ、`dotnet test src/FileLauncher.sln -c Release` → `publish-win.ps1 -Zip`（x64 / arm64 の両方。arm64 は x64 ランナーでクロスコンパイル）。

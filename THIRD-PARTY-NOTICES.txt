@@ -15,7 +15,7 @@ reproduced in the appendices at the end of this file.
 Components
 --------------------------------------------------------------------------------
 
-Avalonia 11.3.22
+Avalonia 12.1.4
   Packages: Avalonia, Avalonia.Desktop, Avalonia.Skia, Avalonia.Themes.Fluent,
             Avalonia.Controls.ColorPicker, Avalonia.Fonts.Inter (and their
             dependencies Avalonia.Win32, Avalonia.Native, Avalonia.X11,
@@ -24,12 +24,12 @@ Avalonia 11.3.22
   Copyright: Copyright (c) AvaloniaUI OÜ
   Source:    https://github.com/AvaloniaUI/Avalonia
 
-MicroCom.Runtime 0.11.0
+MicroCom.Runtime 0.11.6
   License:   MIT (Appendix A)
   Copyright: Copyright (c) 2021 Nikita Tsukanov
   Source:    https://github.com/kekekeks/MicroCom
 
-Tmds.DBus.Protocol 0.21.3
+Tmds.DBus.Protocol 0.94.1
   License:   MIT (Appendix A)
   Copyright: Copyright 2006 Alp Toker, 2010 Other Contributors,
              2016 Tom Deseyn
@@ -60,7 +60,8 @@ libuiohook (fork used by SharpHook 8.0.0)
       your build, then re-sign the bundle:
         codesign --force --sign - CPFileLauncher.app
 
-SkiaSharp 2.88.9 / HarfBuzzSharp 8.3.1.1
+SkiaSharp 4.153.1 / HarfBuzzSharp 8.3.1.3
+  Packages: SkiaSharp.NativeAssets.Linux, SkiaSharp.NativeAssets.WebAssembly
   License:   MIT (Appendix A)
   Copyright: Copyright (c) 2015-2016 Xamarin, Inc.
              Copyright (c) 2017-2018 Microsoft Corporation.
@@ -70,7 +71,7 @@ SkiaSharp 2.88.9 / HarfBuzzSharp 8.3.1.1
   zlib, libjpeg-turbo, libwebp, expat, FreeType, ...). Their notices are
   reproduced in Appendix C.
 
-ANGLE (Avalonia.Angle.Windows.Natives 2.1.25547.20250602, Windows only)
+ANGLE (Avalonia.Angle.Windows.Natives 2.1.27548.20260419, Windows only)
   File:      av_libglesv2.dll (inside CPFileLauncher.exe)
   License:   BSD-3-Clause (Appendix B)
   Copyright: Copyright 2018 The ANGLE Project Authors.
@@ -2972,7 +2973,6 @@ mozzconf.h is distributed under the MPL 1.1/GPL 2.0/LGPL 2.1 tri-license.
 ################################################################################
 # END: zlib
 ################################################################################
-
 
 ================================================================================
 Appendix D. GNU Lesser General Public License v3.0 (libuiohook)

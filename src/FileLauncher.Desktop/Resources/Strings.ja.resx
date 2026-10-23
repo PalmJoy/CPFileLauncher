@@ -990,7 +990,8 @@
   </data>
   <data name="Settings_Data_ImportConfirm" xml:space="preserve">
     <value>今の{0}を「{1}」の内容に置き換えて、CPFileLauncher を再起動します。
-今のファイルは backup/ に残します。</value>
+今のファイルは backup/ に残します。
+信頼できるZIPだけを取り込んでください。取り込んだ項目はコマンドの実行やネットワーク上の場所へのアクセスができます。</value>
   </data>
   <data name="Settings_Data_ImportConfirm_Ok" xml:space="preserve">
     <value>インポートして再起動</value>
@@ -1277,4 +1278,6 @@
 
 配布サイトから新しいバージョンをダウンロードできます。</value></data>
   <data name="Update_OpenWebsite" xml:space="preserve"><value>配布サイトを開く</value></data>
+  <data name="Archive_TooLarge" xml:space="preserve"><value>ZIP が取り込み上限を超えています（128項目、JSONは各4 MiB、各ファイル32 MiB、合計64 MiB）。</value></data>
+  <data name="Launch_ElevatedShellDrop" xml:space="preserve"><value>管理者として実行するコマンドやバッチファイルには、ファイルをドロップできません。Drop-to-Openを使うには、管理者として実行する設定を解除してください。</value></data>
 </root>

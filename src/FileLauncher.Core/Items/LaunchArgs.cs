@@ -10,16 +10,29 @@ public static class LaunchArgs
     public static string Build(string args, IReadOnlyList<string>? droppedPaths)
     {
         args ??= string.Empty;
-        string paths = droppedPaths is { Count: > 0 } ? string.Join(" ", droppedPaths.Select(p => $"\"{p}\"")) : string.Empty;
+        string paths = droppedPaths is { Count: > 0 } ? string.Join(" ", droppedPaths.Select(QuoteArgument)) : string.Empty;
 
         if (args.Contains("%1") || args.Contains("$1"))
         {
-            return args
-                .Replace("\"%1\"", paths).Replace("%1", paths)
-                .Replace("\"$1\"", paths).Replace("$1", paths)
-                .Trim();
+            return System.Text.RegularExpressions.Regex.Replace(args, "\"[%$]1\"|[%$]1", _ => paths).Trim();
         }
         return paths.Length == 0 ? args : $"{args} {paths}".Trim();
+    }
+
+    // ProcessStartInfo.Arguments uses backslash-escaped quotes, including trailing backslashes.
+    private static string QuoteArgument(string value)
+    {
+        var result = new System.Text.StringBuilder("\"");
+        int slashes = 0;
+        foreach (char c in value)
+        {
+            if (c == '\\') { slashes++; continue; }
+            result.Append('\\', c == '"' ? slashes * 2 + 1 : slashes);
+            result.Append(c);
+            slashes = 0;
+        }
+        result.Append('\\', slashes * 2);
+        return result.Append('"').ToString();
     }
 
     /// <summary>環境変数（%USERPROFILE% 等）と ~ / $HOME を展開する。保存データは展開しないまま持ち、起動・アイコン取得時にだけ使う。</summary>

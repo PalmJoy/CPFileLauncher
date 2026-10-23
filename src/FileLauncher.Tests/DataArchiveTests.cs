@@ -111,4 +111,62 @@ public sealed class DataArchiveTests : IDisposable
         using (var notZip = new MemoryStream(Encoding.UTF8.GetBytes("plain text")))
             Assert.Equal(ArchiveError.NotZip, Assert.Throws<ArchiveException>(() => DataArchive.Read(notZip)).Kind);
     }
+    [Fact]
+    public void Oversized_json_is_rejected_before_parsing()
+    {
+        using var zip = Zip((DataArchive.BoardEntry, "{}" + new string(' ', DataArchive.MaxJsonBytes)));
+        Assert.Equal(ArchiveError.TooLarge, Assert.Throws<ArchiveException>(() => DataArchive.Read(zip)).Kind);
+    }
+
+    [Fact]
+    public void Too_many_entries_are_rejected()
+    {
+        using var zip = Zip(Enumerable.Range(0, DataArchive.MaxEntries + 1).Select(i => ($"{i}.txt", "")).ToArray());
+        Assert.Equal(ArchiveError.TooLarge, Assert.Throws<ArchiveException>(() => DataArchive.Read(zip)).Kind);
+    }
+
+    [Fact]
+    public void Expanded_total_is_limited_even_for_highly_compressed_files()
+    {
+        using var stream = new MemoryStream();
+        using (var zip = new ZipArchive(stream, ZipArchiveMode.Create, true))
+        {
+            using (var writer = new StreamWriter(zip.CreateEntry("board.json").Open())) writer.Write("{}");
+            byte[] chunk = new byte[1024 * 1024];
+            for (int i = 0; i < 3; i++)
+            {
+                using var entry = zip.CreateEntry($"background/{i}.png", CompressionLevel.Optimal).Open();
+                for (int j = 0; j < 24; j++) entry.Write(chunk);
+            }
+        }
+        stream.Position = 0;
+        Assert.Equal(ArchiveError.TooLarge, Assert.Throws<ArchiveException>(() => DataArchive.Read(stream)).Kind);
+    }
+
+    [Fact]
+    public void Forged_directory_entry_count_is_rejected_before_zip_parsing()
+    {
+        using var zip = Zip(("board.json", "{}"), ("background/a.png", "image"));
+        byte[] bytes = zip.ToArray();
+        // EOCD is the last 22 bytes of this archive (no comment).
+        int end = bytes.Length - 22;
+        System.Buffers.Binary.BinaryPrimitives.WriteUInt16LittleEndian(bytes.AsSpan(end + 8), 1);
+        System.Buffers.Binary.BinaryPrimitives.WriteUInt16LittleEndian(bytes.AsSpan(end + 10), 1);
+        using var forged = new MemoryStream(bytes);
+        Assert.Equal(ArchiveError.NotZip, Assert.Throws<ArchiveException>(() => DataArchive.Read(forged)).Kind);
+    }
+
+    [Fact]
+    public void Forged_uncompressed_size_is_bounded_or_rejected()
+    {
+        using var zip = Zip(("board.json", "{}" + new string(' ', DataArchive.MaxJsonBytes)));
+        byte[] bytes = zip.ToArray();
+        int end = bytes.Length - 22;
+        int directory = (int)System.Buffers.Binary.BinaryPrimitives.ReadUInt32LittleEndian(bytes.AsSpan(end + 16));
+        System.Buffers.Binary.BinaryPrimitives.WriteUInt32LittleEndian(bytes.AsSpan(directory + 24), 2);
+        using var forged = new MemoryStream(bytes);
+        var exception = Assert.Throws<ArchiveException>(() => DataArchive.Read(forged));
+        Assert.Contains(exception.Kind, new[] { ArchiveError.TooLarge, ArchiveError.NotZip, ArchiveError.EntryCorrupt });
+    }
+
 }

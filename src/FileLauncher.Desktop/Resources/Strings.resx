@@ -1044,7 +1044,8 @@ Folder not found: {1}</value>
   </data>
   <data name="Settings_Data_ImportConfirm" xml:space="preserve">
     <value>Replace the current {0} with the contents of “{1}” and restart CPFileLauncher?
-The current files are kept in backup/.</value>
+The current files are kept in backup/.
+Only import archives you trust. Imported items can run commands and open network locations.</value>
     <comment>{0} what is replaced, {1} file name</comment>
   </data>
   <data name="Settings_Data_ImportConfirm_Ok" xml:space="preserve">
@@ -1338,4 +1339,6 @@ Latest: {1}
 
 You can download the new version from the website.</value></data>
   <data name="Update_OpenWebsite" xml:space="preserve"><value>Open download website</value></data>
+  <data name="Archive_TooLarge" xml:space="preserve"><value>The archive exceeds the import limits (128 entries, 4 MiB per JSON file, 32 MiB per file, 64 MiB total).</value></data>
+  <data name="Launch_ElevatedShellDrop" xml:space="preserve"><value>Files cannot be dropped onto commands or batch files that run as administrator. Open the item without administrator privileges to use Drop-to-Open.</value></data>
 </root>

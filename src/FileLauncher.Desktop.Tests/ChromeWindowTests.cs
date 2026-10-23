@@ -19,7 +19,7 @@ public sealed class ChromeWindowTests
         w.Show();
         Dispatcher.UIThread.RunJobs();
 
-        Assert.Equal(SystemDecorations.None, w.SystemDecorations);
+        Assert.Equal(WindowDecorations.None, w.WindowDecorations);
         double m = w.Chrome.GetMargin();
         Assert.Equal(300 + m * 2, w.Width);
         Assert.Equal(200 + ChromeWindow.TitleBarHeight + 1 + m * 2, w.Height);
@@ -81,7 +81,7 @@ public sealed class ChromeWindowTests
         var guide = new PermissionGuideWindow(new FakePlatform(), () => { }, () => { });
         guide.Show();
         Dispatcher.UIThread.RunJobs();
-        Assert.Equal(SystemDecorations.None, guide.SystemDecorations);
+        Assert.Equal(WindowDecorations.None, guide.WindowDecorations);
         Assert.Contains(guide.GetVisualDescendants().OfType<Button>(), b => (b.Content as string) == Strings.Permission_Retry);
         guide.Close();
     }

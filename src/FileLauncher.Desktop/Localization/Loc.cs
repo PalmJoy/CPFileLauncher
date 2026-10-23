@@ -65,6 +65,7 @@ internal static class Loc
     {
         FileLauncher.Platform.LaunchFailure.NotFound => Strings.FormatLaunch_NotFound(result.Detail),
         FileLauncher.Platform.LaunchFailure.Cancelled => Strings.Launch_Cancelled,
+        FileLauncher.Platform.LaunchFailure.ElevatedShellDrop => Strings.Launch_ElevatedShellDrop,
         FileLauncher.Platform.LaunchFailure.LauncherUnavailable => Strings.FormatLaunch_LauncherUnavailable(result.Detail),
         _ => Strings.FormatLaunch_OsError(result.Detail ?? result.Reason.ToString()),
     };

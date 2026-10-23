@@ -9,7 +9,9 @@
     <Product>CPFileLauncher</Product>
     <AssemblyTitle>CPFileLauncher</AssemblyTitle>
     <!-- 製品のバージョン（「について」と macOS の Info.plist に出る。製品名・正式な版の付け方は SPEC §13.2 の TODO） -->
-    <Version>1.0.2</Version>
+    <Version>1.1.0</Version>
+    <!-- Self-contained releases carry their own security-patched runtime. -->
+    <RuntimeFrameworkVersion Condition="'$(SelfContained)' == 'true'">10.0.13</RuntimeFrameworkVersion>
     <!-- Windows の exe のアイコン（src/build/make-icons.sh が Assets/icon.svg から作る。SPEC §3.9 H13） -->
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
     <!-- フォルダ・プロジェクト名は FileLauncher.Desktop（.App で終わると macOS がアプリバンドルとみなすため）。名前空間は据え置き -->
@@ -29,12 +31,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Avalonia" Version="11.3.22" />
-    <PackageReference Include="Avalonia.Controls.ColorPicker" Version="11.3.22" />
-    <PackageReference Include="Avalonia.Desktop" Version="11.3.22" />
-    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.22" />
-    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.22" />
-    <PackageReference Include="Avalonia.Diagnostics" Version="11.3.22" Condition="'$(Configuration)' == 'Debug'" />
+    <!-- Override Avalonia's transitive Skia dependencies together to keep managed and native libraries on the same version. -->
+    <PackageReference Include="SkiaSharp" Version="4.153.1" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="4.153.1" />
+    <PackageReference Include="SkiaSharp.NativeAssets.WebAssembly" Version="4.153.1" />
+    <PackageReference Include="Avalonia" Version="12.1.4" />
+    <PackageReference Include="Avalonia.Controls.ColorPicker" Version="12.1.4" />
+    <PackageReference Include="Avalonia.Desktop" Version="12.1.4" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.4" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="12.1.4" />
     <!-- resx から Strings クラスを生成する（ビルド時だけ。配布物には入らない。SPEC §10.2） -->
     <PackageReference Include="Microsoft.CodeAnalysis.ResxSourceGenerator" Version="5.0.0-1.25277.114" PrivateAssets="all" />
   </ItemGroup>
@@ -52,6 +57,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Using Include="FileLauncher.Core.Model.Page" Alias="Page" />
     <InternalsVisibleTo Include="FileLauncher.Desktop.Tests" />
   </ItemGroup>
 

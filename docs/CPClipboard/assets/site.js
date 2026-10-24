@@ -30,18 +30,46 @@ import {selectRelease} from './release-selection.js';
     const release = selectRelease(await response.json(), 'cpclipboard-v');
     if (!release) return;
     const names = {'CPClipboard-win-x64.zip':'Windows · x64','CPClipboard-win-arm64.zip':'Windows · ARM64','CPClipboard-macos-arm64.zip':'macOS · Apple silicon'};
-    const assets = (release.assets || []).filter(a => names[a.name]);
+    const assets = Object.keys(names).map(name => (release.assets || []).find(asset => asset.name === name)).filter(Boolean);
     if (!assets.length) return;
-    const urls = {};
+    const urls = {}, cards = {};
+    function element(tag, className, text) {
+      const node = document.createElement(tag);
+      node.className = className;
+      if (text) node.textContent = text;
+      return node;
+    }
+    const requirements = ja
+      ? {'win-x64':'Windows 10（1809以降）/ 11。Intel・AMDのPC。','win-arm64':'ARMのPC（Snapdragonなど）のWindows 11。','macos-arm64':'macOS 15以降。Apple silicon（M1以降）専用。Intel Macには対応していません。'}
+      : {'win-x64':'Windows 10 (1809+) / 11 on Intel and AMD PCs.','win-arm64':'Windows 11 on ARM PCs, including Snapdragon.','macos-arm64':'macOS 15+. Apple silicon (M1 or later) only. Intel Macs are not supported.'};
     for (const asset of assets) {
       const url = new URL(asset.browser_download_url);
       if (url.origin !== 'https://github.com' || !url.pathname.startsWith('/PalmJoy/CPFileLauncher/releases/download/')) continue;
       urls[asset.name] = url.href;
-      const a = document.createElement('a'); a.href = url.href;
-      a.textContent = names[asset.name] + ' ↓ ZIP'; downloads.appendChild(a);
+      const rid = asset.name.slice('CPClipboard-'.length, -4);
+      const item = element('div', 'dl-item'); item.setAttribute('data-asset', rid);
+      const card = element('div', 'dl-card cut');
+      const chips = element('div', 'chips');
+      chips.appendChild(element('span', 'chip', rid === 'macos-arm64' ? 'Apple silicon' : rid === 'win-arm64' ? 'ARM64' : 'x64'));
+      chips.appendChild(element('span', 'chip c2 rec', ja ? 'おすすめ' : 'Recommended'));
+      card.appendChild(chips);
+      card.appendChild(element('h3', '', names[asset.name].split(' · ')[0] + (rid === 'win-arm64' ? ' (ARM)' : '')));
+      card.appendChild(element('div', 'file', asset.name + (asset.size ? ` · ${(asset.size / 1048576).toFixed(1)} MB` : '')));
+      card.appendChild(element('p', 'req', requirements[rid]));
+      const a = element('a', 'btn'); a.href = url.href;
+      a.appendChild(element('span', 'cut', ja ? '↓ ダウンロード' : '↓ Download'));
+      card.appendChild(a); item.appendChild(card); downloads.appendChild(item); cards[rid] = item;
     }
     if (downloads.children.length) status.textContent = (ja ? '公開版: ' : 'Latest release: ') + release.tag_name;
+    document.querySelectorAll('[data-version]').forEach(node => { node.textContent = release.tag_name.replace('cpclipboard-', ''); });
+    const releaseLink = document.querySelector('[data-release-link]');
+    if (releaseLink) releaseLink.href = 'https://github.com/PalmJoy/CPFileLauncher/releases/tag/' + release.tag_name;
     const platform = await detectPlatform();
+    if (cards[platform]) cards[platform].className += ' is-recommended';
+    const target = document.querySelector('[data-console-target]');
+    if (target && platform) target.textContent = platform;
+    const radio = document.getElementById(platform === 'macos-arm64' ? 'os-mac' : 'os-win');
+    if (radio && platform) radio.checked = true;
     const file = platform && `CPClipboard-${platform}.zip`;
     if (hero && urls[file]) {
       hero.href = urls[file];

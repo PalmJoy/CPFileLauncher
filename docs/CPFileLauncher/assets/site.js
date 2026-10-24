@@ -116,26 +116,6 @@ import {selectRelease} from './release-selection.js';
       .catch(function () { /* オフライン・API 上限時は HTML の表示とダウンロードリンクを保つ */ });
   }
 
-  // ---------- 配色の見本（保存しない） ----------
-  $$('.swatch').forEach(function (b) {
-    b.addEventListener('click', function () {
-      var root = document.documentElement.style;
-      root.setProperty('--c1', b.getAttribute('data-c1'));
-      root.setProperty('--c2', b.getAttribute('data-c2'));
-      $$('.swatch').forEach(function (o) { o.setAttribute('aria-pressed', String(o === b)); });
-    });
-  });
-
-  // ---------- 模型の時計（分の変わり目に合わせて更新） ----------
-  var clock = $('[data-clock]');
-  function pad(n) { return (n < 10 ? '0' : '') + n; }
-  function tick() {
-    var d = new Date();
-    if (clock) clock.textContent = d.getFullYear() + '/' + pad(d.getMonth() + 1) + '/' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
-    setTimeout(tick, 60000 - (d.getSeconds() * 1000 + d.getMilliseconds()) + 20);
-  }
-  if (clock) tick();
-
   // ---------- コピー ----------
   $$('[data-copy]').forEach(function (b) {
     if (!navigator.clipboard) return;

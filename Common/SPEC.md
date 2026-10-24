@@ -21,3 +21,5 @@ CPTools rootの `CPTools.slnx` は両製品をまとめてbuild/testする入口
 CI定義はCPTools/.github/workflowsに配置し、製品ディレクトリをworking-directoryとして個別solutionを検証する。Common変更時は両方を検証する。更新確認・サイトは公開Release一覧の先頭100件から正式な製品タグを選び、版番号で最新を決める。公開repositoryは `PalmJoy/CPFileLauncher`。Launcherは既存タグ `vX.Y.Z`、Clipboardは `cpclipboard-vX.Y.Z` を使い、Release/asset/更新確認を製品のタグprefixで分離する。サイト実体はroot/docs/<product>/。Launcherの既存公開URL `https://palmjoy.github.io/CPFileLauncher/` と `/ja/` は、それぞれdocs/CPFileLauncher/index.html・docs/CPFileLauncher/ja/index.htmlへリダイレクトする。検索パラメータとフラグメントを維持し、サイト本体とassetsは製品ディレクトリ内だけで管理する。Clipboardは `https://palmjoy.github.io/CPFileLauncher/CPClipboard/` とその製品内言語導線を使う。
 
 署名のlocal pinは各製品work/に保持する。ローカル作業記録・調査・履歴は製品issue/またはwork/へ置き、Commonの仕様へ混在させない。
+
+両製品の配布サイトはdocs/shared/site.cssとsite-ui.jsで配色変数、フォント、見出し・本文、ナビ、ボタン、配布カード、セットアップタブ、レスポンシブ、演出、配色切替と時計を共有する。各製品は盤面模型・説明とRelease選択を持つ。動きを減らすOS設定では走査線の移動・点滅・グリッチを停止する。Clipboardも日英で同じ構造を使い、配色見本は保存せず、そのページ内だけへ反映する。

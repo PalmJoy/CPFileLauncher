@@ -2,12 +2,84 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>CPClipboard — Your words. One quick paste.</title><meta name="description" content="A snippet tool for Windows and macOS. Tap Ctrl twice, choose your text, and paste it into the app you were using."><meta name="theme-color" content="#0B0F1A">
 <link rel="canonical" href="https://palmjoy.github.io/CPFileLauncher/CPClipboard/"><link rel="alternate" hreflang="en" href="https://palmjoy.github.io/CPFileLauncher/CPClipboard/"><link rel="alternate" hreflang="ja" href="https://palmjoy.github.io/CPFileLauncher/CPClipboard/ja/">
-<link rel="icon" href="assets/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="assets/apple-touch-icon.png"><link rel="stylesheet" href="assets/site.css"><script type="module" src="assets/site.js"></script></head>
-<body><header class="topbar"><div class="wrap"><a class="brand" href="#top">CPClipboard</a><nav class="nav" aria-label="Sections"><a href="#download">Download</a><a href="#features">How it works</a><a href="#setup">Setup</a></nav><div class="langs"><a href="./" lang="en" aria-current="page">EN</a> / <a href="ja/#setup" lang="ja" >JA</a></div></div></header>
-<main id="top"><section class="hero"><div class="wrap"><div><span class="tag">CYBERPUNK CLIPBOARD</span><h1>CP<span class="accent">Clipboard</span></h1><h2>Your words. One quick paste.</h2><p class="lead">A snippet tool for Windows and macOS. Tap Ctrl twice, choose your text, and paste it into the app you were using.</p><div class="actions"><a class="btn" href="#download" data-hero-download><span class="cut" data-hero-label>Download</span></a><a class="alt" href="#download" data-hero-other hidden>Other platforms</a><a class="alt" href="#features">How it works ↓</a></div><div class="chips"><span class="chip">Windows · macOS</span><span class="chip c2">GPL-3.0-only</span><span class="chip">Free</span></div></div>
-<div><div class="snippet-board brackets" role="img" aria-label="Illustration of a snippet board"><div class="snippet-tabs"><span class="on">0 Work</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span></div><div class="snippet-row selected">Thanks for getting in touch.</div><div class="snippet-row ">Thank you for reviewing this.</div><div class="snippet-row ">Sounds good. ⏎ I will follow up shortly.</div><div class="snippet-row ">https://example.com/</div><div class="snippet-row ">About our next meeting</div><div class="board-note">CTRL × 2 → SELECT → PASTE</div></div><p class="board-note">Illustration · not an app screenshot</p></div></div></section>
-<section id="features" class="site-section"><div class="wrap"><div class="section-head"><span class="tag">WORKFLOW / 01—03</span><h2>How it works</h2></div><div class="guide-grid"><article><span class="tag">01 / OPEN</span><h3>Tap Ctrl twice</h3><p>Or use Alt / ⌥ + middle-click. Change the triggers in Settings.</p></article><article><span class="tag">02 / CHOOSE</span><h3>Organize into ten groups</h3><p>Edit text and group names in Settings → Snippets. Switch groups with number keys 0–9.</p></article><article><span class="tag">03 / PASTE</span><h3>Choose and paste</h3><p>Press Enter or click to paste into your previous app. Hold Shift while choosing to copy only.</p></article></div><table class="shortcut-table"><caption>Board shortcuts</caption><tbody><tr><td>↑ / ↓</td><td>Select a snippet</td></tr><tr><td>Enter / Click</td><td>Paste</td></tr><tr><td>Shift + Enter / Shift + Click</td><td>Copy only</td></tr><tr><td>0–9</td><td>Switch groups</td></tr><tr><td>Esc</td><td>Close the board</td></tr></tbody></table></div></section>
-<section id="download" class="site-section"><div class="wrap"><span class="tag">DOWNLOAD / WINDOWS + MACOS</span><h2>Download</h2><p class="release-state" data-release-status>No public release is available yet. Download archives will appear here after a release is published.</p><div class="platform-links" data-downloads></div><p>Windows 10 (1809+) / 11 · x64 / ARM64<br>macOS 15+ · Apple silicon</p><a href="https://github.com/PalmJoy/CPFileLauncher/releases">All releases, SHA256 checksums and attestations ↗</a></div></section>
-<section id="setup" class="site-section"><div class="wrap"><span class="tag">SETUP / FIRST LAUNCH</span><h2>Setup</h2><div class="guide-grid"><article><h3>Windows</h3><p>Extract the zip and run CPClipboard.exe. Keep uiohook.dll next to the executable. Pasting into an elevated app is unavailable; the snippet is copied instead.</p></article><article><h3>macOS</h3><p>Extract the zip and move CPClipboard.app to Applications. Allow CPClipboard in System Settings → Privacy & Security → Accessibility. Until permission is granted, selecting a snippet only copies it. For an unnotarized build, check its source before allowing it in Privacy & Security.</p></article></div><h3>Add your snippets</h3><p>Open Settings → Snippets from the tray or menu bar, choose a group, and select Add. Text edits are saved automatically.</p></div></section>
-<section class="site-section"><div class="wrap"><h2>Storage and clipboard</h2><p>Snippets are stored on your computer. By default, your selected snippet stays on the clipboard after pasting for reuse with Ctrl+V / ⌘V. Restoring the previous clipboard is optional and off by default. Clipboard history, variables, macros and cloud sync are outside the app’s scope.</p><p><a href="https://github.com/PalmJoy/CPFileLauncher/blob/main/README.md">Usage guide and data locations ↗</a></p></div></section></main>
-<footer class="site-footer"><div class="wrap">Copyright © 2026 PalmJoy · <a href="https://github.com/PalmJoy/CPFileLauncher/blob/main/LICENSE">GPL-3.0-only</a> · <a href="https://github.com/PalmJoy/CPFileLauncher/blob/main/THIRD-PARTY-NOTICES.txt">Third-party notices</a> · <a href="https://palmjoy.github.io/CPFileLauncher/">CPFileLauncher</a></div></footer></body></html>
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="assets/apple-touch-icon.png"><link rel="stylesheet" href="assets/site.css"><script type="module" src="assets/site.js"></script><script type="module" src="../shared/site-ui.js"></script></head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-term" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16"/><path d="M7 9l3 3-3 3M12 15h5"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 6h7l2 2h9v11H3z"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/></symbol>
+  <symbol id="i-doc" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6zM14 3v4h4M9 12h6M9 16h6"/></symbol>
+  <symbol id="i-music" viewBox="0 0 24 24"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></symbol>
+  <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-9 9"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14"/><path d="M3 6l9 7 9-7"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol>
+  <symbol id="i-code" viewBox="0 0 24 24"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5M14 4l-4 16"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 4h16v12H9l-5 4z"/></symbol>
+  <symbol id="i-pen" viewBox="0 0 24 24"><path d="M4 20l4-1 11-11-3-3L5 16zM14 6l3 3"/></symbol>
+  <symbol id="i-calc" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18"/><path d="M8 7h8M8 12h2M14 12h2M8 16h2M14 16h2"/></symbol>
+  <symbol id="i-server" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="7"/><rect x="4" y="13" width="16" height="7"/><path d="M8 7.5h.01M8 16.5h.01"/></symbol>
+  <symbol id="i-game" viewBox="0 0 24 24"><path d="M6 8h12a3 3 0 013 3v3a3 3 0 01-5 2l-1-1H9l-1 1a3 3 0 01-5-2v-3a3 3 0 013-3zM8 11v3M6.5 12.5h3M16 12h.01M18 13h.01"/></symbol>
+  <symbol id="i-box" viewBox="0 0 24 24"><path d="M3 7l9-4 9 4v10l-9 4-9-4zM3 7l9 4 9-4M12 11v10"/></symbol>
+  <symbol id="i-video" viewBox="0 0 24 24"><rect x="3" y="6" width="13" height="12"/><path d="M16 10l5-3v10l-5-3"/></symbol>
+</svg>
+
+<header class="topbar">
+  <div class="wrap">
+    <a class="brand" href="#top"><img src="assets/icon.svg" alt="" width="28" height="28">CPClipboard</a>
+    <nav class="nav" aria-label="Sections">
+      <a href="#download">Download</a>
+      <a href="#features">Features</a>
+      <a href="#setup">Setup</a>
+      <a href="#license">License</a>
+    </nav>
+    <div class="langs"><a href="./" aria-current="page" data-lang="en" lang="en">EN</a><span aria-hidden="true">|</span><a href="ja/" data-lang="ja" lang="ja">JA</a></div>
+    <a class="gh" href="https://github.com/PalmJoy/CPFileLauncher" aria-label="GitHub"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38v-1.33c-2.23.48-2.7-1.07-2.7-1.07-.36-.92-.89-1.17-.89-1.17-.73-.5.05-.49.05-.49.8.06 1.23.83 1.23.83.72 1.23 1.88.87 2.34.67.07-.52.28-.87.5-1.07-1.78-.2-3.65-.89-3.65-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.6 7.6 0 014 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48v2.2c0 .21.15.46.55.38A8 8 0 0016 8c0-4.42-3.58-8-8-8z"/></svg><span>GitHub</span></a>
+  </div>
+</header>
+
+<main id="top">
+<section class="hero"><div class="wrap">
+  <div><span class="tag">CyberPunk Clipboard</span>
+    <h1 class="glitch-once">CP<span class="accent">Clipboard</span></h1>
+    <p class="tagline">Your words. One quick paste.</p><p class="lead">A snippet tool for Windows and macOS. Tap Ctrl twice, choose your text, and paste it into the app you were using.</p>
+    <div class="console" aria-hidden="true"><span class="p">&gt;</span> fetch cpclipboard --target <span data-console-target>all</span> <span class="cursor"></span></div>
+    <div class="actions"><a class="btn" href="#download" data-hero-download><span class="cut"><svg aria-hidden="true"><use href="#i-down"/></svg><span data-hero-label>Download</span><span data-version>v1.0.0</span></span></a><a class="alt" href="#download" data-hero-other hidden>Other platforms</a></div>
+    <div class="chips"><span class="chip" data-version>v1.0.0</span><span class="chip c2">GPL-3.0</span><span class="chip">Free</span><span class="chip">Windows · macOS</span></div>
+  </div>
+  <div><div class="board-wrap brackets"><div class="board cut" role="img" aria-label="Illustration of the CPClipboard board">
+    <div class="beam"></div><div class="board-tabs snippet-tabs"><span class="on">0 Work</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span></div>
+    <div class="snippet-row selected">Thanks for getting in touch.</div><div class="snippet-row">Thank you for reviewing this.</div><div class="snippet-row">Sounds good. ⏎ I will follow up shortly.</div><div class="snippet-row">https://example.com/</div><div class="snippet-row">About our next meeting</div>
+    <div class="status"><span>GRP 0</span><span class="mid">ITEMS 5</span><span data-clock></span></div>
+  </div></div>
+        <div class="swatches" role="group" aria-label="Color presets">
+        <span>Colors</span>
+        <button class="swatch" type="button" style="--s1:#00E5FF;--s2:#FF2BD6" data-c1="#00E5FF" data-c2="#FF2BD6" aria-pressed="true" aria-label="Cyan"></button>
+        <button class="swatch" type="button" style="--s1:#FF2E4D;--s2:#37EBF3" data-c1="#FF2E4D" data-c2="#37EBF3" aria-pressed="false" aria-label="Red"></button>
+        <button class="swatch" type="button" style="--s1:#4D8BFF;--s2:#C77DFF" data-c1="#4D8BFF" data-c2="#C77DFF" aria-pressed="false" aria-label="Blue"></button>
+        <button class="swatch" type="button" style="--s1:#39FF88;--s2:#FF4FD8" data-c1="#39FF88" data-c2="#FF4FD8" aria-pressed="false" aria-label="Green"></button>
+        <button class="swatch" type="button" style="--s1:#B967FF;--s2:#00E5FF" data-c1="#B967FF" data-c2="#00E5FF" aria-pressed="false" aria-label="Purple"></button>
+      </div>
+  <p class="board-note">Illustration · not an app screenshot</p></div>
+</div></section>
+<section class="block" id="download"><div class="wrap"><div class="sec-head"><span class="num">01 // Download</span><h2>Get CPClipboard</h2><p>Download the zip for your PC, extract it, and launch the app. No installer is needed.</p></div><p class="small" data-release-status>Checking the latest release. If unavailable, check the GitHub releases page.</p><div class="grid-3" data-downloads></div><div class="dl-notes"><span>This build is not notarized. See the first-launch instructions.</span><a href="#setup">First launch</a><a href="https://github.com/PalmJoy/CPFileLauncher/releases/tag/cpclipboard-v1.0.0" data-release-link>Release files, SHA256 checksums and attestations ↗</a></div></div></section>
+<section class="block" id="features"><div class="wrap"><div class="sec-head"><span class="num">02 // Workflow</span><h2>How it works</h2></div><div class="grid-3"><article class="feat cut"><div class="specimen" aria-hidden="true"><span class="workflow-number">01</span></div><div class="body"><h3>Tap Ctrl twice</h3><p>Or use Alt / ⌥ + middle-click. Change the triggers in Settings.</p></div></article><article class="feat cut"><div class="specimen" aria-hidden="true"><span class="workflow-number">02</span></div><div class="body"><h3>Organize into ten groups</h3><p>Edit text and group names in Settings → Snippets. Switch groups with number keys 0–9.</p></div></article><article class="feat cut"><div class="specimen" aria-hidden="true"><span class="workflow-number">03</span></div><div class="body"><h3>Choose and paste</h3><p>Press Enter or click to paste into your previous app. Hold Shift while choosing to copy only.</p></div></article></div><h3 class="sub-h">Board shortcuts</h3><div class="table-wrap"><table class="req"><caption class="visually-hidden">Board shortcuts</caption><tbody><tr><td><kbd>↑</kbd> / <kbd>↓</kbd></td><td>Select a snippet</td></tr><tr><td>Enter / Click</td><td>Paste</td></tr><tr><td>Shift + Enter / Shift + Click</td><td>Copy only</td></tr><tr><td>0–9</td><td>Switch groups</td></tr><tr><td>Esc</td><td>Close the board</td></tr></tbody></table></div></div></section>
+<section class="block" id="setup"><div class="wrap"><div class="sec-head"><span class="num">03 // Setup</span><h2>First launch</h2></div><div class="os-tabs"><input type="radio" name="setup-os" id="os-win" checked><input type="radio" name="setup-os" id="os-mac"><div class="tablist"><label for="os-win">Windows</label><label for="os-mac">macOS</label></div><div class="panel panel-win"><ol class="steps"><li><strong>Extract the zip</strong><p>Keep the CPClipboard folder together, with <code>uiohook.dll</code> next to <code>CPClipboard.exe</code>.</p></li><li><strong>Launch the app</strong><p>Open <code>CPClipboard.exe</code>. Access Settings from the tray menu.</p></li><li><strong>Open the board</strong><p>Tap <kbd>Ctrl</kbd> twice and choose a snippet. Pasting into an elevated app is unavailable; the snippet is copied instead.</p></li></ol></div><div class="panel panel-mac"><ol class="steps"><li><strong>Move to Applications</strong><p>Extract the zip and move <code>CPClipboard.app</code> to Applications before opening it.</p></li><li><strong>Allow the first launch</strong><p>This build is not notarized. Verify its source before allowing it in System Settings → Privacy &amp; Security.</p></li><li><strong>Allow Accessibility</strong><p>Allow CPClipboard in System Settings → Privacy &amp; Security → Accessibility. Until permission is granted, selecting a snippet only copies it.</p></li><li><strong>Open the board</strong><p>Tap <kbd>Ctrl</kbd> twice and choose a snippet.</p></li></ol></div></div><h3 class="sub-h">Add your snippets</h3><p>Open Settings → Snippets from the tray or menu bar, choose a group, and select Add. Text edits are saved automatically.</p></div></section>
+<section class="block" id="storage"><div class="wrap"><div class="sec-head"><span class="num">04 // Storage</span><h2>Storage and clipboard</h2></div><div class="license-card cut"><p>Snippets are stored on your computer. By default, your selected snippet stays on the clipboard after pasting for reuse with Ctrl+V / ⌘V. Restoring the previous clipboard is optional and off by default. Clipboard history, variables, macros and cloud sync are outside the app’s scope.</p><p><a href="https://github.com/PalmJoy/CPFileLauncher/blob/main/CPClipboard/README.md">Usage guide and data locations ↗</a></p></div></div></section>
+<section class="block" id="license"><div class="wrap"><div class="sec-head"><span class="num">05 // License</span><h2>License</h2></div><div class="license-card cut"><p>Copyright © 2026 PalmJoy · <a href="https://github.com/PalmJoy/CPFileLauncher/blob/main/CPClipboard/LICENSE">GPL-3.0-only</a></p><p>Free to use, modify and redistribute under the terms of the license.</p><p><a href="https://github.com/PalmJoy/CPFileLauncher/blob/main/CPClipboard/THIRD-PARTY-NOTICES.txt">Third-party notices</a></p><p class="small">Chakra Petch / Share Tech Mono · SIL Open Font License 1.1 · <a href="assets/fonts/OFL-ChakraPetch.txt">Chakra Petch</a> / <a href="assets/fonts/OFL-ShareTechMono.txt">Share Tech Mono</a></p></div></div></section>
+</main>
+<footer>
+  <div class="wrap">
+    <span>© 2026 PalmJoy</span>
+    <nav aria-label="Footer">
+      <a href="https://github.com/PalmJoy/CPFileLauncher">GitHub</a>
+      <a href="https://github.com/PalmJoy/CPFileLauncher/issues">Issues</a>
+      <a href="https://github.com/PalmJoy/CPFileLauncher/blob/main/LICENSE">License</a>
+      <a href="https://github.com/PalmJoy/CPFileLauncher/blob/main/CPClipboard/THIRD-PARTY-NOTICES.txt">Third-party notices</a>
+    </nav>
+  </div>
+</footer>
+
+</body>
+</html>

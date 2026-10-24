@@ -8,9 +8,13 @@ async function run(response,lang='en',navigator={}){
   const status={textContent:'unreleased'},downloads={children:[],appendChild(a){this.children.push(a);}};
   const hero={href:'#download'},heroLabel={textContent:'Download'},other={hidden:true};
   const elements={'[data-release-status]':status,'[data-downloads]':downloads,'[data-hero-download]':hero,'[data-hero-label]':heroLabel,'[data-hero-other]':other};
-  const document={documentElement:{lang},querySelector:s=>elements[s]??null,createElement:()=>({})};
+  function node(tag) { return {tag,children:[],setAttribute(){},appendChild(child){this.children.push(child);}}; }
+  const document={documentElement:{lang},querySelector:s=>elements[s]??null,querySelectorAll:()=>[],getElementById:()=>null,createElement:node};
   await vm.runInNewContext(code,{document,navigator,URL,selectRelease,fetch:async()=>response});
-  return {status:status.textContent,links:downloads.children,hero,heroLabel,other};
+  const links=[];
+  function visit(node){if(node.tag==='a')links.push(node);for(const child of node.children??[])visit(child);}
+  visit(downloads);
+  return {status:status.textContent,links,cards:downloads.children,hero,heroLabel,other};
 }
 test('unpublished, draft and prerelease never expose downloads',async()=>{
   for(const response of [{status:404},{ok:true,json:async()=>([{draft:true}])},{ok:true,json:async()=>([{prerelease:true}])}]){
@@ -22,7 +26,8 @@ test('only known archives from the expected GitHub release path are linked',asyn
     {name:'CPClipboard-win-x64.zip',browser_download_url:'https://github.com/PalmJoy/CPFileLauncher/releases/download/cpclipboard-v0.1.0/CPClipboard-win-x64.zip'},
     {name:'CPClipboard-win-arm64.zip',browser_download_url:'https://example.com/untrusted.zip'},
     {name:'unrelated.zip',browser_download_url:'https://github.com/PalmJoy/CPFileLauncher/releases/download/cpclipboard-v0.1.0/unrelated.zip'}]}])});
-  assert.equal(result.links.length,1);assert.equal(result.links[0].textContent,'Windows · x64 ↓ ZIP');
+  assert.equal(result.links.length,1);assert.equal(result.links[0].children[0].textContent,'↓ Download');
+  assert.equal(result.cards[0].className,'dl-item');
   assert.equal(result.status,'Latest release: cpclipboard-v0.1.0');
 });
 test('network failure gives a localized fallback without download links',async()=>{

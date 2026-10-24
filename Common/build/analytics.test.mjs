@@ -61,7 +61,7 @@ test('unsupported or unavailable analytics does not affect the click handler',as
 test('both languages load only the shared tracker and redirect entries do not track',()=>{
   for(const product of ['CPClipboard','CPFileLauncher'])for(const lang of ['','ja/']){
     const html=readFileSync(new URL(`../../docs/${product}/${lang}index.html`,import.meta.url),'utf8');
-    assert.equal((html.match(/src="[^"]*analytics.js"/g)||[]).length,1);
+    assert.equal((html.match(/src="[^"]*analytics.js(?:\?v=\d+)?"/g)||[]).length,1);
     assert.ok(html.includes(`data-product="${product}"`));assert.ok(html.includes('shared/analytics.js'));
   }
   for(const path of ['index.html','ja/index.html'])assert.ok(!readFileSync(new URL('../../docs/'+path,import.meta.url),'utf8').includes('analytics.js'));

@@ -1,4 +1,5 @@
 # リリース: cpclipboard-v<Version> のタグ push で両 OS のテスト → zip → 下書きの Release（SPEC §10.4「リリース」）。
+# 注釈付きタグに Release-Publish: true がある場合はテスト・ビルド後に公開する。
 # 手動実行（workflow_dispatch）は試運転で、zip を Artifact に置くだけ（Release は作らない）。
 # ビルドオプションは CPClipboard/src/build/publish-*.{ps1,sh} に一元化する。ここに dotnet publish を書かない
 name: release-CPClipboard
@@ -27,6 +28,7 @@ jobs:
     timeout-minutes: 30
     outputs:
       version: ${{ steps.v.outputs.version }}
+      publish: ${{ steps.v.outputs.publish }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -39,10 +41,15 @@ jobs:
           VERSION=$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' CPClipboard/src/CPClipboard.Desktop/CPClipboard.Desktop.csproj | head -1)
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "csproj の <Version>: $VERSION"
+          echo "publish=false" >> "$GITHUB_OUTPUT"
           if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
             if [[ ! "$GITHUB_REF_NAME" =~ ^cpclipboard-v[0-9]+\.[0-9]+\.[0-9]+$ || "$GITHUB_REF_NAME" != "cpclipboard-v$VERSION" ]]; then
               echo "::error::タグ $GITHUB_REF_NAME と csproj の <Version> $VERSION が一致しません（タグは cpclipboard-v<Version>）"
               exit 1
+            fi
+            if [[ "$(git cat-file -t "$GITHUB_REF")" == "tag" ]] &&
+              git for-each-ref --format='%(contents)' "$GITHUB_REF" | grep -Fxq 'Release-Publish: true'; then
+              echo "publish=true" >> "$GITHUB_OUTPUT"
             fi
           fi
 
@@ -119,6 +126,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.ref_name }}
           REPO: ${{ github.repository }}
+          PUBLISH_RELEASE: ${{ needs.check-version.outputs.publish }}
         run: |
           if gh release view "$TAG" --repo "$REPO" > /dev/null 2>&1; then
             if [[ "$(gh release view "$TAG" --repo "$REPO" --json isDraft --jq .isDraft)" != "true" ]]; then
@@ -130,4 +138,7 @@ jobs:
             gh release create "$TAG" dist/* --repo "$REPO" --draft --latest=false --verify-tag \
               --title "CPClipboard $TAG" --generate-notes \
               --notes "First launch / 初回の起動: https://palmjoy.github.io/CPFileLauncher/CPClipboard/#setup"
+          fi
+          if [[ "$PUBLISH_RELEASE" == "true" ]]; then
+            gh release edit "$TAG" --repo "$REPO" --draft=false --latest=false
           fi

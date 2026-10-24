@@ -41,7 +41,7 @@ Macの署名pinは製品ごとの `work/macos-signing.identity` に置きます�
 
 ## 配布サイトとRelease
 
-Launcherの既存公開URL・ダウンロードファイル名・`vX.Y.Z`タグを維持します。Clipboardは同じrepositoryに `cpclipboard-vX.Y.Z`タグでReleaseを作り、Launcherのlatest指定を置き換えません。更新確認は製品タグで分離します。CIの手動実行はArtifactを作成します。Launcherの注釈付きタグによる公開指定は既存の運用に従い、Clipboardは下書きReleaseを作成します。
+Launcherの既存公開URL・ダウンロードファイル名・`vX.Y.Z`タグを維持します。Clipboardは同じrepositoryに `cpclipboard-vX.Y.Z`タグでReleaseを作り、Launcherのlatest指定を置き換えません。更新確認は製品タグで分離します。CIの手動実行はArtifactを作成します。Launcherの注釈付きタグによる公開指定は既存の運用に従い、Clipboardも注釈付きタグに単独行 `Release-Publish: true` を指定した場合はテスト・ビルド後に公開し、それ以外は下書きReleaseを作成します。
 
 Launcherのサイトは `docs/CPFileLauncher/` を編集後、次のコマンドで共通Web部品を同期します。
 

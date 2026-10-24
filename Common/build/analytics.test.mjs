@@ -23,7 +23,7 @@ test('one explicit page_view identifies each product and language, with automati
     const r=setup(product,lang);await r.completed;
     assert.equal(r.events.length,1);assert.equal(r.events[0].name,'page_view');
     assert.equal(r.events[0].params.content_group,product);assert.equal(r.events[0].params.product,product);
-    assert.equal(r.events[0].params.language,lang);assert.ok(r.events[0].params.page_path.includes('/'+product+'/'));
+    assert.equal(r.events[0].params.language,lang);assert.equal(r.events[0].params.page_language,lang);assert.ok(r.events[0].params.page_path.includes('/'+product+'/'));
     assert.equal(r.configs[1].config.send_page_view,false);
   }
 });
@@ -34,7 +34,7 @@ test('hero and card downloads record app, actual ZIP platform, language and plac
       r.press(`https://github.com/PalmJoy/CPFileLauncher/releases/download/tag/${product}-${rid}.zip`,placement);
       const event=r.events.at(-1);
       assert.equal(event.name,'download_click');assert.equal(event.params.content_group,product);
-      assert.equal(event.params.platform,rid);assert.equal(event.params.placement,placement);assert.equal(event.params.language,'ja');
+      assert.equal(event.params.platform,rid);assert.equal(event.params.placement,placement);assert.equal(event.params.language,'ja');assert.equal(event.params.page_language,'ja');
       assert.equal(event.params.file_name,`${product}-${rid}.zip`);
     }
     assert.equal(r.events.length,7);

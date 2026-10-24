@@ -15,4 +15,4 @@ C#の共有対象は `shared-sources.json`、コンパイル条件は `SharedIte
 
 既存のFirebase/GA4プロパティ（G-2VWQWZKZC4）で両製品を計測します。GA4の「ページとスクリーン」ではページパスまたは「コンテンツグループ」（CPFileLauncher / CPClipboard）でアクセスを分けます。DLボタン押下は既存の `download_click` イベントです。
 
-`download_click`には `content_group`・`product`・`platform`（win-x64 / win-arm64 / macos-arm64）・`language`・`placement`（hero / platform_card）・`file_name`・`link_url`を付けます。独自パラメータを通常のレポートや探索で使う場合は、GA4管理画面のカスタム定義で必要な項目をイベントスコープのカスタムディメンションとして登録します。登録済みの同名項目はそのまま使えます。計測はページ表示・ボタン押下であり、ダウンロード完了の計測ではありません。
+`download_click`には `content_group`・`product`・`platform`（win-x64 / win-arm64 / macos-arm64）・`page_language`（ページ言語）・`placement`（hero / platform_card）・`file_name`・`link_url`を付けます。独自パラメータを通常のレポートや探索で使う場合は、GA4管理画面のカスタム定義で必要な項目をイベントスコープのカスタムディメンションとして登録します。登録済みの同名項目はそのまま使えます。計測はページ表示・ボタン押下であり、ダウンロード完了の計測ではありません。

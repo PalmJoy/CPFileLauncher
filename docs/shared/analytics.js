@@ -24,6 +24,7 @@ export async function startAnalytics({document = globalThis.document, location =
     product,
     content_group: product,
     language: document.documentElement.lang || 'en',
+    page_language: document.documentElement.lang || 'en',
     page_path: location.pathname,
     page_location: location.href
   };

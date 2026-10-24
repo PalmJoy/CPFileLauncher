@@ -773,15 +773,7 @@ You can download the new version from the website.</value></data>
     <value>The clipboard is busy. Try again.</value>
   </data>
   <data name="Templates_Sample_1" xml:space="preserve">
-    <value>Thank you for your email.
-Best regards,</value>
-  </data>
-  <data name="Templates_Sample_2" xml:space="preserve">
-    <value>Thanks for your time today.</value>
-  </data>
-  <data name="Templates_Sample_3" xml:space="preserve">
-    <value>123 Main Street
-Springfield</value>
+    <value>こんにちは、</value>
   </data>
   <data name="StartupGuide_Description" xml:space="preserve">
     <value>Register snippets in the Edit window. Pick one on the board to paste it into the app you were using.</value>
@@ -933,4 +925,7 @@ Springfield</value>
   <data name="Settings_Snippets_ClipboardEmpty" xml:space="preserve"><value>The clipboard contains no text to add.</value></data>
   <data name="Settings_Snippets_ReadOnlyBanner" xml:space="preserve"><value>This snippet data was created by a newer version. Changes apply only to this session and won’t be saved.</value></data>
   <data name="Editor_Title" xml:space="preserve"><value>Edit</value></data>
+  <data name="Settings_Tab_Popup" xml:space="preserve">
+    <value>Popup</value>
+  </data>
 </root>

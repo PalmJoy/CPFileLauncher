@@ -139,7 +139,7 @@ public sealed class SettingsUiTests : IDisposable
             tabs.SelectedItem = tab;
             Dispatcher.UIThread.RunJobs();
         }
-        Assert.Equal(7, tabs.Items.Count);
+        Assert.Equal(8, tabs.Items.Count);
         w.Close();
     }
 
@@ -249,7 +249,7 @@ public sealed class SettingsUiTests : IDisposable
     {
         _boardPosition = new Avalonia.PixelPoint(300, 400);
         var w = OpenSettings();
-        SelectTab(w, Strings.Settings_Tab_Triggers);
+        SelectTab(w, Strings.Settings_Tab_Popup);
         var tab = Find<TabControl>(w);
         var page = (Control)tab.SelectedContent!;
         // 表示位置の 2 組（呼び出しタブには 2 回押しのキーやマウス操作の ComboBox も並ぶ）
@@ -344,7 +344,7 @@ public sealed class SettingsUiTests : IDisposable
     public void カーソルの位置の3x3はキーボードとマウス共通の1つで保存され_どちらもカーソル位置でなければ無効()
     {
         var w = OpenSettings();
-        SelectTab(w, Strings.Settings_Tab_Triggers);
+        SelectTab(w, Strings.Settings_Tab_Popup);
         var picker = w.GetVisualDescendants().OfType<AnchorPicker>().Single();
         Assert.Equal(CursorAnchor.Top, picker.Value);
         Assert.True(picker.Cells[(int)CursorAnchor.Top].IsChecked);
@@ -540,15 +540,27 @@ public sealed class SettingsUiTests : IDisposable
     [AvaloniaTheory]
     [InlineData("en")]
     [InlineData("ja")]
-    public void 設定画面のタブはアウトラインで_7つとも1行に収まる(string culture)
+    public void 設定画面のタブはアウトラインで_8つとも1行に収まる(string culture)
     {
         var saved = System.Globalization.CultureInfo.CurrentUICulture;
         System.Globalization.CultureInfo.CurrentUICulture = new System.Globalization.CultureInfo(culture);
         SettingsWindow w;
-        try { w = OpenSettings(); }
+        string[] expected;
+        try
+        {
+            expected = new[]
+            {
+                Strings.Settings_Tab_General, Strings.Settings_Tab_Appearance,
+                Strings.Settings_Tab_Effects, Strings.Settings_Tab_Popup,
+                Strings.Settings_Tab_Triggers, Strings.Settings_Tab_Paste,
+                Strings.Settings_Tab_Data, Strings.Settings_Tab_Advanced,
+            };
+            w = OpenSettings();
+        }
         finally { System.Globalization.CultureInfo.CurrentUICulture = saved; }
         var tabs = w.GetVisualDescendants().OfType<TabItem>().ToList();
-        Assert.Equal(7, tabs.Count);
+        Assert.Equal(8, tabs.Count);
+        Assert.Equal(expected, tabs.Select(t => ((TextBlock)t.Header!).Text));
         Assert.All(tabs, t => Assert.Equal(new Avalonia.Thickness(1), t.BorderThickness));
         double top = tabs[0].Bounds.Y;
         Assert.All(tabs, t => Assert.Equal(top, t.Bounds.Y)); // 折り返していない

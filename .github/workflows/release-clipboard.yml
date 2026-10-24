@@ -1,5 +1,6 @@
 # リリース: cpclipboard-v<Version> のタグ push で両 OS のテスト → zip → 下書きの Release（SPEC §10.4「リリース」）。
 # 注釈付きタグに Release-Publish: true がある場合はテスト・ビルド後に公開する。
+# 注釈付きタグに Release-Replace-Assets: true がある場合だけ公開済みアセットの再公開を許可する。
 # 手動実行（workflow_dispatch）は試運転で、zip を Artifact に置くだけ（Release は作らない）。
 # ビルドオプションは CPClipboard/src/build/publish-*.{ps1,sh} に一元化する。ここに dotnet publish を書かない
 name: release-CPClipboard
@@ -29,6 +30,7 @@ jobs:
     outputs:
       version: ${{ steps.v.outputs.version }}
       publish: ${{ steps.v.outputs.publish }}
+      replace-assets: ${{ steps.v.outputs.replace-assets }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -42,6 +44,7 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "csproj の <Version>: $VERSION"
           echo "publish=false" >> "$GITHUB_OUTPUT"
+          echo "replace-assets=false" >> "$GITHUB_OUTPUT"
           if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
             if [[ ! "$GITHUB_REF_NAME" =~ ^cpclipboard-v[0-9]+\.[0-9]+\.[0-9]+$ || "$GITHUB_REF_NAME" != "cpclipboard-v$VERSION" ]]; then
               echo "::error::タグ $GITHUB_REF_NAME と csproj の <Version> $VERSION が一致しません（タグは cpclipboard-v<Version>）"
@@ -50,6 +53,10 @@ jobs:
             if [[ "$(git cat-file -t "$GITHUB_REF")" == "tag" ]] &&
               git for-each-ref --format='%(contents)' "$GITHUB_REF" | grep -Fxq 'Release-Publish: true'; then
               echo "publish=true" >> "$GITHUB_OUTPUT"
+            fi
+            if [[ "$(git cat-file -t "$GITHUB_REF")" == "tag" ]] &&
+              git for-each-ref --format='%(contents)' "$GITHUB_REF" | grep -Fxq 'Release-Replace-Assets: true'; then
+              echo "replace-assets=true" >> "$GITHUB_OUTPUT"
             fi
           fi
 
@@ -127,10 +134,11 @@ jobs:
           TAG: ${{ github.ref_name }}
           REPO: ${{ github.repository }}
           PUBLISH_RELEASE: ${{ needs.check-version.outputs.publish }}
+          REPLACE_ASSETS: ${{ needs.check-version.outputs.replace-assets }}
         run: |
           if gh release view "$TAG" --repo "$REPO" > /dev/null 2>&1; then
-            if [[ "$(gh release view "$TAG" --repo "$REPO" --json isDraft --jq .isDraft)" != "true" ]]; then
-              echo "::error::Published release assets cannot be replaced. Create a new version."
+            if [[ "$(gh release view "$TAG" --repo "$REPO" --json isDraft --jq .isDraft)" != "true" && "$REPLACE_ASSETS" != "true" ]]; then
+              echo "::error::Published release assets cannot be replaced without explicit Release-Replace-Assets: true tag annotation."
               exit 1
             fi
             gh release upload "$TAG" dist/* --clobber --repo "$REPO"

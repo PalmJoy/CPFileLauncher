@@ -54,6 +54,7 @@ internal sealed class SettingsWindow : ChromeWindow
                 Tab(Strings.Settings_Tab_General, GeneralTab()),
                 Tab(Strings.Settings_Tab_Appearance, AppearanceTab()),
                 Tab(Strings.Settings_Tab_Effects, EffectsTab()),
+                Tab(Strings.Settings_Tab_Popup, PopupTab()),
                 Tab(Strings.Settings_Tab_Triggers, TriggersTab()),
                 Tab(Strings.Settings_Tab_Paste, PasteTab()),
                 Tab(Strings.Settings_Tab_Data, DataTab()),
@@ -322,10 +323,10 @@ internal sealed class SettingsWindow : ChromeWindow
         return list;
     }
 
-    /// <summary>表示位置と閉じる条件（呼び出しタブの後半。SETTINGS.md 呼び出しタブ）。</summary>
-    private void PopupRows(StackPanel p)
+    /// <summary>表示位置と閉じる条件。</summary>
+    private Control PopupTab()
     {
-        p.Children.Add(Themed.Glow(new TextBlock { Text = Strings.Settings_Triggers_PositionHeading, FontWeight = FontWeight.SemiBold, Margin = new Thickness(0, 8, 0, 0) }));
+        var p = Panel();
         PlacementGroup(p, Strings.Settings_Triggers_KeyboardPlacement, s => s.Popup.Keyboard);
         PlacementGroup(p, Strings.Settings_Triggers_MousePlacement, s => s.Popup.Mouse);
 
@@ -344,7 +345,6 @@ internal sealed class SettingsWindow : ChromeWindow
             TextWrapping = TextWrapping.Wrap,
         }));
 
-        p.Children.Add(Themed.Glow(new TextBlock { Text = Strings.Settings_Triggers_CloseHeading, FontWeight = FontWeight.SemiBold, Margin = new Thickness(0, 8, 0, 0) }));
         p.Children.Add(Row(Strings.Settings_Triggers_CloseOnOutside, Toggle(
             s => s.Popup.CloseOnOutsideClick, (s, v) => s.Popup.CloseOnOutsideClick = v, SettingsChange.Popup)));
         p.Children.Add(Row(Strings.Settings_Triggers_CloseOnRetrigger, Toggle(
@@ -356,6 +356,7 @@ internal sealed class SettingsWindow : ChromeWindow
         void UpdateLeave() => distance.IsEnabled = _hub.Current.Popup.CloseOnMouseLeave;
         leave.IsCheckedChanged += (_, _) => UpdateLeave();
         _refreshers.Add(UpdateLeave);
+        return Scroll(p);
     }
 
     // ---------------- 配色（主色・副色。SPEC §3.6「配色」） ----------------
@@ -567,10 +568,6 @@ internal sealed class SettingsWindow : ChromeWindow
         doubleTap.IsCheckedChanged += (_, _) => UpdateTapEnabled();
         _refreshers.Add(UpdateTapEnabled);
 
-        p.Children.Add(Themed.Glow(new TextBlock { Text = Strings.Settings_Triggers_Mouse, FontWeight = FontWeight.SemiBold, Margin = new Thickness(0, 8, 0, 0) }));
-        p.Children.Add(new MouseTriggerList(_hub, _refreshers));
-        p.Children.Add(Themed.Note(new TextBlock { Text = Strings.Settings_Triggers_Mouse_Note, FontSize = 12, TextWrapping = TextWrapping.Wrap }));
-
         p.Children.Add(Row(Strings.Settings_Triggers_UseHotkey, Toggle(
             s => s.Triggers.Hotkey.Enabled, (s, v) => s.Triggers.Hotkey.Enabled = v, SettingsChange.Triggers)));
 
@@ -585,7 +582,9 @@ internal sealed class SettingsWindow : ChromeWindow
         p.Children.Add(Row(Strings.Settings_Triggers_Hotkey, recorder,
             Strings.Settings_Triggers_Hotkey_Note));
 
-        PopupRows(p);
+        p.Children.Add(Themed.Glow(new TextBlock { Text = Strings.Settings_Triggers_Mouse, FontWeight = FontWeight.SemiBold, Margin = new Thickness(0, 8, 0, 0) }));
+        p.Children.Add(new MouseTriggerList(_hub, _refreshers));
+        p.Children.Add(Themed.Note(new TextBlock { Text = Strings.Settings_Triggers_Mouse_Note, FontSize = 12, TextWrapping = TextWrapping.Wrap }));
         return Scroll(p);
     }
 

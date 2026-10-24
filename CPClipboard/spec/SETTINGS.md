@@ -70,18 +70,12 @@ CPFileLauncher と同じ。演出の ID は EFFECTS の表（`groupSwitch` / `ta
 | 　走査線の濃さ | `appearance.hud.scanlineOpacity` | int (%) | **25** | 0〜50、5 刻み（スライダー。範囲外は読み込み時に 0〜50 へ丸め、5 の倍数でなければ最も近い 5 の倍数に） | 共通 | 走査線の不透明度。`ScanlineLayer.Opacity = scanlineOpacity / 100`（トークン `FlHudScanline` はアルファなしの主色。配色を変えても濃さは保たれる）。**0 なら層ごと非表示**。`ValueSlider`（`%` 表示、注記なし）。「走査線」の直下に置き、走査線 OFF の間は無効表示（背景グリッド OFF でグリッドの濃さが無効になるのと同じ扱い）。値の根拠（Mac、Retina）: 4% / 2 px と 12% / 2 px は「見えない」、**25% / 3 px** をユーザーが選定。グリッド（0〜10、1 刻み）より範囲が広いのは、横線だけで面積が小さく濃くないと見えないため。変更時の通知は `Hud`（`Render` の中で `Opacity` を付け直す）。キーが無ければ 25（省略可能な追加。`schemaVersion` は上げない）。リソースキー `Settings_Effects_ScanlineOpacity` |
 | 　走査線の間隔 | `appearance.hud.scanlinePitch` | int (px) | **3** | 2 / 3 / 4（`ComboBox`。それ以外の値は読み込み時に 3 に戻す = `ButtonSize` と同じ扱い。`HudSettings.ScanlinePitches = [2, 3, 4]`） | 共通 | 横線の間隔（n px ごとに 1 本）。`ScanlineLayer.Pitch`（`StyledProperty`、`AffectsRender`）に入れる。UI 表示は「2 px / 3 px / 4 px」（書式リソース `Common_PixelValue` = `{0} px`、両言語同じ。数値は翻訳しない）。「走査線の濃さ」の直下に置き、走査線 OFF の間は無効表示。2 px は細かく濃さを上げると CRT らしい、4 px は粗く目立ちにくい。変更時の通知は `Hud`（`Render` の中で `Pitch` を付け直す = 層の描き直しだけ）。キーが無ければ 3（省略可能な追加。`schemaVersion` は上げない）。リソースキー `Settings_Effects_ScanlinePitch` |
 
-## トリガータブ（`triggers` / `popup`）
+## ポップアップタブ（`popup`）
 
-小見出し「呼び出し方」→「表示位置」→「閉じる条件」の順。
+表示位置（キーボード → マウス）→ カーソルの位置 → 閉じる条件の順。
 
 | 項目名（UI） | JSON キー | 型 | 既定値 | 範囲・選択肢 | OS | 備考 |
 |---|---|---|---|---|---|---|
-| 修飾キーの 2 回押し | `triggers.doubleTap.enabled` | bool | **true** | | 共通 | SPEC §4.1。注記「他のアプリが同じ操作を使っていると両方が反応することがあります。」 |
-| 　キー | `triggers.doubleTap.modifier` | enum | `ctrl` | `ctrl` / `alt` / `shift` / `meta` | 共通 | UI 表示は OS で変える: Win「Ctrl / Alt / Shift / Win」、Mac「⌃ / ⌥ / ⇧ / ⌘」（`Loc.Shortcut`）。2 回押しが OFF の間は無効表示 |
-| 　判定の間隔 | `triggers.doubleTap.intervalMs` | int (ms) | **300** | 200〜500、10 刻み | 共通 | 1 回目を離してから 2 回目を押すまでの上限（SPEC §4.1）。押している時間の上限 250 ms は定数で設定にしない |
-| マウス操作（複数） | `triggers.mouse[]` | 配列 | `[{ enabled: true, button: middle, modifiers: alt }]` | 要素: `enabled`(bool, 既定 true) / `button`(`middle` / `left` / `right` / `x1` / `x2`) / `modifiers`(flags) | 共通 | SPEC §4.2。行ごとに ON/OFF・ボタン・修飾キー、「追加」「削除」。`left` / `right` は修飾キーなしを選べない（UI で弾き、読み込み時は捨ててログ）。`x1` / `x2` は Mac で Mission Control 等と競合する注記。注記「CPFileLauncher の既定（Ctrl + 中クリック）と同じ操作にすると両方が反応します。」 |
-| ホットキーを使う | `triggers.hotkey.enabled` | bool | **false** | | 共通 | SPEC §4.3 |
-| 　ホットキー | `triggers.hotkey.modifiers` / `triggers.hotkey.key` | flags / string | `ctrl, alt` / `V` | 修飾キー 1 つ以上 + SharpHook の `KeyCode` 名から `Vc` を除いたもの | 共通 | 記録欄をクリックしてキーを押して決める（CPFileLauncher と同じ記録欄）。記録中はトリガーの判定を止める |
 | 表示位置（キーボードで開いたとき） | `popup.keyboard.position` | enum | `cursor` | `cursor` / `lastPosition` / `screenCenter` / `fixed` | 共通 | ホットキーで開いたときに使う。UI 表示: カーソル位置 / 前回の位置 / 画面中央 / 固定座標。「カーソル位置」はキーボードでも**マウスカーソル**の位置（キャレット位置は SPEC §12）。カーソル位置は画面内に収まるよう補正（SPEC §3.3） |
 | 　座標 X / Y（キーボード） | `popup.keyboard.x`, `popup.keyboard.y` | int? | null | 画面内 | 共通 | `fixed` のときの座標。`lastPosition` のときは閉じるたびに前回位置として上書き保存される欄（**`lastPosition` を選んでいる組だけ**に書く。`fixed` の組の座標は閉じても変わらない）。単位は OS で異なる（Win: 物理 px、Mac: pt）。UI は `fixed` のときだけ有効 + 「今の盤面の位置を使う」ボタン |
 | 表示位置（マウス操作で開いたとき） | `popup.mouse.position` | enum | `cursor` | 同上 | 共通 | マウストリガーで開いたときに使う。**トレイ／メニューバーアイコンのクリック・メニュー（盤面を表示 / グループ ▸）・2 重起動からの表示もこちら**（SPEC §3.3）。UI は 2 組を同じ見た目で縦に並べ、下に注記「トレイアイコンやメニューから開いたときはマウス操作の設定を使います」 |
@@ -92,6 +86,19 @@ CPFileLauncher と同じ。演出の ID は EFFECTS の表（`groupSwitch` / `ta
 | マウスが離れたら閉じる | `popup.closeOnMouseLeave` | bool | false | | 共通 | SPEC §3.3。表示中だけ 100ms 間隔の `DispatcherTimer` で `IWindowService.GetCursorPosition` を見て、盤面矩形からの距離（Core `MouseLeaveTracker`。矩形の外側までの最短距離）が閾値を超えたら閉じる（フックの移動イベントは使わない）。**一度カーソルが盤面に入ってから**判定を始める（画面中央・固定座標の表示でカーソルが遠い場合に即閉じしないため）。モーダル中（`RunModalAsync`）は判定しない |
 | 離れたとみなす距離 | `popup.mouseLeaveDistance` | int | 200 | 50〜1000（SPEC は「距離設定可」のみ。範囲はここで仮決め） | 共通 | 単位は OS に従う。「マウスが離れたら閉じる」OFF のときスライダーは無効表示 |
 | Esc で閉じる | — | — | 常に有効 | | 共通 | 設定項目ではない（SPEC §3.3） |
+
+## トリガータブ（`triggers`）
+
+修飾キーの 2 回押し → ホットキー → マウス操作の順。
+
+| 項目名（UI） | JSON キー | 型 | 既定値 | 範囲・選択肢 | OS | 備考 |
+|---|---|---|---|---|---|---|
+| 修飾キーの 2 回押し | `triggers.doubleTap.enabled` | bool | **true** | | 共通 | SPEC §4.1。注記「他のアプリが同じ操作を使っていると両方が反応することがあります。」 |
+| 　キー | `triggers.doubleTap.modifier` | enum | `ctrl` | `ctrl` / `alt` / `shift` / `meta` | 共通 | UI 表示は OS で変える: Win「Ctrl / Alt / Shift / Win」、Mac「⌃ / ⌥ / ⇧ / ⌘」（`Loc.Shortcut`）。2 回押しが OFF の間は無効表示 |
+| 　判定の間隔 | `triggers.doubleTap.intervalMs` | int (ms) | **300** | 200〜500、10 刻み | 共通 | 1 回目を離してから 2 回目を押すまでの上限（SPEC §4.1）。押している時間の上限 250 ms は定数で設定にしない |
+| ホットキーを使う | `triggers.hotkey.enabled` | bool | **false** | | 共通 | SPEC §4.3 |
+| 　ホットキー | `triggers.hotkey.modifiers` / `triggers.hotkey.key` | flags / string | `ctrl, alt` / `V` | 修飾キー 1 つ以上 + SharpHook の `KeyCode` 名から `Vc` を除いたもの | 共通 | 記録欄をクリックしてキーを押して決める（CPFileLauncher と同じ記録欄）。記録中はトリガーの判定を止める |
+| マウス操作（複数） | `triggers.mouse[]` | 配列 | `[{ enabled: true, button: middle, modifiers: alt }]` | 要素: `enabled`(bool, 既定 true) / `button`(`middle` / `left` / `right` / `x1` / `x2`) / `modifiers`(flags) | 共通 | SPEC §4.2。行ごとに ON/OFF・ボタン・修飾キー、「追加」「削除」。`left` / `right` は修飾キーなしを選べない（UI で弾き、読み込み時は捨ててログ）。`x1` / `x2` は Mac で Mission Control 等と競合する注記。注記「CPFileLauncher の既定（Ctrl + 中クリック）と同じ操作にすると両方が反応します。」 |
 
 ## 貼り付けタブ（`paste`）
 

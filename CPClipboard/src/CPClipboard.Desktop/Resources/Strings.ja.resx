@@ -747,15 +747,7 @@
     <value>クリップボードを使えませんでした。もう一度お試しください。</value>
   </data>
   <data name="Templates_Sample_1" xml:space="preserve">
-    <value>いつもお世話になっております。
-よろしくお願いいたします。</value>
-  </data>
-  <data name="Templates_Sample_2" xml:space="preserve">
-    <value>お疲れさまです。本日はありがとうございました。</value>
-  </data>
-  <data name="Templates_Sample_3" xml:space="preserve">
-    <value>〒100-0001
-東京都千代田区千代田1-1</value>
+    <value>こんにちは、</value>
   </data>
   <data name="StartupGuide_Description" xml:space="preserve">
     <value>「編集…」から文章を登録できます。盤面で選ぶと、使っていたアプリにそのまま貼り付けます。</value>
@@ -907,4 +899,7 @@
   <data name="Settings_Snippets_ClipboardEmpty" xml:space="preserve"><value>クリップボードに追加できる文字がありません。</value></data>
   <data name="Settings_Snippets_ReadOnlyBanner" xml:space="preserve"><value>新しい版の定型文データのため、変更はこのセッションだけに反映され、保存されません。</value></data>
   <data name="Editor_Title" xml:space="preserve"><value>編集</value></data>
+  <data name="Settings_Tab_Popup" xml:space="preserve">
+    <value>ポップアップ</value>
+  </data>
 </root>

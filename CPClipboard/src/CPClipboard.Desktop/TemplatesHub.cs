@@ -108,12 +108,11 @@ internal sealed class TemplatesHub
 /// <summary>初回の例文（SPEC §9.3）。文言は UI 言語のリソースから（Core は文言を持たない）。</summary>
 internal static class TemplateSamples
 {
-    /// <summary>グループ 1 が空なら例文を 3 件入れる。</summary>
+    /// <summary>グループ 1 が空なら例文を 1 件入れる。</summary>
     public static void Fill(TemplateBook book)
     {
         var group = book[1];
         if (group.Snippets.Count > 0) return;
-        foreach (var text in new[] { Strings.Templates_Sample_1, Strings.Templates_Sample_2, Strings.Templates_Sample_3 })
-            group.Snippets.Add(new Snippet { Text = TemplateBook.NormalizeNewlines(text) });
+        group.Snippets.Add(new Snippet { Text = Strings.Templates_Sample_1 });
     }
 }

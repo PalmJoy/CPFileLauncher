@@ -50,7 +50,7 @@ UI 文字列（SPEC §7）の **英訳の正**。`src/CPClipboard.Desktop/Resour
 
 | 日本語 | English（推奨） | 備考 |
 |---|---|---|
-| 一般 / 表示 / 演出 / トリガー / 貼り付け / データ / 詳細 | General / Appearance / Effects / Triggers / Paste / Data / Advanced | 7 タブ。設定本体620×600、独立した編集本体820×600 |
+| 一般 / 表示 / 演出 / ポップアップ / トリガー / 貼り付け / データ / 詳細 | General / Appearance / Effects / Popup / Triggers / Paste / Data / Advanced | 8 タブ。設定本体620×600、独立した編集本体820×600 |
 | 起動時のガイドを表示しない | Don't show the startup guide | |
 | 盤面の幅 / 最大行数 / 文字の大きさ | Board width / Maximum rows / Text size | |
 | 全文のプレビュー | Show full-text preview | |

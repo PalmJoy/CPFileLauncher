@@ -1,0 +1,20 @@
+<Solution>
+  <Folder Name="/CPClipboard/">
+    <Project Path="CPClipboard/src/CPClipboard.Core/CPClipboard.Core.csproj" />
+    <Project Path="CPClipboard/src/CPClipboard.Desktop/CPClipboard.Desktop.csproj" />
+    <Project Path="CPClipboard/src/CPClipboard.Desktop.Tests/CPClipboard.Desktop.Tests.csproj" />
+    <Project Path="CPClipboard/src/CPClipboard.Platform/CPClipboard.Platform.csproj" />
+    <Project Path="CPClipboard/src/CPClipboard.Platform.MacOS/CPClipboard.Platform.MacOS.csproj" />
+    <Project Path="CPClipboard/src/CPClipboard.Platform.Windows/CPClipboard.Platform.Windows.csproj" />
+    <Project Path="CPClipboard/src/CPClipboard.Tests/CPClipboard.Tests.csproj" />
+  </Folder>
+  <Folder Name="/CPFileLauncher/">
+    <Project Path="CPFileLauncher/src/FileLauncher.Core/FileLauncher.Core.csproj" />
+    <Project Path="CPFileLauncher/src/FileLauncher.Desktop/FileLauncher.Desktop.csproj" />
+    <Project Path="CPFileLauncher/src/FileLauncher.Desktop.Tests/FileLauncher.Desktop.Tests.csproj" />
+    <Project Path="CPFileLauncher/src/FileLauncher.Platform/FileLauncher.Platform.csproj" />
+    <Project Path="CPFileLauncher/src/FileLauncher.Platform.MacOS/FileLauncher.Platform.MacOS.csproj" />
+    <Project Path="CPFileLauncher/src/FileLauncher.Platform.Windows/FileLauncher.Platform.Windows.csproj" />
+    <Project Path="CPFileLauncher/src/FileLauncher.Tests/FileLauncher.Tests.csproj" />
+  </Folder>
+</Solution>

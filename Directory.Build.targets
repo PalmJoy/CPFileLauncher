@@ -1,0 +1,16 @@
+<Project>
+  <Target Name="RequirePatchedRuntime" BeforeTargets="Publish" Condition="'$(SelfContained)' == 'true'">
+    <Error Condition="'$(RuntimeFrameworkVersion)' == ''" Text="Self-contained releases must specify a patched RuntimeFrameworkVersion." />
+    <Error Condition="'$(RuntimeFrameworkVersion)' != '' and $([MSBuild]::VersionLessThan('$(RuntimeFrameworkVersion)', '10.0.13'))" Text="Self-contained releases require .NET runtime 10.0.13 or later." />
+  </Target>
+  <Target Name="ValidateCPToolsProduct" BeforeTargets="CoreCompile" Condition="'$(CPToolsProduct)' != ''">
+    <Error Condition="$([System.String]::Copy('$(DefineConstants)').Contains('CPTOOLS_CLIPBOARD')) And $([System.String]::Copy('$(DefineConstants)').Contains('CPTOOLS_LAUNCHER'))" Text="Select exactly one CPTools product." />
+    <Error Condition="'$(CPToolsProduct)' == 'Clipboard' And !$([System.String]::Copy('$(DefineConstants)').Contains('CPTOOLS_CLIPBOARD'))" Text="Clipboard requires CPTOOLS_CLIPBOARD." />
+    <Error Condition="'$(CPToolsProduct)' == 'Launcher' And !$([System.String]::Copy('$(DefineConstants)').Contains('CPTOOLS_LAUNCHER'))" Text="Launcher requires CPTOOLS_LAUNCHER." />
+  </Target>
+  <Target Name="ExcludeNativePublishSymbols" AfterTargets="ComputeResolvedFilesToPublishList" Condition="'$(PublishSingleFile)' == 'true' And $([System.String]::Copy('$(RuntimeIdentifier)').StartsWith('win-'))">
+    <ItemGroup>
+      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" Condition="'%(ResolvedFileToPublish.Extension)' == '.pdb'" />
+    </ItemGroup>
+  </Target>
+</Project>

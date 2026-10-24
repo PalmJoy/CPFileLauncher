@@ -1,0 +1,24 @@
+name: test
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [windows-latest, macos-15]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68
+        with:
+          dotnet-version: 10.0.x
+      - run: dotnet restore CPTools.slnx --locked-mode
+      - run: dotnet test CPTools.slnx -c Release --no-restore
+      - run: node Common/build/test.mjs
+      - run: node Common/build/sync-launcher-site.mjs --check

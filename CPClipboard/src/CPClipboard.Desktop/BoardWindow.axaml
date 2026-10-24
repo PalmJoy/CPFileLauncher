@@ -1,0 +1,139 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:CPClipboard.App"
+        x:Class="CPClipboard.App.BoardWindow"
+        Title="CPClipboard"
+        WindowDecorations="None"
+        ShowInTaskbar="False"
+        CanResize="False"
+        ShowActivated="True"
+        WindowStartupLocation="Manual"
+        TransparencyLevelHint="Transparent"
+        Background="Transparent"
+        FontFamily="{DynamicResource FlFontFamily}">
+
+  <!-- 色・形・発光はテーマのトークン（Fl*。Themes/AppTheme.cs、spec/LOOK.md §3.6） -->
+  <Window.Styles>
+    <Style Selector="Button.row">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="BorderBrush" Value="Transparent" />
+      <Setter Property="Padding" Value="0" />
+      <Setter Property="Margin" Value="0" />
+      <Setter Property="CornerRadius" Value="{DynamicResource FlRowCornerRadius}" />
+      <Setter Property="HorizontalAlignment" Value="Stretch" />
+      <Setter Property="VerticalAlignment" Value="Stretch" />
+      <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+      <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+    <!-- ホバー・選択の強調（演出 rowHover。色の変化の時間は BoardWindow.ApplyEffects が Transitions で付ける） -->
+    <Style Selector="Button.row:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource FlRowHoverBackground}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource FlRowHoverBorder}" />
+    </Style>
+    <Style Selector="Button.row.glow:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="BoxShadow" Value="{DynamicResource FlRowHoverGlow}" />
+    </Style>
+    <Style Selector="Button.row.selected /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="BorderBrush" Value="{DynamicResource FlRowSelectedBorder}" />
+    </Style>
+    <Style Selector="Button.row.glow.selected /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="BoxShadow" Value="{DynamicResource FlRowSelectedGlow}" />
+    </Style>
+    <Style Selector="Button.row.pasting /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="BorderBrush" Value="{DynamicResource FlAccent}" />
+      <Setter Property="BoxShadow" Value="{DynamicResource FlPasteGlow}" />
+    </Style>
+    <!-- 行の左端の ▸（ホバー・選択中だけ） -->
+    <Style Selector="Button.row TextBlock.marker">
+      <Setter Property="Opacity" Value="0" />
+    </Style>
+    <Style Selector="Button.row:pointerover TextBlock.marker, Button.row.selected TextBlock.marker">
+      <Setter Property="Opacity" Value="1" />
+    </Style>
+    <Style Selector="TextBlock.hud">
+      <Setter Property="FontFamily" Value="{DynamicResource FlFontFamily}" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="FontSize" Value="11" />
+      <Setter Property="LetterSpacing" Value="0.5" />
+      <Setter Property="Foreground" Value="{DynamicResource FlHudText}" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <Style Selector="ToggleButton.tab">
+      <Setter Property="Padding" Value="7,2" />
+      <Setter Property="Margin" Value="0,0,2,0" />
+      <Setter Property="MinHeight" Value="24" />
+      <Setter Property="FontSize" Value="12" />
+      <Setter Property="CornerRadius" Value="{DynamicResource FlTabCornerRadius}" />
+      <Setter Property="BorderThickness" Value="{DynamicResource FlTabIndicatorThickness}" />
+    </Style>
+    <Style Selector="ToggleButton.tab /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource FlTabBackground}" />
+      <Setter Property="Foreground" Value="{DynamicResource FlTabText}" />
+      <Setter Property="BorderBrush" Value="Transparent" />
+    </Style>
+    <Style Selector="ToggleButton.tab.empty /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Foreground" Value="{DynamicResource FlEmptyGroupText}" />
+    </Style>
+    <Style Selector="ToggleButton.tab:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource FlTabHoverBackground}" />
+    </Style>
+    <Style Selector="ToggleButton.tab:checked /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource FlTabCheckedBackground}" />
+      <Setter Property="Foreground" Value="{DynamicResource FlTabSelectedText}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource FlTabIndicator}" />
+    </Style>
+    <Style Selector="ToggleButton.tab:checked:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource FlTabCheckedHoverBackground}" />
+      <Setter Property="Foreground" Value="{DynamicResource FlTabSelectedText}" />
+    </Style>
+    <Style Selector="ToggleButton.tab.glow:checked /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="BoxShadow" Value="{DynamicResource FlTabSelectedGlow}" />
+    </Style>
+  </Window.Styles>
+
+  <!-- 枠（Themes/FrameChrome。余白 = 発光が窓の縁で切れないための透明な余白、角ブラケット、最上段の層）。LOOK §3.8 -->
+  <local:FrameChrome x:Name="Chrome" MarginKey="FlGlowMarginThickness" BackgroundKey="FlBoardBackground" ShadowKey="FlBoardGlow" BakeGlow="True">
+    <Grid>
+      <!-- 背景画像（LOOK §3.7）と、その上に重ねる面の色の覆い。画像なしのときは両方とも何も描かない -->
+      <local:BackdropLayer x:Name="Backdrop" />
+      <Border x:Name="Overlay" IsHitTestVisible="False" IsVisible="False"
+              Background="{DynamicResource FlBoardBackground}" CornerRadius="{DynamicResource FlBoardCornerRadius}" />
+      <!-- 背景グリッド（LOOK §3.9 H6）: 面・背景画像・覆いの上、タブと行の下 -->
+      <local:GridLayer x:Name="BackgroundGrid" Stroke="{DynamicResource FlHudGrid}" />
+      <local:HologramEdges x:Name="Hologram" Primary="{DynamicResource FlAccent}" Secondary="{DynamicResource FlAccent2}" Opacity="0.4" />
+      <local:CircuitLayer x:Name="Circuits" Stroke="{DynamicResource FlAccent}" />
+      <!-- 静止した走査線（LOOK §3.9 H14）: グリッドの上、タブと行の下 -->
+      <local:ScanlineLayer x:Name="Scanlines" Stroke="{DynamicResource FlHudScanline}" />
+      <DockPanel Margin="6">
+        <!-- ヘッダー: グループタブ 0〜9。タブ以外の部分をドラッグするとウィンドウ移動 -->
+        <Border x:Name="Header" DockPanel.Dock="Top" Height="30" Background="Transparent" Margin="0,0,0,3">
+          <StackPanel x:Name="TabsPanel" Orientation="Horizontal" VerticalAlignment="Center" ClipToBounds="True" />
+        </Border>
+        <Border DockPanel.Dock="Top" Height="1" Background="{DynamicResource FlHeaderSeparator}" />
+        <!-- ステータス行（LOOK §3.9 H1）: GRP / ITEMS / 時刻 -->
+        <Border x:Name="StatusBar" DockPanel.Dock="Bottom" Height="19" Margin="0,2,0,0" Padding="4,2,4,0"
+                BorderThickness="0,1,0,0" BorderBrush="{DynamicResource FlHeaderSeparator}">
+          <Grid ColumnDefinitions="Auto,*,Auto">
+            <TextBlock x:Name="StatusGroup" Classes="hud" HorizontalAlignment="Left" TextTrimming="CharacterEllipsis" MaxWidth="180" />
+            <TextBlock x:Name="StatusItems" Grid.Column="1" Classes="hud" HorizontalAlignment="Center" />
+            <TextBlock x:Name="StatusClock" Grid.Column="2" Classes="hud" HorizontalAlignment="Right" />
+          </Grid>
+        </Border>
+        <Grid x:Name="ListArea" Margin="0,3,0,0">
+          <ScrollViewer x:Name="RowsScroller" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+            <StackPanel x:Name="RowsPanel" />
+          </ScrollViewer>
+          <!-- 空のグループの案内（LOOK §3.6「空のグループ」） -->
+          <StackPanel x:Name="EmptyNotice" IsVisible="False" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="4">
+            <TextBlock x:Name="EmptyText" FontSize="12" Foreground="{DynamicResource FlEmptyGroupText}" HorizontalAlignment="Center" />
+            <Button x:Name="EmptyAdd" Classes="link" HorizontalAlignment="Center" Background="Transparent" BorderThickness="0"
+                    Foreground="{DynamicResource FlAccent}" FontSize="12" Padding="4,0" />
+          </StackPanel>
+          <local:DataSweep x:Name="GroupSweep" Stroke="{DynamicResource FlAccent}" />
+        </Grid>
+      </DockPanel>
+    </Grid>
+  </local:FrameChrome>
+</Window>

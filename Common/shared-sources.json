@@ -1,0 +1,350 @@
+[
+  {
+    "source": "Common/Core/Effects/AmbientLayout.cs",
+    "clipboard": "CPClipboard/src/CPClipboard.Core/Effects/AmbientLayout.cs",
+    "launcher": "CPFileLauncher/src/FileLauncher.Core/Effects/AmbientLayout.cs",
+    "layer": "Core"
+  },
+  {
+    "source": "Common/Core/Effects/AmbientLook.cs",
+    "clipboard": "CPClipboard/src/CPClipboard.Core/Effects/AmbientLook.cs",
+    "launcher": "CPFileLauncher/src/FileLauncher.Core/Effects/AmbientLook.cs",
+    "layer": "Core"
+  },
+  {
+    "source": "Common/Core/Effects/AmbientMath.cs",
+    "clipboard": "CPClipboard/src/CPClipboard.Core/Effects/AmbientMath.cs",
+    "launcher": "CPFileLauncher/src/FileLauncher.Core/Effects/AmbientMath.cs",
+    "layer": "Core"
+  },
+  {
+    "source": "Common/Core/Effects/EffectSpec.cs",
+    "clipboard": "CPClipboard/src/CPClipboard.Core/Effects/EffectSpec.cs",
+    "launcher": "CPFileLauncher/src/FileLauncher.Core/Effects/EffectSpec.cs",
+    "layer": "Core"
+  },
+  {
+    "source": "Common/Core/Effects/GlitchLook.cs",
+    "clipboard": "CPClipboard/src/CPClipboard.Core/Effects/GlitchLook.cs",
+    "launcher": "CPFileLauncher/src/FileLauncher.Core/Effects/GlitchLook.cs",
+    "layer": "Core"
+  },
+  {
+    "source": "Common/Core/Effects/OrbPath.cs",
+    "clipboard": "CPClipboard/src/CPClipboard.Core/Effects/OrbPath.cs",
+    "launcher": "CPFileLauncher/src/FileLauncher.Core/Effects/OrbPath.cs",
+    "layer": "Core"
+  },
+  {
+    "source": "Common/Core/Input/ModifierDoubleTapDetector.cs",
+    "clipboard": "CPClipboard/src/CPClipboard.Core/Input/ModifierDoubleTapDetector.cs",
+    "launcher": "CPFileLauncher/src/FileLauncher.Core/Input/ModifierDoubleTapDetector.cs",
+    "layer": "Core"
+  },
+  {
+    "source": "Common/Core/Input/ModifierState.cs",
+    "clipboard": "CPClipboard/src/CPClipboard.Core/Input/ModifierState.cs",
+    "launcher": "CPFileLauncher/src/FileLauncher.Core/Input/ModifierState.cs",
+    "layer": "Core"
+  },
+  {
+    "source": "Common/Core/Input/ScreenGeometry.cs",
+    "clipboard": "CPClipboard/src/CPClipboard.Core/Input/ScreenGeometry.cs",
+    "launcher": "CPFileLauncher/src/FileLauncher.Core/Input/ScreenGeometry.cs",
+    "layer": "Core"
+  },
+  {
+    "source": "Common/Core/Popup/MouseLeaveTracker.cs",
+    "clipboard": "CPClipboard/src/CPClipboard.Core/Popup/MouseLeaveTracker.cs",
+    "launcher": "CPFileLauncher/src/FileLauncher.Core/Popup/MouseLeaveTracker.cs",
+    "layer": "Core"
+  },
+  {
+    "source": "Common/Core/Popup/OutsideClickTracker.cs",
+    "clipboard": "CPClipboard/src/CPClipboard.Core/Popup/OutsideClickTracker.cs",
+    "launcher": "CPFileLauncher/src/FileLauncher.Core/Popup/OutsideClickTracker.cs",
+    "layer": "Core"
+  },
+  {
+    "source": "Common/Core/Popup/PopupPlacement.cs",
+    "clipboard": "CPClipboard/src/CPClipboard.Core/Popup/PopupPlacement.cs",
+    "launcher": "CPFileLauncher/src/FileLauncher.Core/Popup/PopupPlacement.cs",
+    "layer": "Core"
+  },
+  {
+    "source": "Common/Core/Storage/BundledFile.cs",
+    "clipboard": "CPClipboard/src/CPClipboard.Core/Storage/BundledFile.cs",
+    "launcher": "CPFileLauncher/src/FileLauncher.Core/Storage/BundledFile.cs",
+    "layer": "Core"
+  },
+  {
+    "source": "Common/Core/Storage/JsonDefaults.cs",
+    "clipboard": "CPClipboard/src/CPClipboard.Core/Storage/JsonDefaults.cs",
+    "launcher": "CPFileLauncher/src/FileLauncher.Core/Storage/JsonDefaults.cs",
+    "layer": "Core"
+  },
+  {
+    "source": "Common/Core/Storage/SettingsPeek.cs",
+    "clipboard": "CPClipboard/src/CPClipboard.Core/Storage/SettingsPeek.cs",
+    "launcher": "CPFileLauncher/src/FileLauncher.Core/Storage/SettingsPeek.cs",
+    "layer": "Core"
+  },
+  {
+    "source": "Common/Core/Storage/VersionedJsonStore.cs",
+    "clipboard": "CPClipboard/src/CPClipboard.Core/Storage/VersionedJsonStore.cs",
+    "launcher": "CPFileLauncher/src/FileLauncher.Core/Storage/VersionedJsonStore.cs",
+    "layer": "Core"
+  },
+  {
+    "source": "Common/Core/Theming/BackgroundLayout.cs",
+    "clipboard": "CPClipboard/src/CPClipboard.Core/Theming/BackgroundLayout.cs",
+    "launcher": "CPFileLauncher/src/FileLauncher.Core/Theming/BackgroundLayout.cs",
+    "layer": "Core"
+  },
+  {
+    "source": "Common/Core/Theming/ColorMath.cs",
+    "clipboard": "CPClipboard/src/CPClipboard.Core/Theming/ColorMath.cs",
+    "launcher": "CPFileLauncher/src/FileLauncher.Core/Theming/ColorMath.cs",
+    "layer": "Core"
+  },
+  {
+    "source": "Common/Core/Theming/ColorPresets.cs",
+    "clipboard": "CPClipboard/src/CPClipboard.Core/Theming/ColorPresets.cs",
+    "launcher": "CPFileLauncher/src/FileLauncher.Core/Theming/ColorPresets.cs",
+    "layer": "Core"
+  },
+  {
+    "source": "Common/Core/Theming/NeonProfile.cs",
+    "clipboard": "CPClipboard/src/CPClipboard.Core/Theming/NeonProfile.cs",
+    "launcher": "CPFileLauncher/src/FileLauncher.Core/Theming/NeonProfile.cs",
+    "layer": "Core"
+  },
+  {
+    "source": "Common/Core/Theming/Octagon.cs",
+    "clipboard": "CPClipboard/src/CPClipboard.Core/Theming/Octagon.cs",
+    "launcher": "CPFileLauncher/src/FileLauncher.Core/Theming/Octagon.cs",
+    "layer": "Core"
+  },
+  {
+    "source": "Common/Core/Theming/RgbColor.cs",
+    "clipboard": "CPClipboard/src/CPClipboard.Core/Theming/RgbColor.cs",
+    "launcher": "CPFileLauncher/src/FileLauncher.Core/Theming/RgbColor.cs",
+    "layer": "Core"
+  },
+  {
+    "source": "Common/Desktop/AppIcon.cs",
+    "clipboard": "CPClipboard/src/CPClipboard.Desktop/AppIcon.cs",
+    "launcher": "CPFileLauncher/src/FileLauncher.Desktop/AppIcon.cs",
+    "layer": "Desktop"
+  },
+  {
+    "source": "Common/Desktop/BoardBackgroundLoader.cs",
+    "clipboard": "CPClipboard/src/CPClipboard.Desktop/BoardBackgroundLoader.cs",
+    "launcher": "CPFileLauncher/src/FileLauncher.Desktop/BoardBackgroundLoader.cs",
+    "layer": "Desktop"
+  },
+  {
+    "source": "Common/Desktop/BoardWindowAppearance.cs",
+    "clipboard": "CPClipboard/src/CPClipboard.Desktop/BoardWindowAppearance.cs",
+    "launcher": "CPFileLauncher/src/FileLauncher.Desktop/BoardWindowAppearance.cs",
+    "layer": "Desktop"
+  },
+  {
+    "source": "Common/Desktop/Dialogs.cs",
+    "clipboard": "CPClipboard/src/CPClipboard.Desktop/Dialogs.cs",
+    "launcher": "CPFileLauncher/src/FileLauncher.Desktop/Dialogs.cs",
+    "layer": "Desktop"
+  },
+  {
+    "source": "Common/Desktop/Effects/AmbientAnimator.cs",
+    "clipboard": "CPClipboard/src/CPClipboard.Desktop/Effects/AmbientAnimator.cs",
+    "launcher": "CPFileLauncher/src/FileLauncher.Desktop/Effects/AmbientAnimator.cs",
+    "layer": "Desktop"
+  },
+  {
+    "source": "Common/Desktop/Effects/DataSweep.cs",
+    "clipboard": "CPClipboard/src/CPClipboard.Desktop/Effects/DataSweep.cs",
+    "launcher": "CPFileLauncher/src/FileLauncher.Desktop/Effects/DataSweep.cs",
+    "layer": "Desktop"
+  },
+  {
+    "source": "Common/Desktop/Effects/GlitchPlayer.cs",
+    "clipboard": "CPClipboard/src/CPClipboard.Desktop/Effects/GlitchPlayer.cs",
+    "launcher": "CPFileLauncher/src/FileLauncher.Desktop/Effects/GlitchPlayer.cs",
+    "layer": "Desktop"
+  },
+  {
+    "source": "Common/Desktop/Effects/NativeAmbient.cs",
+    "clipboard": "CPClipboard/src/CPClipboard.Desktop/Effects/NativeAmbient.cs",
+    "launcher": "CPFileLauncher/src/FileLauncher.Desktop/Effects/NativeAmbient.cs",
+    "layer": "Desktop"
+  },
+  {
+    "source": "Common/Desktop/Effects/OrbLayer.cs",
+    "clipboard": "CPClipboard/src/CPClipboard.Desktop/Effects/OrbLayer.cs",
+    "launcher": "CPFileLauncher/src/FileLauncher.Desktop/Effects/OrbLayer.cs",
+    "layer": "Desktop"
+  },
+  {
+    "source": "Common/Desktop/Effects/PulseLayer.cs",
+    "clipboard": "CPClipboard/src/CPClipboard.Desktop/Effects/PulseLayer.cs",
+    "launcher": "CPFileLauncher/src/FileLauncher.Desktop/Effects/PulseLayer.cs",
+    "layer": "Desktop"
+  },
+  {
+    "source": "Common/Desktop/Effects/ScanBeamLayer.cs",
+    "clipboard": "CPClipboard/src/CPClipboard.Desktop/Effects/ScanBeamLayer.cs",
+    "launcher": "CPFileLauncher/src/FileLauncher.Desktop/Effects/ScanBeamLayer.cs",
+    "layer": "Desktop"
+  },
+  {
+    "source": "Common/Desktop/MemoryTrim.cs",
+    "clipboard": "CPClipboard/src/CPClipboard.Desktop/MemoryTrim.cs",
+    "launcher": "CPFileLauncher/src/FileLauncher.Desktop/MemoryTrim.cs",
+    "layer": "Desktop"
+  },
+  {
+    "source": "Common/Desktop/Notice.cs",
+    "clipboard": "CPClipboard/src/CPClipboard.Desktop/Notice.cs",
+    "launcher": "CPFileLauncher/src/FileLauncher.Desktop/Notice.cs",
+    "layer": "Desktop"
+  },
+  {
+    "source": "Common/Desktop/Program.cs",
+    "clipboard": "CPClipboard/src/CPClipboard.Desktop/Program.cs",
+    "launcher": "CPFileLauncher/src/FileLauncher.Desktop/Program.cs",
+    "layer": "Desktop"
+  },
+  {
+    "source": "Common/Desktop/SafeBitmapLoader.cs",
+    "clipboard": "CPClipboard/src/CPClipboard.Desktop/SafeBitmapLoader.cs",
+    "launcher": "CPFileLauncher/src/FileLauncher.Desktop/SafeBitmapLoader.cs",
+    "layer": "Desktop"
+  },
+  {
+    "source": "Common/Desktop/Settings/AnchorPicker.cs",
+    "clipboard": "CPClipboard/src/CPClipboard.Desktop/Settings/AnchorPicker.cs",
+    "launcher": "CPFileLauncher/src/FileLauncher.Desktop/Settings/AnchorPicker.cs",
+    "layer": "Desktop"
+  },
+  {
+    "source": "Common/Desktop/SingleInstance.cs",
+    "clipboard": "CPClipboard/src/CPClipboard.Desktop/SingleInstance.cs",
+    "launcher": "CPFileLauncher/src/FileLauncher.Desktop/SingleInstance.cs",
+    "layer": "Desktop"
+  },
+  {
+    "source": "Common/Desktop/Themes/BackdropLayer.cs",
+    "clipboard": "CPClipboard/src/CPClipboard.Desktop/Themes/BackdropLayer.cs",
+    "launcher": "CPFileLauncher/src/FileLauncher.Desktop/Themes/BackdropLayer.cs",
+    "layer": "Desktop"
+  },
+  {
+    "source": "Common/Desktop/Themes/ChromeWindow.cs",
+    "clipboard": "CPClipboard/src/CPClipboard.Desktop/Themes/ChromeWindow.cs",
+    "launcher": "CPFileLauncher/src/FileLauncher.Desktop/Themes/ChromeWindow.cs",
+    "layer": "Desktop"
+  },
+  {
+    "source": "Common/Desktop/Themes/CircuitLayer.cs",
+    "clipboard": "CPClipboard/src/CPClipboard.Desktop/Themes/CircuitLayer.cs",
+    "launcher": "CPFileLauncher/src/FileLauncher.Desktop/Themes/CircuitLayer.cs",
+    "layer": "Desktop"
+  },
+  {
+    "source": "Common/Desktop/Themes/FrameChrome.cs",
+    "clipboard": "CPClipboard/src/CPClipboard.Desktop/Themes/FrameChrome.cs",
+    "launcher": "CPFileLauncher/src/FileLauncher.Desktop/Themes/FrameChrome.cs",
+    "layer": "Desktop"
+  },
+  {
+    "source": "Common/Desktop/Themes/GridLayer.cs",
+    "clipboard": "CPClipboard/src/CPClipboard.Desktop/Themes/GridLayer.cs",
+    "launcher": "CPFileLauncher/src/FileLauncher.Desktop/Themes/GridLayer.cs",
+    "layer": "Desktop"
+  },
+  {
+    "source": "Common/Desktop/Themes/HologramEdges.cs",
+    "clipboard": "CPClipboard/src/CPClipboard.Desktop/Themes/HologramEdges.cs",
+    "launcher": "CPFileLauncher/src/FileLauncher.Desktop/Themes/HologramEdges.cs",
+    "layer": "Desktop"
+  },
+  {
+    "source": "Common/Desktop/Themes/NeonGlowLayer.cs",
+    "clipboard": "CPClipboard/src/CPClipboard.Desktop/Themes/NeonGlowLayer.cs",
+    "launcher": "CPFileLauncher/src/FileLauncher.Desktop/Themes/NeonGlowLayer.cs",
+    "layer": "Desktop"
+  },
+  {
+    "source": "Common/Desktop/Themes/ScanlineLayer.cs",
+    "clipboard": "CPClipboard/src/CPClipboard.Desktop/Themes/ScanlineLayer.cs",
+    "launcher": "CPFileLauncher/src/FileLauncher.Desktop/Themes/ScanlineLayer.cs",
+    "layer": "Desktop"
+  },
+  {
+    "source": "Common/Desktop/Themes/Themed.cs",
+    "clipboard": "CPClipboard/src/CPClipboard.Desktop/Themes/Themed.cs",
+    "launcher": "CPFileLauncher/src/FileLauncher.Desktop/Themes/Themed.cs",
+    "layer": "Desktop"
+  },
+  {
+    "source": "Common/Desktop/Toast.cs",
+    "clipboard": "CPClipboard/src/CPClipboard.Desktop/Toast.cs",
+    "launcher": "CPFileLauncher/src/FileLauncher.Desktop/Toast.cs",
+    "layer": "Desktop"
+  },
+  {
+    "source": "Common/Desktop/WindowActivation.cs",
+    "clipboard": "CPClipboard/src/CPClipboard.Desktop/WindowActivation.cs",
+    "launcher": "CPFileLauncher/src/FileLauncher.Desktop/WindowActivation.cs",
+    "layer": "Desktop"
+  },
+  {
+    "source": "Common/Platform/AmbientLayers.cs",
+    "clipboard": "CPClipboard/src/CPClipboard.Platform/AmbientLayers.cs",
+    "launcher": "CPFileLauncher/src/FileLauncher.Platform/AmbientLayers.cs",
+    "layer": "Platform"
+  },
+  {
+    "source": "Common/Platform.MacOS/MacAmbientLayerHost.cs",
+    "clipboard": "CPClipboard/src/CPClipboard.Platform.MacOS/MacAmbientLayerHost.cs",
+    "launcher": "CPFileLauncher/src/FileLauncher.Platform.MacOS/MacAmbientLayerHost.cs",
+    "layer": "Platform.MacOS"
+  },
+  {
+    "source": "Common/Platform.MacOS/MacAmbientLayerService.cs",
+    "clipboard": "CPClipboard/src/CPClipboard.Platform.MacOS/MacAmbientLayerService.cs",
+    "launcher": "CPFileLauncher/src/FileLauncher.Platform.MacOS/MacAmbientLayerService.cs",
+    "layer": "Platform.MacOS"
+  },
+  {
+    "source": "Common/Platform.MacOS/MacWorker.cs",
+    "clipboard": "CPClipboard/src/CPClipboard.Platform.MacOS/MacWorker.cs",
+    "launcher": "CPFileLauncher/src/FileLauncher.Platform.MacOS/MacWorker.cs",
+    "layer": "Platform.MacOS"
+  },
+  {
+    "source": "Common/Platform.MacOS/Native/CoreAnimation.cs",
+    "clipboard": "CPClipboard/src/CPClipboard.Platform.MacOS/Native/CoreAnimation.cs",
+    "launcher": "CPFileLauncher/src/FileLauncher.Platform.MacOS/Native/CoreAnimation.cs",
+    "layer": "Platform.MacOS"
+  },
+  {
+    "source": "Common/Platform.MacOS/Native/CoreGraphics.cs",
+    "clipboard": "CPClipboard/src/CPClipboard.Platform.MacOS/Native/CoreGraphics.cs",
+    "launcher": "CPFileLauncher/src/FileLauncher.Platform.MacOS/Native/CoreGraphics.cs",
+    "layer": "Platform.MacOS"
+  },
+  {
+    "source": "Common/Platform.Windows/StaWorker.cs",
+    "clipboard": "CPClipboard/src/CPClipboard.Platform.Windows/StaWorker.cs",
+    "launcher": "CPFileLauncher/src/FileLauncher.Platform.Windows/StaWorker.cs",
+    "layer": "Platform.Windows"
+  },
+  {
+    "source": "Common/Desktop/UpdateChecker.cs",
+    "clipboard": "CPClipboard/src/CPClipboard.Desktop/UpdateChecker.cs",
+    "launcher": "CPFileLauncher/src/FileLauncher.Desktop/UpdateChecker.cs",
+    "layer": "Desktop"
+  }
+]

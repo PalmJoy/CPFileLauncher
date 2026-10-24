@@ -1,22 +1,57 @@
-# CPFileLauncher
+# CPTools
 
-ホットキーやマウスで呼び出す、ネオンの盤面のファイル / アプリランチャー（Windows / macOS）。
-A cyberpunk file & app launcher for Windows and macOS, summoned with a hotkey or a mouse click.
+CPFileLauncherとCPClipboardをまとめたWindows・macOS向けツール集です。公開リポジトリは既存の[CPFileLauncher](https://github.com/PalmJoy/CPFileLauncher)を使用します。
 
-- 配布サイト / Website: [Windows・macOS 用の無料ファイルランチャー](https://palmjoy.github.io/CPFileLauncher/ja/) / [Free file launcher for Windows & macOS](https://palmjoy.github.io/CPFileLauncher/)
-- ダウンロード / Download: [最新のリリース / Latest release](https://github.com/PalmJoy/CPFileLauncher/releases/latest)（Windows x64 / ARM64、macOS Apple シリコン）
-- ライセンス / License: GPL-3.0-only（[LICENSE](LICENSE)）。Copyright © 2026 PalmJoy。第三者の部品 / Third-party components: [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt)
+| 製品 | 用途 | 配布サイト |
+| --- | --- | --- |
+| [CPFileLauncher](CPFileLauncher/README.md) | ファイル・フォルダ・アプリの起動 | [日本語](https://palmjoy.github.io/CPFileLauncher/ja/) / [English](https://palmjoy.github.io/CPFileLauncher/) |
+| [CPClipboard](CPClipboard/README.ja.md) | 定型文のコピー・貼り付け | [日本語](https://palmjoy.github.io/CPFileLauncher/CPClipboard/ja/) / [English](https://palmjoy.github.io/CPFileLauncher/CPClipboard/) |
 
-## 安全な利用 / Safe use
+両製品は別アプリです。設定・データ保存先・bundle ID・配布ファイル名を個別に持ちます。
 
-出所不明の設定ZIPは取り込まないでください。盤面の項目には、コマンドやネットワーク上の場所を登録できます。
-Only import settings archives from trusted sources: board items can run commands and open network locations.
+## 構成
 
-## 配布ビルド / Release builds
+- `CPFileLauncher/`・`CPClipboard/`: 製品ごとのソース、設定、テスト、配布スクリプト。
+- `Common/`: 入力判定、保存、演出、画面枠、OS補助、署名選択、更新確認などの共通ソース。
+- `docs/CPFileLauncher/`・`docs/CPClipboard/`: 配布サイトの編集元。
+- `CPTools.slnx`: 両製品をまとめてビルド・テストする入口。
 
-- Self-contained配布は.NET 10.0.13以上が必要です。依存関係は`packages.lock.json`で固定し、CIでは固定モードで復元します。既知のNuGet脆弱性はビルドエラーになります。
-- macOS: `CODESIGN_IDENTITY`に`Developer ID Application: …`を指定するとHardened Runtimeとタイムスタンプを使います。`NOTARYTOOL_PROFILE`にキーチェーンの公証プロファイル名を指定すると、公証とstapleも実施します。証明書や認証情報はリポジトリに保存しません。
-- Windows: `CPFL_SIGNING_THUMBPRINT`（または`publish-win.ps1 -SigningThumbprint`）にCurrentUserの証明書ストアのコード署名証明書を指定すると、exeとuiohook.dllをSHA-256とタイムスタンプ付きで署名します。
-- 証明書を指定しないビルドは従来どおり未署名（macOSはad-hoc署名）です。CIのRelease ZIPにはGitHubの来歴証明を付けます。ダウンロード後は`gh attestation verify <ZIPのパス> --repo PalmJoy/CPFileLauncher`で検証できます。
+CommonのC#ソースは各製品へリンクしてコンパイルします。アプリの名前空間・リソース・型の互換を保ち、片方のアプリをもう片方から参照する構成にはしません。[共通部品の仕様](Common/SPEC.md)を参照してください。
 
-注釈付きタグのメッセージに単独行`Release-Publish: true`を含めると、両OSのテストと配布物の作成が成功した後にReleaseを公開します。指定しないタグは下書きになります。
+## ビルドとテスト
+
+.NET 10 SDKとNode.jsが必要です。CPToolsルートで実行します。
+
+```sh
+./build.sh
+```
+
+Windowsでは `./build.ps1` を使用します。個別に実行する場合:
+
+```sh
+dotnet restore CPTools.slnx --locked-mode
+dotnet build CPTools.slnx -c Release --no-restore
+dotnet test CPTools.slnx -c Release --no-build --no-restore
+node Common/build/test.mjs
+```
+
+製品ごとの既存solutionも利用できます。Commonとルートのbuild設定が必要なので、リポジトリ全体を配置してください。配布ビルドはそれぞれの製品ディレクトリから `build-release.sh --zip`（macOS）または `build-release.bat -Zip`（Windows）を実行します。出力は製品ごとの `bin/release/` です。再ビルド前に対象アプリを終了してください。
+
+Macの署名pinは製品ごとの `work/macos-signing.identity` に置きます。明示的な `CODESIGN_IDENTITY` を優先し、利用できない証明書から別署名へ自動変更しません。アプリはFinderまたは `open <appのパス>` で起動します。
+
+## 配布サイトとRelease
+
+Launcherの既存公開URL・ダウンロードファイル名・`vX.Y.Z`タグを維持します。Clipboardは同じrepositoryに `cpclipboard-vX.Y.Z`タグでReleaseを作り、Launcherのlatest指定を置き換えません。更新確認は製品タグで分離します。CIの手動実行はArtifactを作成します。Launcherの注釈付きタグによる公開指定は既存の運用に従い、Clipboardは下書きReleaseを作成します。
+
+Launcherのサイトは `docs/CPFileLauncher/` を編集後、次のコマンドで共通Web部品を同期します。
+
+```sh
+node Common/build/sync-launcher-site.mjs
+node Common/build/sync-launcher-site.mjs --check
+```
+
+GitHub Pagesの配信元はrootの `docs/` です。docs/index.html と docs/ja/index.html は各言語のCPFileLauncherページへリダイレクトします。サイト本体・assetsは製品ディレクトリ内だけで管理します。
+
+## ライセンス
+
+Copyright © 2026 PalmJoy。[GPL-3.0-only](LICENSE)。各製品の第三者表示は[Launcher](CPFileLauncher/THIRD-PARTY-NOTICES.txt)・[Clipboard](CPClipboard/THIRD-PARTY-NOTICES.txt)を参照してください。

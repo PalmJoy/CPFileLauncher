@@ -1,0 +1,20 @@
+<Project>
+  <!-- Explicit product and layer keep linked sources out of tests and unrelated projects. -->
+  <PropertyGroup>
+    <CPToolsProduct Condition="$([System.String]::Copy('$(MSBuildProjectName)').StartsWith('CPClipboard.'))">Clipboard</CPToolsProduct>
+    <CPToolsProduct Condition="$([System.String]::Copy('$(MSBuildProjectName)').StartsWith('FileLauncher.'))">Launcher</CPToolsProduct>
+    <DefineConstants Condition="'$(CPToolsProduct)' == 'Clipboard'">$(DefineConstants);CPTOOLS_CLIPBOARD</DefineConstants>
+    <DefineConstants Condition="'$(CPToolsProduct)' == 'Launcher'">$(DefineConstants);CPTOOLS_LAUNCHER</DefineConstants>
+    <CPToolsLayer Condition="'$(MSBuildProjectName)' == 'CPClipboard.Core' Or '$(MSBuildProjectName)' == 'FileLauncher.Core'">Core</CPToolsLayer>
+    <CPToolsLayer Condition="'$(MSBuildProjectName)' == 'CPClipboard.Platform' Or '$(MSBuildProjectName)' == 'FileLauncher.Platform'">Platform</CPToolsLayer>
+    <CPToolsLayer Condition="'$(MSBuildProjectName)' == 'CPClipboard.Platform.Windows' Or '$(MSBuildProjectName)' == 'FileLauncher.Platform.Windows'">Platform.Windows</CPToolsLayer>
+    <CPToolsLayer Condition="'$(MSBuildProjectName)' == 'CPClipboard.Platform.MacOS' Or '$(MSBuildProjectName)' == 'FileLauncher.Platform.MacOS'">Platform.MacOS</CPToolsLayer>
+    <CPToolsLayer Condition="'$(MSBuildProjectName)' == 'CPClipboard.Desktop' Or '$(MSBuildProjectName)' == 'FileLauncher.Desktop'">Desktop</CPToolsLayer>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(CPToolsLayer)' != ''">
+    <Compile Include="$(MSBuildThisFileDirectory)$(CPToolsLayer)/**/*.cs" Link="Common/$(CPToolsLayer)/%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(MSBuildProjectName)' == 'CPClipboard.Desktop.Tests' Or '$(MSBuildProjectName)' == 'FileLauncher.Desktop.Tests'">
+    <Compile Include="$(MSBuildThisFileDirectory)Tests/Desktop/**/*.cs" Link="Common/Tests/%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+</Project>

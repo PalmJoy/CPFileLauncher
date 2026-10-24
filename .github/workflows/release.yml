@@ -1,8 +1,8 @@
 # リリース: v<Version> のタグ push で両 OS のテスト → zip → 下書きの Release（SPEC §10.4「リリース」）。
 # 注釈付きタグに単独行 Release-Publish: true がある場合は、両OSの確認後に公開する。
 # 手動実行（workflow_dispatch）は試運転で、zip を Artifact に置くだけ（Release は作らない）。
-# ビルドオプションは src/build/publish-*.{ps1,sh} に一元化する。ここに dotnet publish を書かない
-name: release
+# ビルドオプションは CPFileLauncher/src/build/publish-*.{ps1,sh} に一元化する。ここに dotnet publish を書かない
+name: release-CPFileLauncher
 
 on:
   push:
@@ -36,7 +36,7 @@ jobs:
       - id: v
         name: タグと csproj の <Version> の一致
         run: |
-          VERSION=$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' src/FileLauncher.Desktop/FileLauncher.Desktop.csproj | head -1)
+          VERSION=$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' CPFileLauncher/src/FileLauncher.Desktop/FileLauncher.Desktop.csproj | head -1)
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "csproj の <Version>: $VERSION"
           echo "publish=false" >> "$GITHUB_OUTPUT"
@@ -61,14 +61,14 @@ jobs:
         with:
           dotnet-version: 10.0.x
       - name: テスト
-        run: dotnet test src/FileLauncher.sln -c Release
+        run: dotnet test CPFileLauncher/src/FileLauncher.sln -c Release
       - name: publish + zip（win-x64 / win-arm64）
         shell: pwsh
-        run: powershell -NoProfile -ExecutionPolicy Bypass -File src\build\publish-win.ps1 -Zip
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File CPFileLauncher\src\build\publish-win.ps1 -Zip
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: zip-windows
-          path: bin/release/*.zip
+          path: CPFileLauncher/bin/release/*.zip
           retention-days: 7
           if-no-files-found: error
 
@@ -82,15 +82,17 @@ jobs:
         with:
           dotnet-version: 10.0.x
       - name: テスト
-        run: dotnet test src/FileLauncher.sln -c Release
+        run: dotnet test CPFileLauncher/src/FileLauncher.sln -c Release
+      - name: 署名選択のテスト
+        run: node --test CPFileLauncher/src/build/mac-signing.test.mjs
       - name: publish + zip（osx-arm64、ad-hoc 署名）
         env:
           CODESIGN_IDENTITY: '-'
-        run: zsh src/build/publish-mac.sh --zip
+        run: zsh CPFileLauncher/src/build/publish-mac.sh --zip
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: zip-macos
-          path: bin/release/*.zip
+          path: CPFileLauncher/bin/release/*.zip
           retention-days: 7
           if-no-files-found: error
 

@@ -1,0 +1,16 @@
+<Project>
+  <PropertyGroup>
+    <NuGetAudit>true</NuGetAudit>
+    <NuGetAuditMode>all</NuGetAuditMode>
+    <WarningsAsErrors>$(WarningsAsErrors);NU1900;NU1901;NU1902;NU1903;NU1904;NU1905</WarningsAsErrors>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <RuntimeIdentifiers>osx-arm64;win-x64;win-arm64</RuntimeIdentifiers>
+    <RestoreLockedMode Condition="'$(CI)' == 'true'">true</RestoreLockedMode>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Single-file publishing adds this SDK tool implicitly. Pin it for every build mode
+         so normal builds and Windows publishing share the same locked dependency graph. -->
+    <PackageReference Include="Microsoft.NET.ILLink.Tasks" Version="10.0.13" PrivateAssets="all" />
+  </ItemGroup>
+  <Import Project="Common/SharedItems.props" />
+</Project>

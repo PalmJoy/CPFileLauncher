@@ -1,0 +1,476 @@
+# CPClipboard 仕様書 (v1.0)
+
+## 1. 概要
+
+Windows と macOS の両方で動く、**定型文に特化したクリップボードツール**。**製品名は CPClipboard**（CyberPunk Clipboard）。
+参考にするのは Clibor の「定型文」機能。修飾キーの 2 回押しかマウス操作でネオンの盤面を呼び出し、登録した文章を選ぶと、直前に使っていたアプリへそのまま貼り付ける。クリップボードの履歴は持たない（§12）。
+見た目は姉妹アプリ CPFileLauncher と同じ**サイバーパンク専用**（§1.3、`spec/LOOK.md`）。
+
+### 1.1 対象環境
+
+| 項目 | 内容 |
+|---|---|
+| OS | Windows 10 (1809+) / 11、macOS 15 Sequoia 以降（.NET 10 のサポート範囲。`LSMinimumSystemVersion` = 15.0） |
+| CPU | Windows: x64 / arm64、macOS: Apple シリコン（arm64）のみ。Intel / Universal は v1 では出さない（§12） |
+| 言語・基盤 | C# / .NET 10 (LTS) / Avalonia（CPFileLauncher と同じ版） |
+| 配布 | self-contained。Windows は RID 別の単一実行ファイル（+ LGPL の `uiohook.dll`）、macOS は `osx-arm64` の `.app` 1 つ（§10.4） |
+
+### 起動時のガイド
+
+起動時に、呼び出し方（有効なトリガーを「」で囲んで列挙）と「設定の『定型文』タブで文章を登録できる」ことを案内する小さなウィンドウを出す。「次回以降表示しない」は既定オフで、`general.hideStartupGuide` に保存する。閉じるボタン・×・Esc で閉じる。見た目（背景画像・不透明度・グリッド・走査線・表示 / 非表示の演出・常時の演出）は盤面の設定に従う。
+
+### 1.2 設計原則
+
+1. **即応性** — 呼び出しから表示まで体感 100 ms 以内（§11）。選んでから貼り付けまでも待たせない（§5、§11）。
+2. **邪魔をしない** — 必要なときだけ現れ、貼り付けたらすぐ消えて、入力していたアプリへフォーカスを返す。クリップボードの中身も元に戻す（§5.3）。
+3. **OS 差を隠す** — 操作体系は両 OS で同一。**その OS で使えない機能は「無効表示 + 注記」ではなく項目ごと出さない**。注記を付けるのは「使えるが制約がある」ものだけ（§5.5 の貼り付けられない場面など）。
+4. **データは人間可読** — 設定・定型文は JSON テキスト。手編集・バックアップ・移行が容易。
+
+### 1.3 方向性: サイバーパンク専用
+
+- テーマは 1 つだけ。配色は主色・副色の 2 色（プリセット 5 組）で、他の色はすべて主色から導く。見た目の詳細（色トークン・形・発光・フォント・背景画像・フレームレスの窓・HUD）は **`spec/LOOK.md` が正**（本書 §3.6〜§3.9 はそこを指す）。
+- 演出は CPFileLauncher と同じ仕組み（グリッチ・光の玉・発光の明滅・走査線の帯ほか）。一覧と既定値は **`spec/EFFECTS.md` が正**。
+- HUD と演出は入力を遮らず、盤面を隠している間は描画の更新を止める。
+
+---
+
+## 2. 用語
+
+| 用語 | 意味 |
+|---|---|
+| 定型文 (Snippet) | 登録した文章 1 件。複数行でもよい（データは `Snippet`、§9.3） |
+| グループ (Group) | 定型文の入れ物。**0〜9 の 10 個で固定**（増減しない）。名前は任意 |
+| 盤面 (Board) | 呼び出すと出るウィンドウ。上にグループのタブ、下に選択中のグループの定型文を 1 件 1 行で並べる |
+| 行 (Row) | 盤面上の定型文 1 件の表示 |
+| トリガー | 盤面を呼び出す操作（修飾キーの 2 回押し・マウス操作・ホットキー） |
+| 貼り付け先 | 盤面を呼び出したときに前面にあったアプリ（ウィンドウ）。選んだ定型文を貼り付ける相手（§5） |
+
+---
+
+## 3. 盤面
+
+### 3.1 盤面ウィンドウ
+
+```
+ ┏                                                   ┓
+   ┌─────────────────────────────────────────────┐
+   │  0   1  [2]  3   4   5   6   7   8   9      │  ← グループタブ（§3.2）
+   │ ─────────────────────────────────────────── │
+   │   いつもお世話になっております。株式会…    │  ← 行（1 件 1 行。収まらない部分は …）
+   │ ▸ お疲れさまです。〇〇です。⏎よろしくお…  │  ← 選択中（↑↓ / ホバー）
+   │   以上、よろしくお願いいたします。          │
+   │ ─────────────────────────────────────────── │
+   │  GRP 2 · 挨拶      ITEMS 3          15:05   │  ← ステータス行（任意）
+   └─────────────────────────────────────────────┘
+ ┗                                                   ┛
+```
+
+- 表示形式は**ポップアップだけ**（常駐モードは持たない。§12）。通常は非表示で、トリガー（§4）で出し、貼り付け・コピー・Esc などで閉じる（§3.3）。
+- **行は 1 件 1 行**。改行は `⏎`、タブは空白 1 つとして続けて表示し、盤面の幅に収まらない部分は末尾を `…` で切る（見た目は LOOK.md §3.6「各部の見た目」の「行」）。全文はプレビュー（§3.4）で見る。行に番号・ショートカットキーは付けない（v1。§12）。
+- **盤面の幅**は設定 `appearance.boardWidth`（既定 420、範囲 280〜800）。行の高さは文字の大きさ `appearance.fontSize`（既定 13、範囲 11〜20）の 2 倍を整数に丸めた値。
+- **盤面の高さ**は、選んでいるグループの件数に合わせる: 行の数 = `clamp(件数, 3, appearance.maxRows)`（`maxRows` 既定 12、範囲 4〜30）。件数が `maxRows` を超えたら一覧の中を縦にスクロールする（スクロールバーは細い主色の線 2 px、ホバーで 4 px）。空のグループは 3 行ぶんの高さで案内文を出す（LOOK.md「空のグループ」）。
+- グループを切り替えて高さが変わるときは、**ウィンドウの左上を固定**して下へ伸び縮みする。伸びて画面からはみ出す場合は作業領域に収まるよう上へ寄せる（Core `PopupPlacement.ClampInto`）。
+- **ウィンドウの移動**: 行以外の所（グループタブ・タブの隙間・空のグループの余白・ステータス行・枠の余白）を左ボタンで押したまま 4 px 以上動かすとウィンドウが動く（CPFileLauncher と同じ規則。4 px 未満で離せばクリック = タブの切替など）。行の上からはウィンドウを動かさない。サイズの変更（角のドラッグ）はしない。
+- タスクバー / Dock には出さない（Windows: ツールウィンドウ、macOS: LSUIElement）。
+- **不透明度**（30〜100%、既定 80、5 刻み）・**配色**・**背景画像**（表示方法・覆い・画像の不透明度）・**HUD**（ステータス行・背景グリッド・走査線）・**演出**は CPFileLauncher と同じ（LOOK.md・EFFECTS.md・SETTINGS.md）。
+- 盤面は 1 つ。
+
+### 3.2 グループタブ（ヘッダー）
+
+- **0〜9 の 10 個を常に並べる**（`0 1 2 … 9` の順）。名前があれば番号の右に短く出す（最大 6 文字。超えたら `…`）。すべて名前付きで幅が足りないときは名前を省いて番号だけにする（番号は常に見える）。横スクロールはしない。
+- 空のグループのタブは暗く（LOOK.md `FlEmptyGroupText`）表示するが、選べる（選ぶと案内文が出る）。
+- 切替: タブのクリック、**数字キー 0〜9**（盤面にフォーカスがあるとき。物理キー `Digit0..9` とテンキー `NumPad0..9` の両方。修飾キーなし）、Ctrl+Tab / Ctrl+Shift+Tab（Mac も ⌃Tab）、← →、ホイール（§6.1）。Ctrl+Tab・← →・ホイールは**空のグループを飛ばして**次 / 前の空でないグループへ循環する（すべて空なら何もしない）。数字キーとクリックは空のグループにも移る。
+- 演出: `groupSwitch`（既定 fade 80 ms）・`tabHighlight`（既定 glow）。
+- **開いたときのグループ**: 前回閉じたときのグループ（`board.lastGroup` に自動保存、既定 1）。前回のグループが空になっていたら、番号の小さい順で最初の空でないグループ。すべて空なら前回のグループのまま。
+- 開いたとき・グループを切り替えたときは、先頭の行を選択状態にし、一覧を先頭までスクロールする。
+
+### 3.3 表示と閉じる
+
+CPFileLauncher のポップアップモードの規則をそのまま使う（Core `PopupPlacement` / `OutsideClickTracker` / `MouseLeaveTracker`、App `PopupController`）。
+
+- **表示位置**: 「カーソル位置」（既定）/「前回位置」/「画面中央」/「固定座標」。キーボード（2 回押し・ホットキー）で開いたときとマウス操作で開いたときで別々に設定できる（`popup.keyboard` / `popup.mouse`）。トレイ / メニューバーのクリック・メニュー・2 重起動からの表示は `mouse` の組を使う。カーソルのアンカー（9 点）は共通の 1 項目 `popup.cursorAnchor`（既定 `top`）。画面外にはみ出さないよう作業領域に収める。テキストカーソル（キャレット）の位置に出すことは v1 ではしない（§12）。
+- **前面化**: 表示時に盤面を前面に出してキーボードフォーカスを取る（Windows は `AttachThreadInput` で前面スレッドに一時接続して `SetForegroundWindow`、macOS は `activateIgnoringOtherApps:` + `makeKeyAndOrderFront:`）。
+- **貼り付け先の記録**: 表示する**前に**前面のアプリ・ウィンドウを記録する（Windows: `GetForegroundWindow` の hwnd、macOS: `NSWorkspace.frontmostApplication` の pid）。記録先が自アプリ（設定画面を操作中にトリガーした）なら貼り付け先は「なし」とし、選んだときは**コピーだけ**にする（§5.4）。
+- **閉じる条件**:
+  - 定型文を選んだとき（貼り付け・コピー。常に閉じる。設定項目ではない）
+  - Esc（常に有効）
+  - 盤面外をクリックしたとき / 他のウィンドウがアクティブになったとき（既定 ON、`popup.closeOnOutsideClick`）。判定はグローバルフックのマウス押下・離上座標と盤面矩形の比較で、非アクティブ化イベントは補助。表示から 500 ms 以内の非アクティブ化は閉じずに前面化し直す（CPFileLauncher の不具合対策をそのまま引き継ぐ）
+  - トリガーをもう一度実行したとき（トグル、既定 ON、`popup.toggleOnTrigger`）
+  - マウスが盤面から離れたとき（既定 OFF、距離は設定可）
+- **フォーカスの返却**: 選ばずに閉じた（Esc・トグル・マウスが離れた）ときは記録した貼り付け先へフォーカスを返す（Windows: `SetForegroundWindow`、macOS: `yieldActivationToApplication:` → `NSRunningApplication activate`）。盤面外クリック・他ウィンドウのアクティブ化で閉じたときは返さない（フォーカスは既にクリック先にある）。選んだときは §5 の手順の中で返す。
+- 非表示の演出（既定グリッチ 250 ms）は、入力の受付停止とフォーカスの返却を先に済ませ、`Hide()` だけを遅らせる（EFFECTS.md の方針）。貼り付けのキー送信は演出の終わりを**待たない**（§5.1）。
+- ウィンドウは Close せず Hide / Show で再利用する。
+
+### 3.4 全文のプレビュー
+
+- 行にマウスを乗せて、または ↑↓ で選んだ行のまま **400 ms** 止まると、盤面の右（入らなければ左）に全文を出す小窓（`PreviewWindow`）を出す。改行はそのまま。大きさは最大 幅 360 × 高さ 240 で、超えた分は `…`。上に `LEN 128` / `LINES 4`（文字数・行数。翻訳しない HUD の語）。
+- 行から外れる・選択が移る・グループを切り替える・盤面を閉じると消す。プレビューはフォーカスを取らず（`ShowActivated = false`）、OS レベルでもマウス透過にする（`IWindowService.ConfigurePreviewWindow`）。クリックは素通りし、プレビューの矩形内のクリックは盤面外クリックとしても扱わない。
+- 全文が 1 行に収まっている定型文（`…` が付いていない、かつ改行もタブも含まない）ではプレビューを出さない。
+- 設定 `board.preview`（既定 ON）で止められる。演出 `previewShow`（既定 fade 100 ms）。
+
+### 3.5 ウィンドウとアプリのアクティブ化（主に macOS）
+
+CPFileLauncher の規則（自アプリのウィンドウのアクティブ化・設定画面の開閉で直前のアプリへ返す・Dock に出さない・`ChromeWindow` の ⌘W / Esc・座標系の扱い）をそのまま使う。実装は App `WindowActivation.ShowAndActivate` と `IWindowService`（§10.3）。
+
+### 3.6〜3.9 見た目・背景画像・フレームレスの窓・HUD
+
+→ `spec/LOOK.md` の同じ番号の節。
+
+---
+
+## 4. 呼び出し（トリガー）
+
+v1 のトリガーは **修飾キーの 2 回押し**（既定 ON）・**マウス操作**（既定 ON）・**ホットキー**（既定 OFF）の 3 種。同時に有効にできる。すべて SharpHook の 1 つのグローバルフックで受け、判定は Core に置いて単体テストする。
+
+### 4.1 修飾キーの 2 回押し
+
+- 既定 **Ctrl を 2 回**（macOS も ⌃。Clibor と同じ）。設定で Ctrl / Alt(⌥) / Shift / Win(⌘) から 1 つ選ぶ（`triggers.doubleTap.modifier`）。左右のキーは区別しない（左 Ctrl → 右 Ctrl でも成立）。
+- **判定**（Core `ModifierDoubleTapDetector`。時刻はフックのタイムスタンプを使う純粋な状態機械）:
+  1. 対象の修飾キーが押される（1 回目の押下）。
+  2. **他のキー・他の修飾キー・マウスボタンが一切入らずに**離される。押していた時間が `TapMaxMs`（**250 ms**、定数）以下であること。
+  3. 1 回目を離してから `triggers.doubleTap.intervalMs`（既定 **300**、範囲 200〜500）以内に、同じ修飾キーが再び押される。
+  4. 2 回目も他の入力なしに `TapMaxMs` 以内で離された瞬間に発火する（**押した瞬間ではなく離した瞬間**。Ctrl+C のように 2 回目の押下に続けて別のキーが来る操作で誤って開かないため）。
+- 途中で他のキー・修飾キー・マウスボタン（押下）・縦横いずれかのホイールが入ったら最初からやり直す。マウスの移動は取り消しにしない。
+- 他のキー・修飾キー・マウスボタンが既に押されている間は候補を開始しない。対象修飾キーの左右を重ねて押した場合も候補を取り消し、両側を離してから数え直す（左右を交互に単独で押す場合は成立する）。
+- キーリピート: 押しっぱなしで OS から続けて届く押下（Windows は修飾キーでもリピートする）は 1 回と数える（離されるまで次の押下を無視）。
+- **自分が送ったキー**（§5 の貼り付けのキー送信。SharpHook の `IsEventSimulated`）は判定に入れない。
+- 修飾キーの押下・離上は**抑止しない**（他のアプリにもそのまま届く）。2 回押しは「修飾キーを単独で押して離す」だけなので、通常の操作では副作用が無い。
+- 3 回目以降: 発火したら状態を空に戻す。続けて 2 回押すと再び発火する（盤面表示中ならトグルで閉じる）。
+- 注記（設定画面）: 「他のアプリが同じ操作を使っていると両方が反応することがあります。」（例: Windows の PowerToys の Ctrl 2 回、IME の切替）。
+
+### 4.2 マウス操作
+
+- 「修飾キー + マウスボタンのクリック」を複数登録できる（`triggers.mouse[]`）。ボタンは 中 / 左 / 右 / サイド 1（X1）/ サイド 2（X2）、修飾キーは Ctrl / Alt / Shift / Win(⌘) の組合せ。**左・右ボタンは修飾キー 1 つ以上が必須**（修飾キーなしの左右クリックは選べない）。
+- 既定は **Alt + 中クリック**（macOS は ⌥ + 中クリック）。**姉妹アプリ CPFileLauncher の既定（Ctrl + 中クリック）と重ならない**ようにしてある。
+- 一致した操作は押下・離上とも抑止し、下のアプリには渡さない（CPFileLauncher の `TriggerDetector` の規則）。修飾キーなしの中クリックはブラウザ等と競合するので選べるが既定にしない。
+- 長押し・左右同時押し・ホイールクリック + 回転・デスクトップ上でのみ有効、は持たない（§12）。
+- サイドボタンは macOS で Mission Control 等と競合しうる注記を付ける。
+
+### 4.3 ホットキー
+
+- 修飾キーの組合せ + 任意キー（CPFileLauncher と同じ）。既定は **OFF**（値は Ctrl+Alt+V / ⌃⌥V）。押下 1 回につき 1 回だけ発火し、リピートは無視する。一致したキーは抑止する。
+
+- ホットキーの記録中は、2 回押し・マウス操作・ホットキーの新規発火を止める。記録開始・終了、設定変更、フック再起動で 2 回押しの候補を破棄する。既に抑止した入力の対応する離上は引き続き抑止する。
+
+### 4.4 macOS の権限
+
+- グローバルフック（取得と抑止）と、貼り付けのキー送信（§5、`CGEventPost`）の両方に **「アクセシビリティ」** の許可が要る。他の権限は要らない。
+- 未許可のとき（初回起動を含む）は CPFileLauncher と同じ流れ: ウィンドウは勝手に開かず、メニューバーアイコンを警告状態にしてトーストで知らせ、メニュー「権限の設定…」を選んだら権限ガイドを開く。ガイドは 2 秒ごとに `AXIsProcessTrusted` を確かめ、許可されたら自動でフックを始める。
+- 権限ガイドの項目は「アクセシビリティの許可が必要です」（状態・手順・「許可を求める」「システム設定を開く」）と「有効にならないとき」（「再試行」「再起動」）の 2 つ。CPFileLauncher にあった自動化（Finder の制御）の項目は持たない。
+- アクセシビリティが未許可の間は、メニューバーアイコンから盤面を開けるが、選んだ定型文は**コピーだけ**になる（キーを送れないため。トースト `Toast_CopiedOnly_NoPermission`）。
+
+
+---
+
+## 5. 貼り付け
+
+### 5.1 流れ
+
+定型文を選ぶ（クリック / Enter）と、次の順に行う。担当は App の `PasteController`（OS 依存の部分は `IClipboardService` / `IKeySender` / `IWindowService`、§10.3）。
+
+1. **選んだ行の演出** `pasteFlash`（既定 glow 120 ms）を始める（待たない）。
+2. **盤面を閉じる**: 入力の受付を止め、非表示の演出を始める（`Hide()` は演出の後。§3.3）。
+3. **元のクリップボードを退避**する（`IClipboardService.Snapshot()`。§5.3。`paste.restoreClipboard` が OFF なら退避しない）。
+4. **クリップボードに定型文を書く**（プレーンテキスト 1 形式。Windows `CF_UNICODETEXT`、macOS `public.utf8-plain-text`）。書くときに「クリップボード履歴・同期に載せない」印を付ける（§5.3）。改行は OS の流儀に変換する（Windows `\r\n`、macOS `\n`。保存は `\n`、§9.3）。
+5. **貼り付け先へフォーカスを返す**（§3.3 の記録先。Windows `SetForegroundWindow`（`AttachThreadInput` 併用）、macOS `NSRunningApplication activate`）。返した後、前面が貼り付け先になったことを最大 **300 ms**（定数）まで 10 ms おきに確かめる（Windows `GetForegroundWindow`、macOS `frontmostApplication.processIdentifier`）。
+   - macOS は前面アプリの PID 一致に加え、自アプリが非アクティブで、自アプリのキーウィンドウが無いかキー状態を失っていることも確認する。非同期のフォーカス移行中に貼り付けキーを送らないための確認であり、非表示演出の終了を固定時間待つものではない。AppKit の状態はメインスレッドで読み、確認の間はメインループを進める。
+6. **修飾キーが離されるのを待つ**: ユーザーがまだ Ctrl / Alt / Shift / Win(⌘) を押していれば、すべて離されるまで最大 **1000 ms**（定数）待つ（フックで押下中の修飾キーを追跡する `ModifierState`）。押したままだと送ったキーと合成されて Ctrl+Shift+V（書式なし貼り付け）などに化けるため。
+   - macOS は自アプリ前面時の修飾キーがフックへ届かない場合があるため、待機判定では OS の現在の修飾キー状態（`CGEventSourceFlagsState`）を照合する。フックで追跡する二度押しの入力列とは分離し、利用者が押した Ctrl などが残ったまま ⌘V を送らない。
+7. **貼り付けのキーを送る**: 送信の直前にも貼り付け先が前面で、§5.5 の事前判定が通ることを確かめる。 Windows **Ctrl+V**、macOS **⌘V**（SharpHook の `EventSimulator`。Windows は `SendInput`、macOS は `CGEventPost`）。押下・離上を 1 組で送り、自分のフックでは `IsEventSimulated` で無視する。
+8. **元のクリップボードを戻す**（`paste.restoreClipboard` が ON の場合だけ。既定 **OFF**）: キーを送ってから `paste.restoreDelayMs`（既定 **500**、範囲 200〜3000）後に、退避したものを書き戻す（§5.3）。
+
+- 5〜7 のどこかで続けられなかったときは、クリップボードが変更されていなければ**定型文を残したまま**（8 の書き戻しをしない）トーストで知らせる（`Toast_CopiedOnly_*`。§5.5）。ユーザーは自分で貼り付けられる。別の内容に変更済みなら、その内容を上書きせず保持する（§5.3）。
+- 1 回の流れが終わるまで次の選択は受け付けない（盤面は閉じているので普通は起きない。トリガーで再び開いた盤面から選んだら、前の流れが送信前なら完了を待つ。送信済みの書き戻し待ちなら待ち時間を短縮して変更トークンの条件付きで書き戻してから始める）。
+
+### 5.2 自動貼り付けとコピーだけ
+
+- `paste.autoPaste`（既定 **ON**）: ON なら §5.1 の全手順。OFF なら 1〜4 だけ行い（退避もしない）、フォーカスを返して終わる（= コピーだけ）。
+- **Shift + Enter / Shift + クリック**は、設定に関係なく**コピーだけ**（クリップボードに残し、元に戻さない）。右クリックメニューにも「コピーだけ」（§6.2）。
+- コピーだけのときは、クリップボードに残したことを短いトースト `Toast_Copied`（情報、1.5 秒）で知らせる。`paste.autoPaste` OFF を選んだ人には毎回は煩いので、このトーストは `paste.autoPaste` が ON のときの Shift 操作・メニューのときだけ出す。
+
+### 5.3 クリップボードの退避と書き戻し
+
+- `paste.restoreClipboard` は既定 **OFF**。自動貼り付け後も選んだ定型文をクリップボードに残し、後から Ctrl+V / ⌘V で利用できる。ON にした場合は以下の規則で元の内容を戻す。既存設定の明示的な ON / OFF は維持する。
+
+- **退避の範囲**: その時点のクリップボードにある**すべての形式**を、データとして読める範囲で丸ごと取る（`IClipboardService.Snapshot()` → `ClipboardSnapshot`。文字だけでなく画像・ファイルの一覧・リッチテキストも戻せるように）。
+  - Windows: `EnumClipboardFormats` で列挙し、`GetClipboardData` が `HGLOBAL` を返す形式だけ中身を複写する（`CF_BITMAP` などの GDI ハンドルの形式・`CF_OWNERDISPLAY`・遅延描画で失敗する形式は飛ばす。`CF_DIB` があればビットマップはそれで戻る）。
+  - macOS: `NSPasteboard.generalPasteboard` の `pasteboardItems` ごとに `types` を列挙し `dataForType:` を複写する（戻すときは `NSPasteboardItem` を作り直して `writeObjects:`）。
+  - 合計が **32 MB** を超えたら退避をあきらめ、書き戻しもしない（ログ 1 行。定型文はクリップボードに残る）。
+- **送信前の変更確認**: フォーカスや修飾キーの解放を待っている間に別の内容がコピーされた場合に備え、貼り付けキーを送る直前にも、定型文を書いた直後の変更トークンと照合する。不一致ならキー送信と書き戻しを両方中止し、新しいクリップボードの内容を保つ。結果は `ClipboardChanged` とし、トースト `Toast_ClipboardChanged` で知らせる。
+- **書き戻しの条件**: 書き戻す直前に、クリップボードが**自分が定型文を書いた後に変わっていない**ことを確かめる（Windows `GetClipboardSequenceNumber`、macOS `changeCount` を 4 の直後に記録して比べる）。変わっていれば（貼り付け先アプリや利用者が別の物をコピーした）書き戻さない。
+- 復元時は Platform のクリップボード操作の中でも変更トークンを再照合する。Windows はクリップボードを開いている間に照合と書き込みを行う。macOS は照合と書き込みを他プロセスに対して原子的にはできないため、競合を完全には排除できない。
+- 退避したものが空（何も無かった）なら、書き戻しはクリップボードを空にする。
+- **履歴に載せない印**（他のクリップボード管理ソフト・OS の履歴に定型文を残さないため）: Windows は `ExcludeClipboardContentFromMonitorProcessing` と `CanIncludeInClipboardHistory` = 0 / `CanUploadToCloudClipboard` = 0 を一緒に書く。macOS は `org.nspasteboard.TransientType` と `org.nspasteboard.AutoGeneratedType` の型を一緒に書く。復元 OFF の通常の自動貼り付けでもこの印は付けるが、クリップボードの定型文自体は残り、後から Ctrl+V / ⌘V で利用できる。**コピーだけ**のときはユーザーがそれを使うので印を付けない。書き戻しの書き込みにも印を付ける（元の物が履歴に二重に載らないように）。
+- クリップボードを開けない（他のプロセスが開いている）ときは 10 ms おきに最大 200 ms 試し、だめなら失敗として扱う（§5.5）。
+
+### 5.4 貼り付け先が無いとき
+
+- 記録した貼り付け先が自アプリ・取れなかった・もう終了している、のいずれかなら、**コピーだけ**にしてトースト `Toast_Copied` を出す。
+
+### 5.5 貼り付けられない場面（制約。設定画面「貼り付け」タブに注記）
+
+| 場面 | 結果 |
+|---|---|
+| Windows: 貼り付け先が管理者権限で動いている（UIPI でキーを送れない） | `SendInput` は成功を返すが届かない。事前に判別できるとき（`OpenProcessToken` で昇格を確かめられたとき）はコピーだけにして `Toast_CopiedOnly_Elevated` |
+| macOS: パスワード欄など「セキュア入力」が有効（`IsSecureEventInputEnabled`） | キーが届かないのでコピーだけにして `Toast_CopiedOnly_SecureInput` |
+| macOS: アクセシビリティ未許可 | コピーだけ（§4.4）`Toast_CopiedOnly_NoPermission` |
+| 修飾キーが 1000 ms たっても離されない | コピーだけ `Toast_CopiedOnly_ModifierHeld` |
+| 貼り付け先へフォーカスを戻せない | コピーだけ `Toast_CopiedOnly_Focus` |
+| 貼り付け可能かの確認に失敗した | コピーだけ `Toast_CopiedOnly_CheckFailed` |
+| 貼り付けキーの送信に失敗した | コピーだけ `Toast_CopiedOnly_SendFailed` |
+| 待機中にクリップボードが変わった | 送信・書き戻しを中止し、新しい内容を保持 `Toast_ClipboardChanged` |
+| クリップボードを開けない | 何もせず `Toast_ClipboardBusy`（エラー） |
+| 貼り付け先が Ctrl+V / ⌘V 以外で貼り付けるアプリ（一部の端末など） | 検出しない。`paste.restoreClipboard` を ON にすると定型文が書き戻されて残らないため、OFF にするよう注記で案内する |
+
+### 5.6 フックとの関係
+
+- 貼り付けのキー送信は自分のフックにも届く。`IsEventSimulated` の付いた入力は 2 回押し・既存ホットキー・マウス操作・盤面外クリック・修飾キー状態の判定で無視する。
+- 送信中に利用者が打ったキーは抑止しない（割り込みは起こりうるが、送るのは 1 組のキーだけなので実害は小さい）。
+
+---
+
+## 6. 盤面の操作と定型文の編集
+
+### 6.1 盤面の操作
+
+| 操作 | 動作 |
+|---|---|
+| クリック / Enter | 選んだ定型文を貼り付ける（§5。`paste.autoPaste` OFF ならコピーだけ） |
+| Shift + クリック / Shift + Enter | コピーだけ（§5.2） |
+| ↑ ↓ | 行の選択を移す（端で止まる。循環しない）。見えない所へ行けばスクロール |
+| Page Up / Page Down、Home / End | 1 画面ぶん / 先頭・末尾へ |
+| 0〜9 | グループを切り替える（§3.2） |
+| ← → / Ctrl+Tab / Ctrl+Shift+Tab | 前後の空でないグループへ（§3.2） |
+| ホイール（一覧の上） | 一覧があふれていればスクロール。あふれていなければ、`board.wheelSwitchesGroup`（既定 ON）のとき前後の空でないグループへ（下 = 次） |
+| ホイール（タブの上） | `board.wheelSwitchesGroup` ON なら前後の空でないグループへ |
+| Esc | 閉じる（§3.3） |
+| Ctrl+, / ⌘, | 設定画面を開く（盤面は閉じる） |
+| 右クリック | メニュー（§6.2） |
+
+- マウスを行に乗せたらその行が選択になる（キーボードの選択と 1 つに統合。Clibor と同じ）。
+- 盤面内のドラッグで行を並べ替えることはしない（編集は設定画面だけ。§6.3）。行の上で押して動かしてもウィンドウは動かない。
+
+### 6.2 右クリックメニュー
+
+- 行の上: **貼り付け** / **コピーだけ** / ― / **設定で編集…**（設定画面の定型文タブを、そのグループ・その定型文を選んだ状態で開く）/ ― / 設定… / 更新を確認… / CPClipboard について
+- 行以外: 設定… / 更新を確認… / CPClipboard について
+
+### 6.3 定型文の編集（設定画面「定型文」タブ）
+
+定型文とグループの編集は**設定画面の「定型文」タブだけ**で行う。
+
+```
+┌ グループ ─────────┐ ┌ 定型文（グループ 2 · 挨拶） ─────────────────────────────┐
+│  0               │ │  いつもお世話になっております。株式会…                    │
+│  1  仕事     12  │ │ ▸お疲れさまです。〇〇です。⏎よろしくお…                    │
+│ [2  挨拶      3] │ │  以上、よろしくお願いいたします。                          │
+│  3  住所      2  │ │                                                          │
+│  …               │ │ [追加] [クリップボードから追加] [複製] [削除] [↑] [↓] [移動 ▸] │
+│  9               │ ├──────────────────────────────────────────────────────────┤
+│ 名前 [挨拶     ] │ │ お疲れさまです。〇〇です。                                │
+│ [グループを空に…]│ │ よろしくお願いします。                      (28 文字)    │
+└──────────────────┘ └──────────────────────────────────────────────────────────┘
+```
+
+- **左: グループの一覧**（10 個固定。番号・名前・件数）。下に選んだグループの名前の入力欄（最大 20 文字、空でよい）と「グループを空にする…」（確認ダイアログあり）。
+- **右上: 定型文の一覧**（盤面と同じ 1 行表示）。ボタン:
+  - **追加**: 選択の直後に空の定型文を足して下の編集欄にフォーカスを移す。
+  - **クリップボードから追加**: いまのクリップボードの文字を新しい定型文として選択の直後に足す（文字が無ければボタンを無効表示）。
+  - **複製** / **削除**（確認なし。下の「元に戻す」で戻せる）/ **↑** / **↓**（並べ替え）/ **移動 ▸**（他のグループ 0〜9 へ移す。メニュー。移した先の末尾に入る）。
+  - 一覧内のドラッグでも並べ替えられる。左のグループの上へ落とすとそのグループの末尾へ**移動**（Ctrl / ⌥ を押しながらなら**複製**）。
+- **右下: 編集欄**（複数行の `TextBox`。`AcceptsReturn = true`、`AcceptsTab = true`。タブ文字を入れられるので、欄から出るのは Ctrl+Tab / マウス）。右下に文字数。打った内容はそのまま反映され、500 ms のまとめ書きで保存される（§6.4）。
+- **空の定型文**（空白・改行だけを含む）は、選択が他へ移ったとき・タブを離れたとき・設定画面を閉じたときに自動で取り除く（盤面には出さない）。
+- 1 件の上限 **10,000 文字**、1 グループの上限 **500 件**（§9.4）。上限に達したら入力・追加を止めて注記を出す。
+- **元に戻す**: 一覧に対する操作（削除・移動・複製・並べ替え・グループを空にする・追加）を **1 段階** 戻せる（一覧かグループの一覧にフォーカスがあるときの Ctrl+Z / ⌘Z と、ボタンの並びの「元に戻す」）。編集欄の中の Ctrl+Z は `TextBox` 自身の取り消し。
+  - 戻すのは「直前の一覧操作の直前の状態」（定型文とグループ全体の控え）。一覧操作のあとに**本文やグループ名を編集したら、元に戻すは使えなくなる**（控えに戻すと、その編集まで消えるため）。空の定型文の自動の除去は控えを消さない。
+  - 戻したあとは、操作の前に選んでいた定型文を選び直す。もう一度押しても何もしない（やり直しは持たない）。
+- **クリップボードから追加**は、空白・改行だけの文字や 10,000 文字を超える文字なら追加せずに注記を出す（切り詰めて足さない）。
+- **移動 ▸** で他のグループへ移したあとは、元のグループの同じ位置の定型文を選ぶ（無ければ 1 つ前）。複製のときは元の定型文を選んだまま。
+- 盤面を出したまま設定画面を操作した場合、盤面の表示はすぐに追従する（`TemplatesHub.Changed`）。
+
+### 6.4 保存
+
+- 定型文とグループは `templates.json`（§9）。変更は App の `TemplatesHub` を通し（設定の `SettingsHub` と同じ形）、**500 ms のまとめ書き**で保存する。設定画面を閉じるとき・アプリの終了時は即座に書く。
+- `templates.json` の書き込みはアトミック（一時ファイル → 置き換え）で、書く前に世代バックアップを取る（`data.backupGenerations`、既定 10）。読み込みに失敗したら最新のバックアップから戻し、通知で知らせる（CPFileLauncher の `AppDataStore` と同じ規則）。
+- `templates.json` が現行より新しい版（`schemaVersion` が大きい）なら読み取り専用で開き、保存しない（設定画面の定型文タブ上部に注記、編集はこのセッションだけ）。
+
+---
+
+## 7. 設定
+
+**設定項目の一覧（UI 表示名・JSON キー・型・既定値・範囲・OS 差）は `spec/SETTINGS.md` が正**。本節は方針だけ。
+
+- タブ: **一般 / 表示 / 演出 / 呼び出し / 貼り付け / 定型文 / データ / 詳細**（8 タブ）。演出タブは CPFileLauncher と同じ構成（「アニメーション」→ 常時の演出 3 行 → VSync → 注記 → 折りたたみ「詳細設定」（表示 / 非表示の直下にグリッチの強さ）→「すべて既定に戻す」→ 静止した走査線）。
+- **定型文タブだけ広い**: 設定画面の本体は 620 × 600 px の固定（CPFileLauncher と同じ）だが、定型文タブの編集欄が狭いので、本体を **820 × 600** にする（すべてのタブで同じ大きさ。タブを切り替えても窓の大きさは変えない）。
+- 変更は即時反映・自動保存（`SettingsHub`、500 ms のまとめ書き）。OK / キャンセルは無く、× / Esc / Ctrl+W（⌘W）で閉じる。設定画面は 1 つだけ開く。
+- **設定画面はユーザーが選んだときだけ開く**（トレイ / メニューバーの「設定…」、盤面の右クリック、盤面表示中の Ctrl+, / ⌘,、空のグループの「設定で追加…」）。初回起動・権限未許可・エラーで自動で開かない。
+- 言語（`system` / `ja` / `en`）は再起動後に反映。UI 文字列は `Strings.resx`（英語、既定）/ `Strings.ja.resx`（日本語）だけから引き、Core / Platform は文言を返さない。訳語は `spec/TERMS.md`。
+- 設定画面が開いている間もトリガーは有効（盤面を出して確かめながら変えられる）。ホットキーの記録中だけトリガーの判定を止める。
+
+---
+
+## 8. トレイ / メニューバー
+
+- Windows: 通知領域アイコン。macOS: メニューバーアイコン（テンプレート画像）。Dock には出さない。
+- 左クリック（Windows）: 盤面の表示 / 非表示。
+- メニュー（Windows は右クリック、macOS はクリック）: **盤面を表示** / **グループ ▸**（0〜9。名前と件数。選ぶとそのグループで盤面を出す）/ ― / **設定…** / **権限の設定…**（macOS、未許可のときだけ）/ **更新を確認…** / ― / **終了**。macOS のアプリメニューにも「設定… ⌘,」「更新を確認…」「終了 ⌘Q」。
+- トレイから開いた盤面の貼り付け先: 開く前の前面アプリ（Windows ではトレイのクリックでタスクバーが前面になっているので、`GetForegroundWindow` がタスクバー（`Shell_TrayWnd`）なら**直前の前面ウィンドウ**（`IWindowService.PreviousForeground`、フックで前面の変化を追うのではなく、Z オーダーでタスクバーの次の可視トップレベル）を使う。取れなければ貼り付け先なし = コピーだけ）。
+- アイコンは状態を反映（通常 / 権限未許可の警告 / フック開始失敗の警告）。警告は同じ線画の橙版。
+
+---
+
+## 9. データ保存
+
+### 9.1 保存場所
+
+| OS | パス |
+|---|---|
+| Windows | `%APPDATA%\CPClipboard\` |
+| macOS | `~/Library/Application Support/CPClipboard/` |
+| ポータブル | 実行ファイルの隣に `portable.flag` があれば、その隣の `data/`（隠し機能。UI には出さない） |
+
+### 9.2 ファイル構成
+
+```
+CPClipboard/
+  settings.json      # アプリ設定（§7、SETTINGS.md）
+  templates.json     # グループと定型文（§9.3）
+  background/        # 盤面の背景画像のコピー（LOOK.md §3.7）
+  backup/            # templates.json の世代バックアップ（既定 10 世代、10 分に 1 回まで）とインポート前の控え
+  logs/              # ログ（詳細設定で ON の場合。Debug ビルドは常に）
+```
+
+### 9.3 templates.json
+
+```json
+{
+  "schemaVersion": 1,
+  "groups": [
+    { "key": 0, "name": "", "snippets": [] },
+    { "key": 1, "name": "仕事", "snippets": [
+      { "id": "7f3c…", "text": "いつもお世話になっております。\n株式会社〇〇の△△です。" }
+    ] }
+  ]
+}
+```
+
+- `groups` は `key` 0〜9 の 10 要素。**読み込み時に正規化**する: 欠けている `key` は空のグループで補い、範囲外・重複の `key` は捨て（ログ）、`key` 順に並べる（Core `TemplateBook.Normalize`）。
+- `snippets` の並びが盤面の行の順。`id` は GUID の文字列（編集の元に戻す・設定画面の選択の保持に使う。無い・重複なら読み込み時に振り直す）。
+- `text` の改行は `\n` に正規化して保存する（`\r\n` / `\r` は読み込み時に `\n`）。
+- **初回**（`templates.json` が無い）は、グループ 1 に UI 言語に合わせた例を 3 件入れて作る（`Templates_Sample_1..3`。日本語なら挨拶・締めの文と住所の例）。
+- 項目を足すときの規則は CPFileLauncher と同じ（省略可能なキーの追加は `schemaVersion` を上げない。意味が変わるときだけ上げて移行を書く）。
+
+### 9.4 入力データの制限
+
+| 項目 | 上限 | 超えたとき |
+|---|---|---|
+| 定型文 1 件の文字数 | 10,000 | 編集欄は入力を止める。読み込み時は超えた分を切り詰めてログ |
+| 1 グループの件数 | 500 | 追加・移動・複製を止めて注記。読み込み時は超えた分を捨ててログ |
+| グループ名 | 20 文字 | 入力を止める。読み込み時は切り詰める |
+| `templates.json` の大きさ | 16 MB | 読み込みを拒否して通知（バックアップから戻す） |
+| エクスポート zip の中身 | settings.json + templates.json + background/ の 1 ファイル、合計 64 MB | インポートを拒否 |
+
+### 9.5 エクスポート / インポート
+
+- データタブ。エクスポート = `settings.json` + `templates.json`（+ 背景画像のコピー）を `CPClipboard-backup-yyyyMMdd-HHmmss.zip` に保存。インポート = zip から読み込んで置き換え（確認ダイアログ、再起動後に反映）。CPFileLauncher の `DataArchive` の規則（危険なパス・大きさの検査）をそのまま使う。
+- 定型文だけを取り込む・書き出す機能（テキスト / CSV / Clibor の形式）は v1 では持たない（§12）。
+
+---
+
+## 10. アーキテクチャ
+
+### 10.1 プロジェクト構成（src/）
+
+```
+src/
+  CPClipboard.sln
+  CPClipboard.Core/            # モデル、永続化、判定ロジック。OS 非依存
+  CPClipboard.Desktop/         # Avalonia UI、エントリポイント（本書で「App」と呼ぶ層。名前空間 CPClipboard.App）
+  CPClipboard.Platform/        # プラットフォーム抽象インターフェースと SharpHook の共通実装
+  CPClipboard.Platform.Windows/
+  CPClipboard.Platform.MacOS/
+  CPClipboard.Tests/           # xUnit（Core）
+  CPClipboard.Desktop.Tests/   # xUnit + Avalonia.Headless（App の UI テスト）
+```
+
+- **CPFileLauncher のコードをコピーして、不要な部分を削って作る**（共有ライブラリにはしない。別のリポジトリ `PalmJoy/CPFileLauncher`）。持ち込むもの・削るものは `issue/` の M0 に列挙する。
+- アセンブリ名 = 実行ファイル名 **`CPClipboard`**（`avares://CPClipboard/…`）。`.app` / `.App` で終わるフォルダ・プロジェクトは作らない（macOS の Gatekeeper の事故を避ける。アプリ本体は `CPClipboard.Desktop`）。
+- 製品名・副題（"CyberPunk Clipboard"）・ウィンドウタイトルの接頭辞は App の `AppInfo` 1 か所。
+- 依存方向: Core ← Platform ← Platform.Windows / Platform.MacOS ← App。全プロジェクト `net10.0` 単一 TFM。Windows 実装は `[SupportedOSPlatform("windows")]`、起動時に `OperatingSystem.IsWindows()` / `IsMacOS()` で実装を選ぶ。
+
+### 10.2 主要ライブラリ
+
+CPFileLauncher と同じ（Avalonia + Fluent、Avalonia.Controls.ColorPicker、Avalonia.Headless.XUnit、SharpHook 8 系、System.Text.Json、Microsoft.CodeAnalysis.ResxSourceGenerator、同梱フォント Chakra Petch / Share Tech Mono）。macOS のネイティブ呼び出しはバインディングを使わず `objc_msgSend` / CF / CG / AX を P/Invoke で直接呼ぶ。依存は `packages.lock.json` で固定する。
+
+### 10.3 プラットフォーム抽象（CPClipboard.Platform）
+
+| インターフェース | 責務 | Windows | macOS |
+|---|---|---|---|
+| `IInputHookService` | グローバルフック（キー・マウス）の開始・停止。`ConfigureDoubleTap(DoubleTapSetting)` で 2 回押しを設定し、成立を `DoubleTapped` で通知する。`PressedModifiers` は物理キーの押下状態から集約した修飾キーを返す。マウス操作・ホットキー・盤面外クリックとフックを共有し、`IsEventSimulated` の入力は状態更新・判定・記録・通知の前に除外する | SharpHook | SharpHook（CGEventTap） |
+| `IKeySender`（新規） | 貼り付けのキー（Ctrl+V / ⌘V）を送る。`SendPaste()` | SharpHook `EventSimulator`（`SendInput`） | SharpHook `EventSimulator`（`CGEventPost`） |
+| `IClipboardService`（新規） | `SnapshotAsync()` / `RestoreAsync(snapshot, expectedToken)` / `SetTextAsync(text, transient, expectedToken?)` / `GetText()` / `ChangeToken`（§5.3） | Win32 `OpenClipboard` / `EnumClipboardFormats` / `GetClipboardData` / `SetClipboardData` / `GetClipboardSequenceNumber` / `RegisterClipboardFormat`（専用の STA スレッド） | `NSPasteboard`（`pasteboardItems` / `types` / `dataForType:` / `clearContents` / `writeObjects:` / `changeCount`） |
+| `IWindowService` | タスクバー / Dock 対策、前面化、**貼り付け先の記録と返却**（`CaptureForeground()` → `nint` の不透明 token（Windows hwnd / macOS pid、0 は貼り付け先なし）、`RestoreForeground(token)`、`IsForeground(token)`、`PreviousForeground()`）、カーソル位置、座標系、`PrefersReducedMotion`、プレビュー小窓の非アクティブ・マウス透過設定（`ConfigurePreviewWindow(handle)`） | Win32 | Cocoa |
+| `IPasteGuard`（新規） | 貼り付けられない場面の事前判定（§5.5）: `Check(token)` → `Ok` / `Elevated` / `SecureInput` / `NoPermission` | `OpenProcessToken` + `GetTokenInformation(TokenElevation)`（自分が昇格していなくて相手が昇格しているとき `Elevated`） | `IsSecureEventInputEnabled`、`AXIsProcessTrusted` |
+| `IAutoStartService` | ログイン時の自動起動 | `HKCU\…\Run` | `SMAppService.mainAppService` |
+| `IPermissionService` | アクセシビリティの状態・システム設定を開く・許可を求める | 常に許可済み | `AXIsProcessTrusted(WithOptions)` |
+| `IShellService` | フォルダ・ファイルを OS の既定で開く（設定フォルダ・ログフォルダ・ライセンス文・URL）だけ | `ShellExecuteEx` | `open` |
+| `IAmbientLayerService` | 常時の演出を OS の層で描く | 非対応（Avalonia の層） | Core Animation（CPFileLauncher と同じ） |
+
+- 判定ロジックは Core に置いて単体テストする: `ModifierDoubleTapDetector`（§4.1）、`TriggerDetector`（§4.2・§4.3）、`ModifierState`（§5.1 の 6）、`OutsideClickTracker` / `MouseLeaveTracker` / `PopupPlacement`（§3.3）、`TemplateBook`（§9.3 の正規化・編集操作・元に戻す）、`SnippetLine.Format`（1 行表示の文字列化。改行 → `⏎`、タブ → 空白）、`PasteFlow`（§5.1 の手順を Core の `IPasteOperations` 越しに実行する状態機械。App のアダプターが Platform インターフェースへ委譲し、Core から Platform を参照しない。待ち時間は注入できる時計で）。
+- CPFileLauncher にあった `IIconProvider`・`IDesktopDetector`・Finder / Explorer のタブ操作・自動化の権限は持たない。
+- 単一インスタンス: 名前付き Mutex（`Global\` 付き）+ 名前付きパイプ。名前は `CPClipboard-<ユーザー名>-<データフォルダのハッシュ先頭 12 桁>`。2 つ目の起動は既存のインスタンスに「盤面を表示」を送って終わる。判定は `Program.Main` で Avalonia を立ち上げる前に行う。
+
+### 10.4 ビルド・配布
+
+CPFileLauncher と同じ方式（スクリプトの名前・中身を CPClipboard に置き換える）。
+
+- Windows: `src/build/publish-win.ps1` → `bin/win-x64/CPClipboard.exe`、`bin/win-arm64/CPClipboard.exe`（単一ファイル + ReadyToRun、`uiohook.dll` は LGPL のため exe の隣）。
+- macOS: `src/build/publish-mac.sh` → `bin/osx-arm64/CPClipboard.app`（ReadyToRun、bundle id **`com.palmjoy.cpclipboard`**、`LSUIElement`、`NSAppleEventsUsageDescription` は持たない）。
+- macOS のローカル署名 identity は、明示した `CODESIGN_IDENTITY`、ローカル専用 `work/macos-signing.identity` の証明書SHA-1フィンガープリント、既定名 `FileLauncher Dev` の順で選ぶ。選択した identity が利用できなければビルドを失敗させ、別の証明書や ad-hoc へ自動で切り替えない。CI は明示的な `CODESIGN_IDENTITY=-` で ad-hoc 署名を使う。ローカル設定に証明書・秘密鍵を含めず、fingerprint のみを保存する。
+- macOS の再ビルドでは同じ署名 identity と bundle id `com.palmjoy.cpclipboard` を保つ。署名 identity を変更した初回はアクセシビリティ許可の再登録が必要になる場合がある。証明書による開発署名と公証済み配布は区別する。
+- 配布 zip は `bin/release/`。リリースはタグ `cpclipboard-vX.Y.Z` → CI（両 OS でテスト → zip → 下書きの Release）→ ユーザーが実機で確かめて公開。来歴証明の扱いは CPFileLauncher と同じ。
+- 配布サイトは GitHub Pages（`docs/`、日英）。M6 で作る。
+- **更新の確認**: 起動ごとに一度、バックグラウンドで GitHub Releases（`PalmJoy/CPFileLauncher`）の最新の公開正式版を確かめる。メニューの「更新を確認…」からも実行できる。新しい版があれば現在と最新の版を見せ、ユーザーが選んだら配布サイトを開く。手動の確認では「最新です」・通信失敗も知らせ、起動時は更新があるときだけ知らせる。自動インストールはしない（CPFileLauncher の `UpdateChecker` と同じ）。
+- ライセンスは GPL-3.0-only、「Copyright © 2026 PalmJoy」。第三者の部品は `THIRD-PARTY-NOTICES.txt`。
+
+### 10.5 UI の自動テスト
+
+- `CPClipboard.Desktop.Tests`（Avalonia.Headless）。`FakePlatform`（`IClipboardService` / `IKeySender` / `IWindowService` の偽物を含む）に差し替えて、盤面（1 行表示・グループ切替・キー操作・高さの伸縮・プレビュー）、設定画面（全タブ・定型文の編集）、貼り付けの流れ（`PasteController` が偽物に正しい順で呼ぶこと）を確かめる。グローバルフック・本物のクリップボード・OS の前面化は対象外（手で確かめる。`issue/`）。
+
+---
+
+## 11. 非機能要件
+
+| 項目 | 要件 |
+|---|---|
+| 表示遅延 | トリガーから最初のフレームまで 100 ms 以内（表示演出の時間は含めない） |
+| 貼り付けの速さ | 選んでから貼り付けのキーを送るまで 150 ms 以内（修飾キーの解放待ちと、貼り付け先の前面化を待つ時間は除く） |
+| 常駐メモリ | 定型文 1,000 件・背景画像なしで、起動後一度も表示していない状態は 100 MB 以下、表示後は 150 MB 以下 |
+| 起動時間 | プロセス開始から呼び出しを受け付けるまで 1.5 秒以内 |
+| CPU | 常時の演出をすべて「なし」にした Release 構成で、盤面表示中の 30 秒平均が 1 コア換算 3% 以下、非表示中は 0.5% 以下 |
+| データ保全 | アトミック書き込みと世代バックアップで直前の保存状態を守る |
+| 多言語 | UI は英語（既定）と日本語。ログは対象外 |
+| アクセシビリティ | キーボードだけで盤面の全操作と定型文の編集ができる |
+
+## 12. v1 スコープ外
+
+- クリップボードの履歴（Clibor の FIFO / LIFO・履歴の保存）。定型文専用のツールにするため。
+- 常駐モード（盤面を出しっぱなしにする）。
+- 定型文の変数・マクロ（`{date}`、貼り付け後のカーソル位置の指定、入力欄を出す差し込み）。
+- 行ごとのショートカットキー（A〜Z など）・番号の表示。
+- 画像・リッチテキストの定型文。
+- 定型文の検索（盤面で文字を打って絞り込む）。
+- 定型文の取り込み・書き出し（テキスト / CSV / Clibor の形式）。
+- キャレット（テキストカーソル）の位置に盤面を出す。
+- マウスの長押し・左右同時押し・ホイールクリック + 回転・デスクトップ上でのみ有効。
+- macOS の Intel / Universal 配布、更新の自動インストール、クラウド同期。
+
+## CPTools の共通構造
+
+製品はCPTools/CPClipboard/に配置し、共通ソースは兄弟ディレクトリCommon/から明示的にリンクしてコンパイルする。共通構造と責務は `../../Common/SPEC.md` を参照。Coreの同一ロジック、Desktopの同一描画・演出部品、Platformの同一native補助を共有し、製品固有の設定enum・resource・盤面・データはこの製品が所有する。製品間に参照を設けず、assembly名・bundle ID・保存先は維持し、更新先は以下の製品別Releaseへ接続する。共有化はプロセス間メモリ共有や既定演出の変更を意味しない。
+
+配布サイトの実ソースはCPTools/docs/CPClipboard/。製品内scriptは自身の位置からCPTools rootを解決し、Commonとサイト参照を起動ディレクトリに依存させない。CI定義はCPTools rootの.github/workflowsへ置き、Common変更を両製品で検証する。公開repositoryは `PalmJoy/CPFileLauncher` に集約し、製品別のタグ/assetで分離する。署名identity・bundle ID・データ保存先は維持する。
+
+### CPTools の公開先と更新判定
+
+CPClipboardのReleaseは `PalmJoy/CPFileLauncher` の `cpclipboard-vX.Y.Z` タグで公開する。更新確認は公開正式Release一覧からこのprefixに一致するものだけをSemVerで比較し、Launcherの `vX.Y.Z`・draft・prerelease・別prefixを除外する。repository全体のlatest endpointやlatest/downloadをCPClipboardの最新版として扱わない。ダウンロードは選定したReleaseの実在するCPClipboard assetを使う。配布サイトとsetupは `https://palmjoy.github.io/CPFileLauncher/CPClipboard/` と `#setup`。このサイトのリンクは同repositoryの製品別Releaseへ接続する。

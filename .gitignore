@@ -56,3 +56,8 @@ portable.flag
 *.log
 
 astra-optimize-report.md
+
+# CPTools local material
+**/src/spikes/
+**/flow.md
+/flow.md

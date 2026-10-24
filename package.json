@@ -1,0 +1,12 @@
+{
+  "name": "cptools",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node Common/build/test.mjs",
+    "check:sites": "node Common/build/sync-launcher-site.mjs --check"
+  }
+}

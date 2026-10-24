@@ -69,13 +69,13 @@ public sealed class BoardTests
         {
             var rows = Rows(w);
             Assert.Equal(3, rows.Count);
-            var text = rows[0].GetVisualDescendants().OfType<TextBlock>().Single(t => !t.Classes.Contains("marker"));
+            var text = rows[0].GetVisualDescendants().OfType<TextBlock>().Single(t => t.Classes.Contains("snippet-text"));
             Assert.Equal("いつもお世話になっております。⏎株式会社〇〇の△△です。", text.Text);
             Assert.Equal(Avalonia.Media.TextTrimming.CharacterEllipsis, text.TextTrimming);
             Assert.Contains("selected", rows[0].Classes); // 開いたときは先頭の行
             w.SwitchGroup(4);
             Dispatcher.UIThread.RunJobs();
-            Assert.Equal("住所 〒100-0001", Rows(w)[0].GetVisualDescendants().OfType<TextBlock>().Single(t => !t.Classes.Contains("marker")).Text);
+            Assert.Equal("住所 〒100-0001", Rows(w)[0].GetVisualDescendants().OfType<TextBlock>().Single(t => t.Classes.Contains("snippet-text")).Text);
         }
         finally { Close(w); }
     }
@@ -226,4 +226,37 @@ public sealed class BoardTests
         }
         finally { Close(w); }
     }
+    [AvaloniaFact]
+    public void 英字キーは論理順の先頭26件だけを実行しスクロールしても割当が変わらない()
+    {
+        var book = TemplateBook.CreateEmpty();
+        for (int i = 0; i < 30; i++) book[1].Snippets.Add(new() { Text = $"line {i}" });
+        book[4].Snippets.Add(new() { Text = "other group" });
+        var w = Create(book, new AppearanceSettings { Animation = false, MaxRows = 4 });
+        var invoked = new List<(string, bool)>();
+        w.SnippetInvoked += (snippet, copy) => invoked.Add((snippet.Text, copy));
+        try
+        {
+            w.KeyPressQwerty(PhysicalKey.End, RawInputModifiers.None); Dispatcher.UIThread.RunJobs();
+            Assert.All(Rows(w), row =>
+            {
+                var snippet = (Snippet)row.Tag!;
+                int index = book[1].Snippets.IndexOf(snippet);
+                Assert.Equal(index < 26 ? ((char)('a'+index)).ToString() : "", ((SnippetRowContent)row.Content!).Shortcut.Text);
+            });
+            w.KeyPressQwerty(PhysicalKey.Z, RawInputModifiers.None);
+            Assert.Equal(25, w.SelectedIndex);
+            w.KeyPressQwerty(PhysicalKey.A, RawInputModifiers.None);
+            w.KeyPressQwerty(PhysicalKey.B, RawInputModifiers.Shift);
+            foreach(var mods in new[] { RawInputModifiers.Control, RawInputModifiers.Alt, RawInputModifiers.Meta })
+                w.KeyPressQwerty(PhysicalKey.C, mods);
+            Assert.Equal(new[] { ("line 25", false), ("line 0", false), ("line 1", true) }, invoked);
+            w.SwitchGroup(4);
+            w.KeyPressQwerty(PhysicalKey.Z, RawInputModifiers.None); Assert.Equal(3, invoked.Count);
+            w.KeyPressQwerty(PhysicalKey.A, RawInputModifiers.None); Assert.Equal(("other group", false), invoked[^1]);
+            w.SwitchGroup(0); w.KeyPressQwerty(PhysicalKey.A, RawInputModifiers.None); Assert.Equal(4, invoked.Count);
+        }
+        finally { Close(w); }
+    }
+
 }

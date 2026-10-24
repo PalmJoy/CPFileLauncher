@@ -26,13 +26,14 @@ Download links become available when a release is published. The app includes .N
 
 **macOS:** extract the zip and move `CPClipboard.app` to Applications. In System Settings → Privacy & Security → Accessibility, allow CPClipboard to read triggers and send the paste shortcut. Until permission is granted, snippets are copied only. For an unnotarized build, confirm the source before allowing it through Privacy & Security. The menu bar icon offers a permission guide.
 
-The app lives in the system tray or menu bar. Open **Settings → Snippets**, choose a group, and add text. Edits save automatically. Quit from the tray or menu bar menu.
+The app lives in the system tray or menu bar. Open **Edit…**, choose a group, and add text. Edits save automatically. Quit from the tray or menu bar menu.
 
 ## Use
 
 | Action | Shortcut |
 | --- | --- |
 | Choose a snippet | ↑ / ↓ |
+| Paste / copy one of the first 26 snippets | a–z / Shift+a–z |
 | Paste | Enter / click |
 | Copy only | Shift + Enter / Shift + click |
 | Switch group | 0–9 |
@@ -40,7 +41,7 @@ The app lives in the system tray or menu bar. Open **Settings → Snippets**, ch
 | First / last snippet | Home / End |
 | Close the board | Esc |
 
-A row’s context menu offers Paste, Copy only and Edit. Hover over truncated or multiline text to preview it. In Settings → Snippets, edit, duplicate, reorder or move text between groups. List operations support one step of Undo.
+A row’s context menu offers Paste, Copy only and Edit. Hover over truncated or multiline text to preview it. In Edit…, edit, duplicate, reorder or move text between groups. List operations support one step of Undo.
 
 Automatic paste requires a valid target and input permission. Elevated Windows apps and macOS Secure Input cause copy-only fallback. Clipboard formats that cannot be safely captured, or snapshots over 32 MiB, cannot be restored. Clipboard ownership is checked before restoration; cross-process comparison and writing are not atomic on macOS.
 

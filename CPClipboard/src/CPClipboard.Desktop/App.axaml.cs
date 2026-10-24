@@ -27,6 +27,7 @@ public partial class App : Application
     private TemplatesHub? _templates;
     private PopupController? _popup;
     private SettingsWindow? _settingsWindow;
+    private TemplatesWindow? _templatesWindow;
     private DataPaths? _paths;
     private AppDataStore? _store;
     private readonly BoardBackgroundLoader _backgroundLoader = new();
@@ -97,8 +98,8 @@ public partial class App : Application
         var popup = _popup = new PopupController(_board, _platform, _hub, () => templates.DisplayBook());
         popup.Attach();
         _board.SettingsRequested += OpenSettings;
-        _board.AddRequested += group => OpenSettings(new TemplateEditTarget(group, null));
-        _board.EditRequested += (group, id) => OpenSettings(new TemplateEditTarget(group, id));
+        _board.AddRequested += group => OpenEditor(new TemplateEditTarget(group, null));
+        _board.EditRequested += (group, id) => OpenEditor(new TemplateEditTarget(group, id));
         _board.UpdateRequested += () => { _popup?.Hide("update", restoreFocus: false); _ = CheckForUpdatesAsync(true); };
         _board.AboutRequested += () =>
         {
@@ -154,6 +155,8 @@ public partial class App : Application
             Gesture = new KeyGesture(Key.OemComma, OperatingSystem.IsMacOS() ? Avalonia.Input.KeyModifiers.Meta : Avalonia.Input.KeyModifiers.Control),
         };
         settingsItem.Click += (_, _) => OpenSettings();
+        var editItem = new NativeMenuItem(Strings.Menu_Edit);
+        editItem.Click += (_, _) => OpenEditor();
         _permissionItem = new NativeMenuItem(Strings.Tray_Permissions) { IsVisible = false }; // 未許可のときだけ出す（Mac）
         _permissionItem.Click += (_, _) => ShowPermissionGuide();
         var update = new NativeMenuItem(Strings.Update_Check);
@@ -166,18 +169,20 @@ public partial class App : Application
             // アプリメニュー（盤面がキーのときに ⌘Q を効かせる）
             var appSettings = new NativeMenuItem(Strings.Common_Settings) { Gesture = new KeyGesture(Key.OemComma, Avalonia.Input.KeyModifiers.Meta) };
             appSettings.Click += (_, _) => OpenSettings();
+            var appEdit = new NativeMenuItem(Strings.Menu_Edit);
+            appEdit.Click += (_, _) => OpenEditor();
             var appQuit = new NativeMenuItem(Strings.Tray_Quit_Mac) { Gesture = new KeyGesture(Key.Q, Avalonia.Input.KeyModifiers.Meta) };
             appQuit.Click += (_, _) => Quit(desktop);
             var appUpdate = new NativeMenuItem(Strings.Update_Check);
             appUpdate.Click += (_, _) => _ = CheckForUpdatesAsync(true);
-            NativeMenu.SetMenu(this, new NativeMenu { Items = { appSettings, appUpdate, new NativeMenuItemSeparator(), appQuit } });
+            NativeMenu.SetMenu(this, new NativeMenu { Items = { appSettings, appEdit, appUpdate, new NativeMenuItemSeparator(), appQuit } });
         }
 
         _tray = new TrayIcon
         {
             Icon = AppIcon.Create(),
             ToolTipText = AppInfo.ProductName,
-            Menu = new NativeMenu { Items = { show, groupsItem, new NativeMenuItemSeparator(), settingsItem, _permissionItem, update, new NativeMenuItemSeparator(), quit } },
+            Menu = new NativeMenu { Items = { show, groupsItem, new NativeMenuItemSeparator(), settingsItem, editItem, _permissionItem, update, new NativeMenuItemSeparator(), quit } },
             IsVisible = true,
         };
         MacOSProperties.SetIsTemplateIcon(_tray, AppIcon.IsTemplate(warning: false));
@@ -219,9 +224,7 @@ public partial class App : Application
     // ---------------- 設定（SPEC §7） ----------------
 
     /// <summary>設定画面を開く（ユーザーが選んだときだけ。既に開いていれば前面へ）。盤面が出ていれば閉じる（SPEC §3.5）。</summary>
-    private void OpenSettings() => OpenSettings(null);
-
-    private void OpenSettings(TemplateEditTarget? target)
+    private void OpenSettings()
     {
         if (_hub is null || _platform is null) return;
         _templates?.Flush();
@@ -237,16 +240,32 @@ public partial class App : Application
                 ImportAndRestart: ImportAndRestart,
                 BackgroundStatus: () => _backgroundLoader.LastStatus,
                 BackgroundBitmap: () => _backgroundLoader.Current,
-                Restart: Restart,
-                Templates: _templates));
+                Restart: Restart));
             _settingsWindow.Closed += (_, _) =>
             {
                 _settingsWindow = null;
-                MemoryTrim.Schedule(() => _settingsWindow is null && _popup?.IsShown != true); // 設定画面の部品を返す
+                MemoryTrim.Schedule(() => _settingsWindow is null && _templatesWindow is null && _popup?.IsShown != true); // 設定画面の部品を返す
             };
         }
-        if (target is not null) _settingsWindow.SetTemplateTarget(target);
         WindowActivation.ShowAndActivate(_settingsWindow, _platform);
+    }
+
+    private void OpenEditor(TemplateEditTarget? target = null)
+    {
+        if (_templates is null || _platform is null) return;
+        _popup?.Hide("editor", restoreFocus: false);
+        if (_templatesWindow is null)
+        {
+            _templatesWindow = new TemplatesWindow(_templates, _platform.Clipboard, _hub, () => _backgroundLoader.Current);
+            _templatesWindow.SetTemplateTarget(target ?? new TemplateEditTarget(_board?.GroupKey ?? 0, null));
+            _templatesWindow.Closed += (_, _) =>
+            {
+                _templatesWindow = null;
+                MemoryTrim.Schedule(() => _templatesWindow is null && _settingsWindow is null && _popup?.IsShown != true);
+            };
+        }
+        else if (target is not null) _templatesWindow.SetTemplateTarget(target);
+        WindowActivation.ShowAndActivate(_templatesWindow, _platform);
     }
 
     /// <summary>設定が変わったら、関係する所だけ反映し直す（即時反映）。</summary>

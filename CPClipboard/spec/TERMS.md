@@ -18,7 +18,7 @@ UI 文字列（SPEC §7）の **英訳の正**。`src/CPClipboard.Desktop/Resour
 
 | 日本語 | English（推奨） | 候補 | 備考 |
 |---|---|---|---|
-| 定型文 | snippet | template / fixed phrase | 識別子 `Snippet` に合わせる。「定型文」タブ = "Snippets" |
+| 定型文 | snippet | template / fixed phrase | 識別子 `Snippet` に合わせる。編集ウィンドウの対象として使用 |
 | グループ | group | set | 「グループ 2」= "Group 2"。名前付きは "2 · Greetings" |
 | 盤面 | board | panel | 「盤面を表示」= "Show board" |
 | 行 | row | | UI にはほぼ出ない |
@@ -44,13 +44,13 @@ UI 文字列（SPEC §7）の **英訳の正**。`src/CPClipboard.Desktop/Resour
 | CPClipboard について | About CPClipboard | 見出しは製品名 "CPClipboard"、副題 "CyberPunk Clipboard"（両言語とも英字） |
 | 貼り付け | Paste | 行のメニュー |
 | コピーだけ | Copy only | 行のメニュー。ショートカット表示 Shift+Enter / ⇧↩ |
-| 設定で編集… | Edit in Settings… | |
+| 編集… | Edit… | 対象の定型文を独立編集ウィンドウで選択 |
 
 ### 2.3 設定画面（項目の定義は `spec/SETTINGS.md`）
 
 | 日本語 | English（推奨） | 備考 |
 |---|---|---|
-| 一般 / 表示 / 演出 / 呼び出し / 貼り付け / 定型文 / データ / 詳細 | General / Appearance / Effects / Triggers / Paste / Snippets / Data / Advanced | 8 タブ。本体の幅 820 で 1 行に収まる |
+| 一般 / 表示 / 演出 / トリガー / 貼り付け / データ / 詳細 | General / Appearance / Effects / Triggers / Paste / Data / Advanced | 7 タブ。設定本体620×600、独立した編集本体820×600 |
 | 起動時のガイドを表示しない | Don't show the startup guide | |
 | 盤面の幅 / 最大行数 / 文字の大きさ | Board width / Maximum rows / Text size | |
 | 全文のプレビュー | Show full-text preview | |
@@ -62,7 +62,7 @@ UI 文字列（SPEC §7）の **英訳の正**。`src/CPClipboard.Desktop/Resour
 | 貼り付け後にクリップボードを元に戻す | Restore the clipboard after pasting | |
 | OFF（既定）のままなら、貼り付け後も定型文がクリップボードに残ります。 | Leave this off (the default) to keep the snippet on the clipboard after pasting. | 貼り付け後の復元設定の注記 |
 | 元に戻すまでの時間 | Restore delay | |
-| （定型文タブ）追加 / クリップボードから追加 / 複製 / 削除 / 移動 ▸ / 元に戻す | Add / Add from clipboard / Duplicate / Delete / Move to ▸ / Undo | |
+| （編集ウィンドウ）追加 / クリップボードから追加 / 複製 / 削除 / 移動 ▸ / 元に戻す | Add / Add from clipboard / Duplicate / Delete / Move to ▸ / Undo | |
 | グループの名前 | Group name | |
 | このグループには定型文を500件まで登録できます。 | This group can contain up to 500 snippets. | `Settings_Snippets_GroupFull` |
 | 定型文は10,000文字以内にしてください。 | Snippets must be 10,000 characters or fewer. | `Settings_Snippets_TooLong` |
@@ -76,7 +76,7 @@ UI 文字列（SPEC §7）の **英訳の正**。`src/CPClipboard.Desktop/Resour
 | 日本語 | English（推奨） | キー |
 |---|---|---|
 | このグループには定型文がありません | This group has no snippets | `Board_EmptyGroup` |
-| 設定で追加… | Add in Settings… | `Board_EmptyGroup_Add` |
+| 定型文を追加… | Add snippets… | `Board_EmptyGroup_Add` |
 | クリップボードにコピーしました。 | Copied to the clipboard. | `Toast_Copied` |
 | 管理者として動いているアプリには貼り付けられないため、コピーだけしました。 | Can't paste into an app running as administrator, so the snippet was only copied. | `Toast_CopiedOnly_Elevated`（Win） |
 | パスワードの入力中は貼り付けられないため、コピーだけしました。 | Can't paste while secure input is on, so the snippet was only copied. | `Toast_CopiedOnly_SecureInput`（Mac） |
@@ -97,7 +97,7 @@ UI 文字列（SPEC §7）の **英訳の正**。`src/CPClipboard.Desktop/Resour
 ## 4. リソースキーの命名（`Strings.resx`）
 
 - `領域_要素[_部位]`。領域: `Common` / `Tray` / `Menu` / `Settings` / `Effect` / `Enum` / `Toast` / `Dialog` / `Notice` / `Permission` / `About` / `Board` / `Templates` / `Load` / `Archive` / `Guide`。
-- 設定画面は `Settings_<タブ>_<項目>`（タブ: `General` / `Appearance` / `Effects` / `Triggers` / `Paste` / `Snippets` / `Data` / `Advanced`）、注記は `_Note`、選択肢は `_<値>`。
+- 設定画面は `Settings_<タブ>_<項目>`（タブ: `General` / `Appearance` / `Effects` / `Triggers` / `Paste` / `Data` / `Advanced`）、注記は `_Note`、選択肢は `_<値>`。
 - enum の表示名は `Enum_<型名>_<値>`（macOS で名前が変わる値だけ `_Mac`）。演出名は `Effect_<演出 ID>`。
 - 初回の例文は `Templates_Sample_1..3`（SPEC §9.3）。
 - ログ・例外の開発者向けメッセージはリソースにしない（日本語のまま）。
@@ -107,3 +107,18 @@ UI 文字列（SPEC §7）の **英訳の正**。`src/CPClipboard.Desktop/Resour
 - 製品名 **CPClipboard**、副題 **CyberPunk Clipboard** は両言語とも英字のまま文言に直接書く。
 - HUD の装飾語は翻訳しない: ステータス行の `GRP` / `ITEMS`、プレビューの `LEN` / `LINES`（Core の固定文字列）、ダイアログのタグ `CFG` / `AUTH` / `SYS` / `CONFIRM` / `INFO`、トーストの状態コード `>` / `!`。
 - 時刻 `HH:mm` / `HH:mm:ss`（24 時間）、日付 `yyyy/MM/dd`（`InvariantCulture`）で固定。
+
+## 編集ウィンドウと共通呼称
+
+| 日本語 | English | 用途 |
+|---|---|---|
+| 編集… | Edit… | トレイ・macOSアプリメニュー・盤面の編集導線。Launcherと統一 |
+| 編集 | Edit | 独立編集ウィンドウのタイトル |
+| トリガー | Triggers | 設定タブ名。JSONキーや既存Settings_Triggers_*は変更しない |
+
+Launcherと同じ機能は同じ呼称を使う。Clipboard固有のグループ・定型文・貼り付けをLauncherのページ・アイテム・起動へ言い換えない。トリガーはタブ/機能名で、文章中の「呼び出す」まで機械的に置換しない。
+
+## 盤面の自動ショートカット
+
+- a〜zは翻訳しない。現在グループの先頭26件へ自動で割り当てるキー表示であり、定型文本文に含めない。
+- 設定や編集の入力欄では文字入力を優先する。既存の「貼り付け」「コピーだけ」の文言を再利用し、新しい手動割り当て項目を作らない。

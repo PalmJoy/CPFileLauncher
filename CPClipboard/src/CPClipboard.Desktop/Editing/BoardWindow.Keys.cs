@@ -35,6 +35,18 @@ public partial class BoardWindow
             SwitchGroup(digit);
             return true;
         }
+        // グループ全体で先頭26件に固定。画面外の行も論理indexで実行する。
+        if ((mods == InputModifiers.None || mods == InputModifiers.Shift) &&
+            e.PhysicalKey is >= PhysicalKey.A and <= PhysicalKey.Z)
+        {
+            int index = e.PhysicalKey - PhysicalKey.A;
+            if (index >= SnippetCount) return false;
+            _selected = index;
+            RevealSelection();
+            UpdateSelection();
+            Invoke(_book[_groupKey].Snippets[index], copyOnly: mods == InputModifiers.Shift);
+            return true;
+        }
         switch (e.Key)
         {
             case Key.Up when mods == InputModifiers.None:

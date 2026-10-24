@@ -36,7 +36,7 @@ internal sealed class TemplatesHub
     public bool CanUndo => History.CanUndo;
 
     /// <summary>
-    /// 定型文タブの編集（SPEC §6.3）。undoable = 一覧操作（追加・複製・削除・並べ替え・移動・グループを空にする）なら操作の直前を控える。
+    /// 編集ウィンドウでの編集（SPEC §6.3）。undoable = 一覧操作（追加・複製・削除・並べ替え・移動・グループを空にする）なら操作の直前を控える。
     /// 本文・名前の編集（undoable = false）で変わったら控えを捨てる（戻すとその編集まで消えるため）。変わったら知らせて保存を予約。
     /// </summary>
     public EditResult Edit(Func<TemplateBook, EditResult> op, Guid? selected, bool undoable, int? selectedGroup = null)

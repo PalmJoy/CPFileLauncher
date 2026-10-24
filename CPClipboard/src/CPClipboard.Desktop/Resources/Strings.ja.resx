@@ -738,7 +738,7 @@
     <value>このグループには定型文がありません</value>
   </data>
   <data name="Board_EmptyGroup_Add" xml:space="preserve">
-    <value>設定で追加…</value>
+    <value>編集で追加…</value>
   </data>
   <data name="Toast_Copied" xml:space="preserve">
     <value>クリップボードにコピーしました。</value>
@@ -758,7 +758,7 @@
 東京都千代田区千代田1-1</value>
   </data>
   <data name="StartupGuide_Description" xml:space="preserve">
-    <value>設定の「定型文」タブで文章を登録できます。盤面で選ぶと、使っていたアプリにそのまま貼り付けます。</value>
+    <value>「編集…」から文章を登録できます。盤面で選ぶと、使っていたアプリにそのまま貼り付けます。</value>
   </data>
   <data name="StartupGuide_OpenBoard" xml:space="preserve">
     <value>現在設定されている操作{0}で、盤面を呼び出せます。</value>
@@ -770,7 +770,7 @@
     <value>貼り付け</value>
   </data>
   <data name="Settings_Tab_Triggers" xml:space="preserve">
-    <value>呼び出し</value>
+    <value>トリガー</value>
   </data>
   <data name="Settings_Appearance_BoardWidth" xml:space="preserve">
     <value>盤面の幅</value>
@@ -887,7 +887,7 @@
     <value>現在、キーボードとマウスの呼び出しは無効です。トレイまたはメニューバーのアイコンから盤面を呼び出せます。</value>
   </data>
   <data name="Menu_CopyOnly" xml:space="preserve"><value>コピーだけ</value></data>
-  <data name="Menu_EditInSettings" xml:space="preserve"><value>設定で編集…</value></data>
+  <data name="Menu_Edit" xml:space="preserve"><value>編集…</value></data>
   <data name="Toast_CopiedOnly_Elevated" xml:space="preserve"><value>管理者として動いているアプリには貼り付けられないため、コピーだけしました。</value></data>
   <data name="Toast_CopiedOnly_SecureInput" xml:space="preserve"><value>パスワードの入力中は貼り付けられないため、コピーだけしました。</value></data>
   <data name="Toast_CopiedOnly_NoPermission" xml:space="preserve"><value>アクセシビリティの許可が無いため、コピーだけしました。</value></data>
@@ -896,7 +896,6 @@
   <data name="Toast_CopiedOnly_SendFailed" xml:space="preserve"><value>貼り付けのキーを送れなかったため、コピーだけしました。</value></data>
   <data name="Toast_CopiedOnly_CheckFailed" xml:space="preserve"><value>貼り付け可能か確認できなかったため、コピーだけしました。</value></data>
   <data name="Toast_ClipboardChanged" xml:space="preserve"><value>クリップボードが変更されたため、貼り付けを中止しました。</value></data>
-  <data name="Settings_Tab_Snippets" xml:space="preserve"><value>定型文</value></data>
   <data name="Settings_Snippets_GroupName" xml:space="preserve"><value>グループの名前</value></data>
   <data name="Settings_Snippets_ClearGroup" xml:space="preserve"><value>グループを空にする…</value></data>
   <data name="Settings_Snippets_ClearConfirm" xml:space="preserve"><value>グループ {0} の定型文 {1} 件を削除します。よろしいですか？</value></data>
@@ -907,4 +906,5 @@
   <data name="Settings_Snippets_TooLong" xml:space="preserve"><value>定型文は10,000文字以内にしてください。</value></data>
   <data name="Settings_Snippets_ClipboardEmpty" xml:space="preserve"><value>クリップボードに追加できる文字がありません。</value></data>
   <data name="Settings_Snippets_ReadOnlyBanner" xml:space="preserve"><value>新しい版の定型文データのため、変更はこのセッションだけに反映され、保存されません。</value></data>
+  <data name="Editor_Title" xml:space="preserve"><value>編集</value></data>
 </root>

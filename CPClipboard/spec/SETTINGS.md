@@ -2,7 +2,7 @@
 
 `settings.json`（SPEC §9）に保存される設定項目の一覧。**設定項目の正はこのファイル**で、SPEC §7 には方針だけを置く。
 項目を足す・消す・既定値や範囲を変えるときは、先にこの表を直してから `src/CPClipboard.Core/Model/AppSettings.cs` と設定画面を合わせる。
-定型文とグループは `settings.json` ではなく `templates.json`（SPEC §9.3）に入る。編集は「定型文」タブ（SPEC §6.3）。
+定型文とグループは `settings.json` ではなく `templates.json`（SPEC §9.3）に入る。編集は独立した「編集」ウィンドウ（SPEC §6.3）。設定には定型文タブを置かない。
 
 ## 読み方
 
@@ -70,7 +70,7 @@ CPFileLauncher と同じ。演出の ID は EFFECTS の表（`groupSwitch` / `ta
 | 　走査線の濃さ | `appearance.hud.scanlineOpacity` | int (%) | **25** | 0〜50、5 刻み（スライダー。範囲外は読み込み時に 0〜50 へ丸め、5 の倍数でなければ最も近い 5 の倍数に） | 共通 | 走査線の不透明度。`ScanlineLayer.Opacity = scanlineOpacity / 100`（トークン `FlHudScanline` はアルファなしの主色。配色を変えても濃さは保たれる）。**0 なら層ごと非表示**。`ValueSlider`（`%` 表示、注記なし）。「走査線」の直下に置き、走査線 OFF の間は無効表示（背景グリッド OFF でグリッドの濃さが無効になるのと同じ扱い）。値の根拠（Mac、Retina）: 4% / 2 px と 12% / 2 px は「見えない」、**25% / 3 px** をユーザーが選定。グリッド（0〜10、1 刻み）より範囲が広いのは、横線だけで面積が小さく濃くないと見えないため。変更時の通知は `Hud`（`Render` の中で `Opacity` を付け直す）。キーが無ければ 25（省略可能な追加。`schemaVersion` は上げない）。リソースキー `Settings_Effects_ScanlineOpacity` |
 | 　走査線の間隔 | `appearance.hud.scanlinePitch` | int (px) | **3** | 2 / 3 / 4（`ComboBox`。それ以外の値は読み込み時に 3 に戻す = `ButtonSize` と同じ扱い。`HudSettings.ScanlinePitches = [2, 3, 4]`） | 共通 | 横線の間隔（n px ごとに 1 本）。`ScanlineLayer.Pitch`（`StyledProperty`、`AffectsRender`）に入れる。UI 表示は「2 px / 3 px / 4 px」（書式リソース `Common_PixelValue` = `{0} px`、両言語同じ。数値は翻訳しない）。「走査線の濃さ」の直下に置き、走査線 OFF の間は無効表示。2 px は細かく濃さを上げると CRT らしい、4 px は粗く目立ちにくい。変更時の通知は `Hud`（`Render` の中で `Pitch` を付け直す = 層の描き直しだけ）。キーが無ければ 3（省略可能な追加。`schemaVersion` は上げない）。リソースキー `Settings_Effects_ScanlinePitch` |
 
-## 呼び出しタブ（`triggers` / `popup`）
+## トリガータブ（`triggers` / `popup`）
 
 小見出し「呼び出し方」→「表示位置」→「閉じる条件」の順。
 
@@ -102,7 +102,7 @@ CPFileLauncher と同じ。演出の ID は EFFECTS の表（`groupSwitch` / `ta
 | 　元に戻すまでの時間 | `paste.restoreDelayMs` | int (ms) | **500** | 200〜3000、100 刻み | 共通 | SPEC §5.1 の 8。貼り付けが間に合わないアプリ向けに延ばせる |
 | （注記）貼り付けられない場面 | — | — | — | | Win / Mac で文が違う | SPEC §5.5。Win「管理者として動いているアプリには貼り付けられません（コピーだけになります）。」、Mac「パスワードの入力欄には貼り付けられません（コピーだけになります）。」 |
 
-## 定型文タブ
+## 編集ウィンドウ（設定タブとは独立）
 
 値は `templates.json`（SPEC §9.3）。UI は SPEC §6.3。設定キーは持たない。
 

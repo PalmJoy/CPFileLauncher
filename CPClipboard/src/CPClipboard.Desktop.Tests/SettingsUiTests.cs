@@ -139,7 +139,7 @@ public sealed class SettingsUiTests : IDisposable
             tabs.SelectedItem = tab;
             Dispatcher.UIThread.RunJobs();
         }
-        Assert.Equal(8, tabs.Items.Count);
+        Assert.Equal(7, tabs.Items.Count);
         w.Close();
     }
 
@@ -540,7 +540,7 @@ public sealed class SettingsUiTests : IDisposable
     [AvaloniaTheory]
     [InlineData("en")]
     [InlineData("ja")]
-    public void 設定画面のタブはアウトラインで_8つとも1行に収まる(string culture)
+    public void 設定画面のタブはアウトラインで_7つとも1行に収まる(string culture)
     {
         var saved = System.Globalization.CultureInfo.CurrentUICulture;
         System.Globalization.CultureInfo.CurrentUICulture = new System.Globalization.CultureInfo(culture);
@@ -548,7 +548,7 @@ public sealed class SettingsUiTests : IDisposable
         try { w = OpenSettings(); }
         finally { System.Globalization.CultureInfo.CurrentUICulture = saved; }
         var tabs = w.GetVisualDescendants().OfType<TabItem>().ToList();
-        Assert.Equal(8, tabs.Count);
+        Assert.Equal(7, tabs.Count);
         Assert.All(tabs, t => Assert.Equal(new Avalonia.Thickness(1), t.BorderThickness));
         double top = tabs[0].Bounds.Y;
         Assert.All(tabs, t => Assert.Equal(top, t.Bounds.Y)); // 折り返していない

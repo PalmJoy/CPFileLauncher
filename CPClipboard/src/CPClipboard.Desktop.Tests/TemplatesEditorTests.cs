@@ -18,7 +18,7 @@ public sealed class TemplatesEditorTests : IDisposable
     private readonly AppDataStore _store;
     private readonly TemplatesHub _hub;
     private readonly FakePlatform _platform = new();
-    private SettingsWindow? _window;
+    private TemplatesWindow? _window;
     public TemplatesEditorTests()
     {
         _store = new(new(_dir, false));
@@ -35,7 +35,7 @@ public sealed class TemplatesEditorTests : IDisposable
     private TemplatesEditor Open(int group = 1, Guid? id = null)
     {
         var settings = new SettingsHub(_store, _store.LoadAll().Settings.Value);
-        _window = new(new(settings, _platform, _store.Paths, () => null, _ => { }, () => { }, Templates: _hub));
+        _window = new(_hub, _platform.Clipboard);
         _window.SetTemplateTarget(new(group, id)); _window.Show(); Dispatcher.UIThread.RunJobs();
         return _window.TemplatesEditor;
     }
@@ -50,13 +50,13 @@ public sealed class TemplatesEditorTests : IDisposable
     private static TextBox Text(TemplatesEditor editor) => Control<TextBox>(editor, "SnippetText");
 
     [AvaloniaFact]
-    public void 対象指定で定型文タブを開き本文と名前が即反映される()
+    public void 対象指定で編集ウィンドウを開き本文と名前が即反映される()
     {
         Guid id = _hub.Current[1].Snippets[1].Id;
         var editor = Open(1, id);
         Assert.Equal(id, editor.SelectedSnippet);
         Assert.Equal("second", Text(editor).Text);
-        Assert.Equal(8, _window!.GetVisualDescendants().OfType<TabControl>().Single().Items.Count);
+        Assert.Empty(_window!.GetVisualDescendants().OfType<TabControl>());
         Text(editor).Text = "edited\r\ntext";
         Control<TextBox>(editor, "GroupName").Text = "Renamed";
         Assert.Equal("edited\ntext", _hub.Current[1].Snippets[1].Text);
@@ -173,13 +173,13 @@ public sealed class TemplatesEditorTests : IDisposable
     }
 
     [AvaloniaFact]
-    public void タブを離れると空を除きCtrlTabは本文から一覧へ出る()
+    public void 編集を閉じると空を除きCtrlTabは本文から一覧へ出る()
     {
         var editor = Open();
         Click(editor, "AddSnippet");
         _window!.KeyPressQwerty(PhysicalKey.Tab, RawInputModifiers.Control); Dispatcher.UIThread.RunJobs();
         Assert.True(List(editor).IsKeyboardFocusWithin);
-        var tabs = _window.GetVisualDescendants().OfType<TabControl>().Single(); tabs.SelectedIndex = 0;
+        _window.Close();
         Assert.Equal(3, _hub.Current[1].Snippets.Count);
     }
 
@@ -225,7 +225,7 @@ public sealed class TemplatesEditorTests : IDisposable
         var loaded = store.LoadAll();
         var hub = new TemplatesHub(store, loaded.Templates.Value);
         var settings = new SettingsHub(store, loaded.Settings.Value);
-        _window = new(new(settings, _platform, store.Paths, () => null, _ => { }, () => { }, Templates: hub));
+        _window = new(hub, _platform.Clipboard);
         _window.SetTemplateTarget(new(1, null)); _window.Show(); Dispatcher.UIThread.RunJobs();
         var editor = _window.TemplatesEditor;
         Assert.Contains(editor.GetVisualDescendants().OfType<TextBlock>(), t => t.Text == Strings.Settings_Snippets_ReadOnlyBanner && t.IsEffectivelyVisible);
@@ -234,6 +234,59 @@ public sealed class TemplatesEditorTests : IDisposable
         Assert.Equal("session only", hub.Current[1].Snippets[0].Text);
         _window.Close();
         Assert.Equal(original, File.ReadAllText(_store.Paths.TemplatesFile));
+    }
+
+    [AvaloniaFact]
+    public void 設定と編集は独立し編集の再表示は同じ窓を使い閉じると作り直す()
+    {
+        var settings = new SettingsHub(_store, _store.LoadAll().Settings.Value);
+        var app = new CPClipboard.App.App();
+        var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        void Set(string name, object value) => typeof(CPClipboard.App.App).GetField(name, flags)!.SetValue(app, value);
+        TemplatesWindow? Current() => (TemplatesWindow?)typeof(CPClipboard.App.App).GetField("_templatesWindow", flags)!.GetValue(app);
+        void OpenEditor(TemplateEditTarget? target) => typeof(CPClipboard.App.App).GetMethod("OpenEditor", flags)!.Invoke(app, [target]);
+        Set("_platform", _platform); Set("_templates", _hub);
+        var board = new BoardWindow(); board.Render(_hub.Current, settings.Current.Appearance, 4); Set("_board", board);
+        using var cleanup = new WindowCleanup(() => { Current()?.Close(); board.AllowClose = true; board.Close(); });
+        OpenEditor(null);
+        var first = Current()!; Assert.Equal(4, first.TemplatesEditor.SelectedGroup);
+        OpenEditor(new(1, _hub.Current[1].Snippets[1].Id));
+        Assert.Same(first, Current()); Assert.Equal(_hub.Current[1].Snippets[1].Id, first.TemplatesEditor.SelectedSnippet);
+        OpenEditor(null); Assert.Equal(1, Current()!.TemplatesEditor.SelectedGroup);
+        var window = new SettingsWindow(new(settings, _platform, _store.Paths, () => null, _ => { }, () => { }));
+        try
+        {
+            window.Show(); Dispatcher.UIThread.RunJobs();
+            Assert.Equal(7, window.GetVisualDescendants().OfType<TabControl>().Single().Items.Count);
+            Assert.Empty(window.GetVisualDescendants().OfType<TemplatesEditor>());
+            Text(first.TemplatesEditor).Text = "saved independently";
+            window.Close(); Assert.True(first.IsVisible);
+            first.Close(); Assert.Null(Current());
+            Assert.Contains(new AppDataStore(_store.Paths).LoadAll().Templates.Value[1].Snippets, line => line.Text == "saved independently");
+            OpenEditor(null); Assert.NotSame(first, Current());
+        }
+        finally { window.Close(); }
+    }
+
+    private sealed class WindowCleanup(Action cleanup) : IDisposable
+    {
+        public void Dispose() => cleanup();
+    }
+
+    [AvaloniaFact]
+    public void 編集一覧は盤面と同じ行を使いグループ件数を表示せず英字は本文へ入力できる()
+    {
+        var editor = Open();
+        editor.ApplyAppearance(new AppearanceSettings { FontSize = 17 });
+        Dispatcher.UIThread.RunJobs();
+        var groups = Control<ListBox>(editor, "SnippetGroups").Items.OfType<ListBoxItem>().ToArray();
+        Assert.Equal("1  Greetings", ((TextBlock)groups[1].Content!).Text);
+        var row = List(editor).Items.OfType<ListBoxItem>().First();
+        var content = Assert.IsType<SnippetRowContent>(row.Content);
+        Assert.Equal("a", content.Shortcut.Text); Assert.Equal(17, content.Text.FontSize); Assert.Equal(34, row.Height);
+        Text(editor).Focus(); _window!.KeyTextInput("az"); Dispatcher.UIThread.RunJobs();
+        Assert.Contains("az", Text(editor).Text);
+        Assert.Equal(1, editor.SelectedGroup); Assert.Equal(3, _hub.Current[1].Snippets.Count);
     }
 
     [AvaloniaTheory]

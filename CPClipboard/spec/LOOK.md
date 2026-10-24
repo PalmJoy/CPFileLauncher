@@ -79,7 +79,7 @@ CPFileLauncher v1.1.0 の見た目をそのまま引き継いでおり、節の�
 | グループタブ | 0〜9 の 10 個を常に出す（SPEC §3.2）。文字 12 px `FlMonoFontFamily`（番号）+ 名前があれば `FlFontFamily` で番号の右に（最大 6 文字、超えたら `…`）。角丸なし、背景なし。未選択 = `FlTabText` + `FlTextGlowSoft`、空のグループ = `FlEmptyGroupText`（発光なし）、ホバー = 文字 `FlText` + 背景 `FlAccentSoft`、選択 = 文字 `FlTabSelectedText` + `FlTextGlow` + 下線 2 px `FlTabIndicator` + `FlTabSelectedGlow`（演出 `tabHighlight` = `glow`） |
 | 行（定型文） | 高さ = `appearance.fontSize` × 2（既定 13 → 26 px。SPEC §3.1）、左右の内側 8 px、左端 12 px は `▸` の場所。文字 `appearance.fontSize`（既定 13 px）`FlRowText`、**1 行で表示**（改行は `⏎`（`FlTextMuted`）、タブは空白 1 つにし、連続する空白はまとめない）。収まらない部分は末尾を `…` で切る（`TextTrimming = CharacterEllipsis`）。枠 1 px 透明、角 2 px。ホバー = 1 px `FlRowHoverBorder` + 面 `FlRowHoverBackground` + `FlRowHoverGlow`（演出 `rowHover` = `glow`）+ 左端に `▸`（`FlAccent`）。押下 = 0.97 倍（`rowPress`）。**文字発光は付けない**（`FlTextGlow` の注記と同じ理由） |
 | 選んだ行（キーボード、SPEC §6.1） | 1 px `FlRowSelectedBorder` + `FlRowSelectedGlow` + 左端の `▸`（面は付けない。ホバーと重なったらホバーの面 + 選択の枠） |
-| 空のグループ | 一覧の中央に案内文「このグループには定型文がありません」（`FlEmptyGroupText`、12 px）と、その下に「設定で追加…」のリンク風ボタン（`FlAccent`。押すと設定画面の定型文タブをこのグループで開く） |
+| 空のグループ | 一覧の中央に案内文「このグループには定型文がありません」（`FlEmptyGroupText`、12 px）と、その下に「編集で追加…」のリンク風ボタン（`FlAccent`。押すと編集ウィンドウをこのグループで開く） |
 | 全文のプレビュー（SPEC §3.4） | 盤面の外（右。入らなければ左）に出す別の小窓。`FlSurface` 96% の面、1 px 主色 60% の枠、角 2 px、外側に `FlToastGlow` と同じ発光。文字は `FlText` 12 px、改行をそのまま見せる。最大 幅 360 × 高さ 240、超えたら末尾を `…`。上に等幅 9 px の `LEN 128` / `LINES 4`（`FlHudText`。翻訳しない） |
 | 貼り付けのフィードバック | `pasteFlash`（既定 `glow`）。行の発光が一瞬 `FlPasteGlow` へ強まる。並行して盤面の非表示演出が始まる |
 | トースト | `FlToastBackground`、1 px `FlToastBorder`、左に縦帯 3 px（情報 = `FlAccent`、エラー = `FlError`）、**縦帯の右に状態コード**（§3.9 コンソール風: 情報 `>` / エラー `!`、`FlMonoFontFamily` 12 px 太字、縦帯と同じ色）、文字 `FlToastText` + 文字発光 `FlTextGlowSoft`（弱）、外側に `FlToastGlow`（エラーは `FlToastErrorGlow`。ネオン管 3 段。矩形の `BoxShadow` のまま）、角 2 px、`FlToastMargin` の余白（34。盤面の余白 `FlGlowMargin` = 40 とは別） |
@@ -316,3 +316,10 @@ CPFileLauncher v1.1.0 の見た目をそのまま引き継いでおり、節の�
 - macOS のメニューバー: テンプレート画像なので OS が明暗に合わせて塗る（**暗いメニューバーでは白、明るいメニューバーでは黒）。§8 の「警告はバッジ」は実装では**橙の線画への差し替え**（テンプレート解除）で表す（バッジを重ねるより 16 px で見分けやすい。§8 を合わせた）。
 
 ---
+
+## 編集ウィンドウと自動行ショートカット
+
+- 編集ウィンドウのグループ/定型文一覧は盤面と同じ背景・枠・文字・選択のトークンを使う。Fluent既定の灰色ListBox面や選択色を残さず、面はFlBoardBackground、文字はFlRowText、hover/selectionは既存FlRow*とFlAccentへ揃える。ウィンドウ本体のChrome枠と配色追従は維持する。
+- 左グループは番号と名前だけを表示し、件数は付けない。空グループも選択でき、選択状態を盤面と同じ主色の枠・面で示す。
+- 盤面の先頭26件には小文字a〜zを右端の独立した固定幅欄へ表示する。本文の末尾省略がキー表示を隠さないよう本文と列を分ける。選択marker▸は左端の既存位置を維持。27件目以降は表示しない。キー文字はFlMonoFontFamily、通常FlTextMuted、選択時FlAccent。文字キーの表示は画面上の実体化順ではなく論理行indexで決まる。
+- 編集一覧は同じ描画トークンを使うが、盤面の文字キー即実行を持たない。本文TextBoxの複数行・タブ入力、リストのUndo/D&Dと既存focus操作を維持する。

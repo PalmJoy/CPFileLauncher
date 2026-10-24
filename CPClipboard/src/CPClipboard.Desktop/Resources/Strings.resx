@@ -764,7 +764,7 @@ You can download the new version from the website.</value></data>
     <value>This group has no snippets</value>
   </data>
   <data name="Board_EmptyGroup_Add" xml:space="preserve">
-    <value>Add in Settings…</value>
+    <value>Add in Edit…</value>
   </data>
   <data name="Toast_Copied" xml:space="preserve">
     <value>Copied to the clipboard.</value>
@@ -784,7 +784,7 @@ Best regards,</value>
 Springfield</value>
   </data>
   <data name="StartupGuide_Description" xml:space="preserve">
-    <value>Register snippets in Settings → Snippets. Pick one on the board to paste it into the app you were using.</value>
+    <value>Register snippets in the Edit window. Pick one on the board to paste it into the app you were using.</value>
   </data>
   <data name="StartupGuide_OpenBoard" xml:space="preserve">
     <value>You can open the board with: {0}.</value>
@@ -913,7 +913,7 @@ Springfield</value>
     <value>Keyboard and mouse triggers are currently disabled. You can open the board from the tray or menu bar icon.</value>
   </data>
   <data name="Menu_CopyOnly" xml:space="preserve"><value>Copy only</value></data>
-  <data name="Menu_EditInSettings" xml:space="preserve"><value>Edit in settings…</value></data>
+  <data name="Menu_Edit" xml:space="preserve"><value>Edit…</value></data>
   <data name="Toast_CopiedOnly_Elevated" xml:space="preserve"><value>Can’t paste into an app running as administrator, so the snippet was only copied.</value></data>
   <data name="Toast_CopiedOnly_SecureInput" xml:space="preserve"><value>Can’t paste while secure input is on, so the snippet was only copied.</value></data>
   <data name="Toast_CopiedOnly_NoPermission" xml:space="preserve"><value>Accessibility permission is off, so the snippet was only copied.</value></data>
@@ -922,7 +922,6 @@ Springfield</value>
   <data name="Toast_CopiedOnly_SendFailed" xml:space="preserve"><value>Couldn’t send the paste shortcut, so the snippet was only copied.</value></data>
   <data name="Toast_CopiedOnly_CheckFailed" xml:space="preserve"><value>Couldn’t check whether pasting is available, so the snippet was only copied.</value></data>
   <data name="Toast_ClipboardChanged" xml:space="preserve"><value>The clipboard changed, so pasting was cancelled.</value></data>
-  <data name="Settings_Tab_Snippets" xml:space="preserve"><value>Snippets</value></data>
   <data name="Settings_Snippets_GroupName" xml:space="preserve"><value>Group name</value></data>
   <data name="Settings_Snippets_ClearGroup" xml:space="preserve"><value>Clear group…</value></data>
   <data name="Settings_Snippets_ClearConfirm" xml:space="preserve"><value>Delete {1} snippets from group {0}?</value></data>
@@ -933,4 +932,5 @@ Springfield</value>
   <data name="Settings_Snippets_TooLong" xml:space="preserve"><value>Snippets must be 10,000 characters or fewer.</value></data>
   <data name="Settings_Snippets_ClipboardEmpty" xml:space="preserve"><value>The clipboard contains no text to add.</value></data>
   <data name="Settings_Snippets_ReadOnlyBanner" xml:space="preserve"><value>This snippet data was created by a newer version. Changes apply only to this session and won’t be saved.</value></data>
+  <data name="Editor_Title" xml:space="preserve"><value>Edit</value></data>
 </root>

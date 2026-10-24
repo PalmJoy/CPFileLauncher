@@ -51,7 +51,7 @@ public partial class BoardWindow : Window
     /// <summary>盤面表示中の Ctrl+, / ⌘,（SPEC §7 設定画面の入口）。</summary>
     public event Action? SettingsRequested;
 
-    /// <summary>空のグループの「設定で追加…」（SPEC §3.1。そのグループで定型文タブを開く）。</summary>
+    /// <summary>空のグループの「編集で追加…」（SPEC §3.1。そのグループで編集ウィンドウを開く）。</summary>
     public event Action<int>? AddRequested;
 
     /// <summary>グループが変わった（前回のグループの保存用。SPEC §3.2）。</summary>
@@ -525,31 +525,11 @@ public partial class BoardWindow : Window
 
     private Button RowButton(Snippet snippet, int rowHeight, int index)
     {
-        var marker = new TextBlock
-        {
-            Text = "▸",
-            Classes = { "marker" },
-            Width = 12,
-            Margin = new Thickness(4, 0, 0, 0),
-            VerticalAlignment = VerticalAlignment.Center,
-            [!TextBlock.ForegroundProperty] = new DynamicResourceExtension("FlAccent"),
-        };
-        var text = new TextBlock
-        {
-            Text = SnippetLine.Format(snippet.Text),
-            FontSize = _appearance.FontSize,
-            TextTrimming = TextTrimming.CharacterEllipsis,
-            TextWrapping = TextWrapping.NoWrap,
-            VerticalAlignment = VerticalAlignment.Center,
-            [!TextBlock.ForegroundProperty] = new DynamicResourceExtension("FlRowText"),
-        };
-        var content = new DockPanel { Margin = new Thickness(0, 0, 8, 0) };
-        DockPanel.SetDock(marker, Dock.Left);
-        content.Children.Add(marker);
-        content.Children.Add(text);
+        var content = new SnippetRowContent();
+        content.Update(snippet.Text, index, _appearance.FontSize);
         var button = new Button
         {
-            Content = new Grid { Children = { content } },
+            Content = content,
             Classes = { "row" },
             Height = rowHeight,
             Focusable = false, // キーボードのフォーカスは盤面が持つ

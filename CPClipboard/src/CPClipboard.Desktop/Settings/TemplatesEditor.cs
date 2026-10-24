@@ -39,6 +39,13 @@ internal sealed partial class TemplatesEditor : Grid, IDisposable
     public TemplatesEditor(TemplatesHub hub, IClipboardService clipboard, Func<string, string, string, Task<bool>> confirm)
     {
         _hub = hub; _clipboard = clipboard; _confirm = confirm;
+        StyleList(_groups); StyleList(_snippets);
+        foreach (var input in new[] { _name, _text })
+        {
+            input[!TextBox.BackgroundProperty] = Themed.Res("FlBoardBackground");
+            input[!TextBox.ForegroundProperty] = Themed.Res("FlRowText");
+            input[!TextBox.BorderBrushProperty] = Themed.Res("FlTabOutline");
+        }
         Margin = new Thickness(12); RowDefinitions = new("Auto,*"); ColumnDefinitions = new("180,*"); ColumnSpacing = 12; RowSpacing = 8;
         var banner = new TextBlock { Text = Strings.Settings_Snippets_ReadOnlyBanner, IsVisible = hub.IsReadOnly, TextWrapping = TextWrapping.Wrap, [!TextBlock.ForegroundProperty] = Themed.Res("FlWarning") };
         SetColumnSpan(banner, 2); Children.Add(banner);
@@ -143,19 +150,31 @@ internal sealed partial class TemplatesEditor : Grid, IDisposable
                 }).ToArray();
                 _groups.ItemsSource = groups;
             }
-            foreach (var g in _hub.Current.Groups) ((TextBlock)groups[g.Key].Content!).Text = $"{g.Key}  {g.Name}  {g.Snippets.Count}";
+            foreach (var g in _hub.Current.Groups)
+            {
+                var text = (TextBlock)groups[g.Key].Content!;
+                text.Text = $"{g.Key}  {g.Name}"; text.FontSize = _fontSize;
+                groups[g.Key].Height = _fontSize * 2;
+                groups[g.Key].Padding = new Thickness(7, 0);
+            }
             _groups.SelectedItem = groups[_group];
             var rows = _snippets.Items.OfType<ListBoxItem>().ToArray();
             if (!rows.Select(r => (Guid)r.Tag!).SequenceEqual(group.Snippets.Select(s => s.Id)))
             {
                 rows = group.Snippets.Select(s =>
                 {
-                    var row = new ListBoxItem { Tag = s.Id, Padding = new Thickness(6, 4), Content = new TextBlock { TextWrapping = TextWrapping.NoWrap, TextTrimming = TextTrimming.CharacterEllipsis } };
+                    var row = new ListBoxItem { Tag = s.Id, Padding = new Thickness(0), Content = new SnippetRowContent() };
                     AttachRowDrag(row, s.Id); return row;
                 }).ToArray();
                 _snippets.ItemsSource = rows;
             }
-            for (int i = 0; i < rows.Length; i++) ((TextBlock)rows[i].Content!).Text = SnippetLine.Format(group.Snippets[i].Text);
+            int shortcut = 0;
+            for (int i = 0; i < rows.Length; i++)
+            {
+                bool empty = string.IsNullOrWhiteSpace(group.Snippets[i].Text);
+                ((SnippetRowContent)rows[i].Content!).Update(group.Snippets[i].Text, empty ? -1 : shortcut++, _fontSize);
+                rows[i].Height = _fontSize * 2;
+            }
             _snippets.SelectedItem = rows.FirstOrDefault(r => (Guid)r.Tag! == _selected);
             var snippet = group.Snippets.FirstOrDefault(s => s.Id == _selected);
             bool changedTarget = _text.Tag is not Guid previousId || previousId != _selected;

@@ -21,18 +21,6 @@ namespace CPClipboard.App;
 internal sealed class SettingsWindow : ChromeWindow
 {
     private const double LabelColumnWidth = 200;
-    internal TemplateEditTarget? TemplateTarget { get; private set; }
-    internal void SetTemplateTarget(TemplateEditTarget target)
-    {
-        TemplateTarget = target;
-        _tabs.SelectedItem = _snippetsTab;
-        _templatesEditor.SelectTarget(target);
-    }
-    private readonly TabControl _tabs;
-    private readonly TabItem _snippetsTab;
-    private readonly TemplatesEditor _templatesEditor;
-    internal TemplatesEditor TemplatesEditor => _templatesEditor;
-
     private readonly SettingsHub _hub;
     private readonly SettingsContext _ctx;
     private readonly Func<PixelPoint?> _boardPosition;
@@ -54,24 +42,12 @@ internal sealed class SettingsWindow : ChromeWindow
 
         Title = AppInfo.TitlePrefix + Strings.Settings_Title;
         TagCode = "CFG";
-        BodyWidth = 820; // 定型文タブの編集欄のため広く取る（SPEC §7。どのタブでも同じ大きさ）
+        BodyWidth = 620;
         BodyHeight = 600;
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
         ShowInTaskbar = OperatingSystem.IsWindows(); // Win は通常のウィンドウとして Alt+Tab / タスクバーから戻れるように（SPEC §7）
 
-        var templates = ctx.Templates;
-        if (templates is null)
-        {
-            var templateStore = new AppDataStore(ctx.Paths);
-            templates = new TemplatesHub(templateStore, templateStore.LoadAll().Templates.Value);
-        }
-        _templatesEditor = new TemplatesEditor(templates, ctx.Platform.Clipboard, (title, text, ok) => Confirm(title, text, ok));
-        _snippetsTab = Tab(Strings.Settings_Tab_Snippets, _templatesEditor);
-        AddHandler(KeyDownEvent, (_, e) =>
-        {
-            if (_templatesEditor.HandleNavigation(e)) e.Handled = true;
-        }, Avalonia.Interactivity.RoutingStrategies.Tunnel);
-        var tabs = _tabs = new TabControl
+        var tabs = new TabControl
         {
             Items =
             {
@@ -80,7 +56,6 @@ internal sealed class SettingsWindow : ChromeWindow
                 Tab(Strings.Settings_Tab_Effects, EffectsTab()),
                 Tab(Strings.Settings_Tab_Triggers, TriggersTab()),
                 Tab(Strings.Settings_Tab_Paste, PasteTab()),
-                _snippetsTab,
                 Tab(Strings.Settings_Tab_Data, DataTab()),
                 Tab(Strings.Settings_Tab_Advanced, AdvancedTab()),
             },
@@ -104,18 +79,12 @@ internal sealed class SettingsWindow : ChromeWindow
             DockPanel.SetDock(banner, Dock.Top);
             root.Children.Add(banner);
         }
-        tabs.SelectionChanged += (_, e) =>
-        {
-            if (ReferenceEquals(e.Source, tabs)) _templatesEditor.SetActive(ReferenceEquals(tabs.SelectedItem, _snippetsTab));
-        };
-        Activated += (_, _) => { if (ReferenceEquals(tabs.SelectedItem, _snippetsTab)) _ = _templatesEditor.RefreshClipboardAsync(); };
         root.Children.Add(tabs);
         Body = root;
 
         _hub.Changed += OnHubChanged;
         Closed += (_, _) =>
         {
-            _templatesEditor.Dispose();
             _hub.Changed -= OnHubChanged;
             _hub.Flush();
         };

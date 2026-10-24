@@ -115,7 +115,7 @@ public class BoardInteractionTests
             var menu = w.OpenMenu!;
             Assert.True(w.ContextMenuOpen);
             var items = menu.Items.OfType<MenuItem>().ToList();
-            Assert.Equal(new[] { Strings.Menu_Paste, Strings.Menu_CopyOnly, Strings.Menu_EditInSettings, Strings.Common_Settings, Strings.Update_Check, Strings.Menu_About }, items.Select(i => i.Header));
+            Assert.Equal(new[] { Strings.Menu_Paste, Strings.Menu_CopyOnly, Strings.Common_Settings, Strings.Menu_Edit, Strings.Update_Check, Strings.Menu_About }, items.Select(i => i.Header));
             var calls = new List<(Guid, bool)>();
             w.SnippetInvoked += (s, copy) => calls.Add((s.Id, copy));
             items[0].RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
@@ -123,7 +123,7 @@ public class BoardInteractionTests
             Assert.Equal(new[] { (book[1].Snippets[0].Id, false), (book[1].Snippets[0].Id, true) }, calls);
             (int, Guid?) target = (-1, null);
             w.EditRequested += (g, id) => target = (g, id);
-            items[2].RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+            items.Single(i => Equals(i.Header, Strings.Menu_Edit)).RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
             Assert.Equal((1, (Guid?)book[1].Snippets[0].Id), target);
             menu.Open(Rows(w)[0]); Dispatcher.UIThread.RunJobs();
             Assert.True(w.ContextMenuOpen);
@@ -131,7 +131,7 @@ public class BoardInteractionTests
             menu.Close(); Dispatcher.UIThread.RunJobs();
             Assert.False(w.ContextMenuOpen);
             var chrome = w.GetVisualDescendants().OfType<FrameChrome>().Single();
-            Assert.Equal(3, chrome.ContextMenu!.Items.OfType<MenuItem>().Count());
+            Assert.Equal(4, chrome.ContextMenu!.Items.OfType<MenuItem>().Count());
         }
         finally { Close(w); }
     }
@@ -305,7 +305,7 @@ public class BoardInteractionTests
             w.EditRequested += (_, id) => target = id;
             row.RaiseEvent(new ContextRequestedEventArgs { RoutedEvent = InputElement.ContextRequestedEvent });
             Dispatcher.UIThread.RunJobs();
-            w.OpenMenu!.Items.OfType<MenuItem>().Single(item => Equals(item.Header, Strings.Menu_EditInSettings))
+            w.OpenMenu!.Items.OfType<MenuItem>().Single(item => Equals(item.Header, Strings.Menu_Edit))
                 .RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
             Assert.Equal(book[1].Snippets[101].Id, target);
             w.OpenMenu?.Close();

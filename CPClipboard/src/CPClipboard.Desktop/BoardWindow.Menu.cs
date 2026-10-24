@@ -34,10 +34,9 @@ public partial class BoardWindow
             Add(Strings.Menu_Paste, () => Invoke(snippet, false));
             Add(Strings.Menu_CopyOnly, () => Invoke(snippet, true));
             items.Add(new Separator());
-            Add(Strings.Menu_EditInSettings, () => EditRequested?.Invoke(group, snippet.Id));
-            items.Add(new Separator());
         }
         Add(Strings.Common_Settings, () => SettingsRequested?.Invoke());
+        Add(Strings.Menu_Edit, () => EditRequested?.Invoke(group, snippet?.Id));
         Add(Strings.Update_Check, () => UpdateRequested?.Invoke());
         Add(Strings.Menu_About, () => AboutRequested?.Invoke());
         menu.ItemsSource = items;

@@ -299,7 +299,7 @@ public partial class App : Application
         }
         nint target = _platform.Window.CaptureForeground();
         _popup?.Hide("history", restoreFocus: false);
-        var window = new HistoryWindow(_history, _hub, () => _backgroundLoader.Current);
+        var window = new HistoryWindow(_history, _hub, () => _backgroundLoader.Current, _platform.Window);
         _historyWindow = window;
         bool chosen = false;
         var closed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);

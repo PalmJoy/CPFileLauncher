@@ -5,6 +5,9 @@ using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media.Imaging;
 using CPClipboard.Core.Model;
+using CPClipboard.Core.Popup;
+using CPClipboard.Platform;
+using Avalonia.Threading;
 using KeyModifiers = Avalonia.Input.KeyModifiers;
 
 namespace CPClipboard.App;
@@ -12,6 +15,11 @@ namespace CPClipboard.App;
 internal sealed class HistoryWindow : ChromeWindow
 {
     private readonly HistoryHub _history;
+    private readonly SettingsHub _settings;
+    private readonly IWindowService? _windowService;
+    private readonly MouseLeaveTracker _leave = new();
+    private readonly DispatcherTimer _leaveTimer = new() { Interval = TimeSpan.FromMilliseconds(100) };
+    private bool _pointerHeld;
     private readonly ListBox _list = new() { Name = "HistoryList", Focusable = true };
     private readonly TextBox _filter = new() { Name = "HistoryFilter", PlaceholderText = Strings.History_Filter };
     private readonly TextBlock _empty = Themed.Note(new TextBlock { Text = Strings.History_Empty, Margin = new Thickness(12) });
@@ -21,9 +29,11 @@ internal sealed class HistoryWindow : ChromeWindow
     internal ListBox HistoryList => _list;
     internal TextBox Filter => _filter;
 
-    public HistoryWindow(HistoryHub history, SettingsHub settings, Func<Bitmap?>? background = null)
+    public HistoryWindow(HistoryHub history, SettingsHub settings, Func<Bitmap?>? background = null, IWindowService? windowService = null)
     {
         _history = history;
+        _settings = settings;
+        _windowService = windowService;
         Title = AppInfo.TitlePrefix + Strings.History_Title;
         TagCode = "HIST";
         BodyWidth = 620; BodyHeight = 600;
@@ -48,9 +58,34 @@ internal sealed class HistoryWindow : ChromeWindow
         AddHandler(KeyDownEvent, OnNavigation, RoutingStrategies.Tunnel);
         history.Changed += Refresh;
         Closed += (_, _) => history.Changed -= Refresh;
-        Opened += (_, _) => _list.Focus();
+        Opened += (_, _) => { _list.Focus(); UpdateDistanceMonitoring(); };
+        _leaveTimer.Tick += (_, _) => CheckMouseDistance();
+        AddHandler(PointerPressedEvent, (_, _) => _pointerHeld = true, RoutingStrategies.Tunnel, handledEventsToo: true);
+        AddHandler(PointerReleasedEvent, (_, _) => _pointerHeld = false, RoutingStrategies.Tunnel, handledEventsToo: true);
+        PointerCaptureLost += (_, _) => _pointerHeld = false;
+        void OnSettingsChanged(SettingsChange change)
+        {
+            if (change.HasFlag(SettingsChange.Popup)) UpdateDistanceMonitoring();
+        }
+        settings.Changed += OnSettingsChanged;
+        Closed += (_, _) => { _leaveTimer.Stop(); settings.Changed -= OnSettingsChanged; };
         Refresh();
     }
+    private void UpdateDistanceMonitoring()
+    {
+        _leave.Reset();
+        if (IsVisible && _windowService is not null && _settings.Current.Popup.CloseOnMouseLeave) _leaveTimer.Start();
+        else _leaveTimer.Stop();
+    }
+    internal void CheckMouseDistance()
+    {
+        if (!IsVisible || !IsHitTestVisible || _windowService is null || _pointerHeld || !_settings.Current.Popup.CloseOnMouseLeave) return;
+        double scaling = _windowService.UsesLogicalScreenCoordinates ? 1.0 : RenderScaling;
+        var bounds = new CPClipboard.Core.Input.ScreenRect(Position.X, Position.Y,
+            (int)Math.Ceiling(Bounds.Width * scaling), (int)Math.Ceiling(Bounds.Height * scaling));
+        if (_leave.Update(_windowService.GetCursorPosition(), bounds, _settings.Current.Popup.MouseLeaveDistance)) Close();
+    }
+
     private void Refresh()
     {
         var selected = (_list.SelectedItem as ListBoxItem)?.Tag as HistoryEntry;

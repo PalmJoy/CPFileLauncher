@@ -200,4 +200,33 @@ public sealed class HistoryUiTests : IDisposable
         finally { Window()?.Close(); await paste.StopAsync(); }
     }
 
+    [AvaloniaFact]
+    public void HistoryClosesOnlyAfterEntryAndTheConfiguredDistanceAndRespondsToSettingChanges()
+    {
+        using var history = new HistoryHub(_paths, _settings, new Clipboard());
+        var platform = new FakePlatform();
+        var window = new HistoryWindow(history, _settings, windowService: platform);
+        _settings.Update(s => { s.Popup.CloseOnMouseLeave = true; s.Popup.MouseLeaveDistance = 100; }, SettingsChange.Popup);
+        window.Show(); Dispatcher.UIThread.RunJobs();
+        try
+        {
+            int right = window.Position.X + (int)Math.Ceiling(window.Bounds.Width * window.RenderScaling);
+            int insideY = window.Position.Y + 20;
+            platform.CursorPosition = new(right + 500, insideY);
+            window.CheckMouseDistance(); Assert.True(window.IsVisible); // 初めから遠くても閉じない
+            platform.CursorPosition = new(window.Position.X + 20, insideY); window.CheckMouseDistance();
+            platform.CursorPosition = new(right + 49, insideY); window.CheckMouseDistance(); Assert.True(window.IsVisible);
+            _settings.Update(s => s.Popup.CloseOnMouseLeave = false, SettingsChange.Popup);
+            platform.CursorPosition = new(right + 500, insideY); window.CheckMouseDistance(); Assert.True(window.IsVisible);
+            _settings.Update(s => s.Popup.CloseOnMouseLeave = true, SettingsChange.Popup);
+            window.CheckMouseDistance(); Assert.True(window.IsVisible); // 再び有効にしたら入場を待つ
+            platform.CursorPosition = new(window.Position.X + 20, insideY); window.CheckMouseDistance();
+            _settings.Update(s => s.Popup.MouseLeaveDistance = 300, SettingsChange.Popup);
+            platform.CursorPosition = new(window.Position.X + 20, insideY); window.CheckMouseDistance();
+            platform.CursorPosition = new(right + 150, insideY); window.CheckMouseDistance(); Assert.True(window.IsVisible);
+            platform.CursorPosition = new(right + 301, insideY); window.CheckMouseDistance(); Assert.False(window.IsVisible);
+        }
+        finally { window.Close(); }
+    }
+
 }

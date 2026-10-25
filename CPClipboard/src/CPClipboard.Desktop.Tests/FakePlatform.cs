@@ -73,7 +73,8 @@ internal sealed class FakePlatform : IPlatformServices, IInputHookService, IHotk
     public bool BringToForeground(nint windowHandle) => true;
     public List<nint> RestoredTargets { get; } = [];
     public bool RestoreForeground(nint previous) { RestoredTargets.Add(previous); Foreground = previous; return true; }
-    public ScreenPoint GetCursorPosition() => new(100, 100);
+    public ScreenPoint CursorPosition { get; set; } = new(100, 100);
+    public ScreenPoint GetCursorPosition() => CursorPosition;
 
     // 自動起動・権限
     public bool IsEnabled { get; private set; }

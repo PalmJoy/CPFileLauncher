@@ -45,7 +45,7 @@ A row’s context menu offers Paste, Copy only and Edit. Hover over truncated or
 
 Automatic paste requires a valid target and input permission. Elevated Windows apps and macOS Secure Input cause copy-only fallback. Clipboard formats that cannot be safely captured, or snapshots over 32 MiB, cannot be restored. Clipboard ownership is checked before restoration; cross-process comparison and writing are not atomic on macOS.
 
-Clipboard history, variables/macros, rich-text snippets, search and cloud sync are outside the app’s scope. Update checks notify you of published releases and open the download site; updates are installed manually.
+Open History… to search and reuse copied text. The filter is at the bottom; a–z selects the first 26 results, with Shift to copy only. The History settings tab provides Clear history, automatic expiry in minutes, and a freely entered maximum count capped at 1000. Snippet and history triggers are configured separately. History is stored locally in history.json and excluded from backups and exports. Variables/macros, rich-text snippets and cloud sync are outside the app’s scope. Update checks notify you of published releases and open the download site; updates are installed manually.
 
 ## Data and backup
 

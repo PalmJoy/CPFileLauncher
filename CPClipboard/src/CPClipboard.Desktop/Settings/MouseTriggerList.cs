@@ -31,13 +31,15 @@ internal sealed class MouseTriggerList : StackPanel
     ];
 
     private readonly SettingsHub _hub;
+    private readonly Func<AppSettings, TriggerSettings> _get;
     private readonly StackPanel _rows = new() { Spacing = 6 };
     private readonly TextBlock _error = Themed.Foreground(new TextBlock { FontSize = 12, TextWrapping = TextWrapping.Wrap, IsVisible = false }, "FlError");
     private List<MouseTriggerSetting> _items = new();
 
-    public MouseTriggerList(SettingsHub hub, List<Action> refreshers)
+    public MouseTriggerList(SettingsHub hub, List<Action> refreshers, Func<AppSettings, TriggerSettings>? get = null)
     {
         _hub = hub;
+        _get = get ?? (s => s.Triggers);
         Spacing = 6;
         var add = new Button { Content = Strings.Common_Add };
         add.Click += (_, _) =>
@@ -53,7 +55,7 @@ internal sealed class MouseTriggerList : StackPanel
             Children.Add(Themed.Note(new TextBlock { Text = Strings.Settings_Triggers_SideButtonNote, FontSize = 12, TextWrapping = TextWrapping.Wrap }));
         refreshers.Add(() =>
         {
-            _items = _hub.Current.Triggers.Mouse.Select(Clone).ToList();
+            _items = _get(_hub.Current).Mouse.Select(Clone).ToList();
             Rebuild();
         });
     }
@@ -72,7 +74,7 @@ internal sealed class MouseTriggerList : StackPanel
         _error.IsVisible = invalid;
         if (invalid) return;
         var copy = _items.Select(Clone).ToList();
-        _hub.Update(s => s.Triggers.Mouse = copy, SettingsChange.Triggers);
+        _hub.Update(s => _get(s).Mouse = copy, SettingsChange.Triggers);
     }
 
     private void Rebuild()

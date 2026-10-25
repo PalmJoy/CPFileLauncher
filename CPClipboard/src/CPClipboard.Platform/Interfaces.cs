@@ -157,7 +157,15 @@ public interface IClipboardService
     Task<long?> SetTextAsync(string text, bool transient, long? expectedToken = null);
     Task<bool> RestoreAsync(ClipboardSnapshot snapshot, long expectedToken);
     Task<string?> GetTextAsync();
+    Task<string?> GetHistoryTextAsync() => GetTextAsync();
     long ChangeToken { get; }
 }
 public interface IKeySender { bool SendPaste(); }
 public interface IPasteGuard { PasteGuardResult Check(nint target); }
+
+/// <summary>履歴専用のトリガー。通常の盤面と同一操作なら盤面を優先する。</summary>
+public interface IHistoryTriggerService
+{
+    void ConfigureHistory(TriggerSettings settings);
+    event Action<ScreenPoint?, long>? HistoryTriggered;
+}

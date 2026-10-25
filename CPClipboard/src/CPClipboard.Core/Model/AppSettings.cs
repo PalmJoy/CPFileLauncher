@@ -12,6 +12,8 @@ public sealed class AppSettings
     public AppearanceSettings Appearance { get; set; } = new();
     public PopupSettings Popup { get; set; } = new();
     public TriggerSettings Triggers { get; set; } = new();
+    public HistorySettings History { get; set; } = new();
+    public TriggerSettings HistoryTriggers { get; set; } = TriggerSettings.Disabled();
     public PasteSettings Paste { get; set; } = new();
     public BoardSettings Board { get; set; } = new();
     public DataSettings Data { get; set; } = new();
@@ -25,6 +27,10 @@ public sealed class AppSettings
         Popup ??= new();
         Triggers ??= new();
         Paste ??= new();
+        History ??= new();
+        History.Normalize();
+        HistoryTriggers ??= TriggerSettings.Disabled();
+        NormalizeTriggers(HistoryTriggers);
         Board ??= new();
         Data ??= new();
         Advanced ??= new();
@@ -60,6 +66,16 @@ public sealed class AppSettings
         Appearance.Hud.ScanlineOpacity = (int)Math.Round(Math.Clamp(Appearance.Hud.ScanlineOpacity, 0, 50) / 5.0, MidpointRounding.AwayFromZero) * 5;
         if (!HudSettings.ScanlinePitches.Contains(Appearance.Hud.ScanlinePitch)) Appearance.Hud.ScanlinePitch = 3;
     }
+    private static void NormalizeTriggers(TriggerSettings triggers)
+    {
+        triggers.DoubleTap ??= new() { Enabled = false };
+        triggers.Hotkey ??= new();
+        triggers.Mouse ??= [];
+        triggers.DoubleTap.IntervalMs = (int)Math.Round(Math.Clamp(triggers.DoubleTap.IntervalMs, 200, 500) / 10.0, MidpointRounding.AwayFromZero) * 10;
+        if (!Enum.IsDefined(triggers.DoubleTap.Modifier)) triggers.DoubleTap.Modifier = DoubleTapModifier.Ctrl;
+        triggers.Mouse.RemoveAll(m => m is null || !m.IsValid);
+    }
+
 }
 
 public sealed class GeneralSettings
@@ -276,6 +292,7 @@ public enum PopupPosition
 
 public sealed class TriggerSettings
 {
+    public static TriggerSettings Disabled() => new() { DoubleTap = new() { Enabled = false }, Mouse = [] };
     /// <summary>修飾キーの 2 回押し（SPEC §4.1。既定 ON・Ctrl）。</summary>
     public DoubleTapSetting DoubleTap { get; set; } = new();
 
@@ -386,4 +403,16 @@ public sealed class AdvancedSettings
 {
     public bool Logging { get; set; }
     // hardwareAcceleration は 2026-10-07 に廃止（描画方式はコードで固定。SPEC §10.7）。残ったキーは読み込みで無視される
+}
+
+public sealed class HistorySettings
+{
+    public bool AutoClear { get; set; }
+    public int AutoClearMinutes { get; set; } = 60;
+    public int MaxItems { get; set; } = 1000;
+    public void Normalize()
+    {
+        AutoClearMinutes = Math.Max(1, AutoClearMinutes);
+        MaxItems = Math.Clamp(MaxItems, 1, 1000);
+    }
 }

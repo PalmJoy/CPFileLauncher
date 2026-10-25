@@ -11,13 +11,15 @@ namespace CPClipboard.Platform.Input;
 /// Windows / macOS 共通（OS 差はライブラリが吸収）。判定ロジックは Core の TriggerDetector。
 /// イベント抑止（SuppressEvent）が要るので SimpleGlobalHook を使う（TaskPoolGlobalHook は抑止できない）。
 /// </summary>
-public sealed class SharpHookInputService : IInputHookService, IHotkeyService, IMouseTriggerService
+public sealed class SharpHookInputService : IInputHookService, IHotkeyService, IMouseTriggerService, IHistoryTriggerService
 {
     private readonly object _gate = new();
     private readonly object _inputGate = new();
     private SimpleGlobalHook? _hook;
     private readonly TriggerDetector _detector;
     private readonly ModifierDoubleTapDetector _doubleTap = new();
+    private readonly TriggerDetector _historyDetector = new();
+    private readonly ModifierDoubleTapDetector _historyDoubleTap = new();
     private readonly ModifierState _modifiers = new();
     private volatile bool _running;
 
@@ -31,6 +33,7 @@ public sealed class SharpHookInputService : IInputHookService, IHotkeyService, I
     {
         _detector = new TriggerDetector();
         _currentModifiers = currentModifiers;
+        _historyDoubleTap.Configure(new() { Enabled = false });
     }
 
     public bool IsRunning => _running;
@@ -40,6 +43,16 @@ public sealed class SharpHookInputService : IInputHookService, IHotkeyService, I
     public event Action<ScreenPoint, long>? Triggered;
     public event Action<ScreenPoint>? PassedThroughDown;
     public event Action<long>? DoubleTapped;
+    public event Action<ScreenPoint?, long>? HistoryTriggered;
+    public void ConfigureHistory(TriggerSettings settings)
+    {
+        lock (_inputGate)
+        {
+            _historyDetector.SetHotkey(settings.Hotkey);
+            _historyDetector.SetMouse(settings);
+            _historyDoubleTap.Configure(settings.DoubleTap);
+        }
+    }
     // 自アプリへ切り替わった後のキーはフックから欠けることがあるため、OS照会があればそちらを使う。
     public KeyModifiers PressedModifiers => _currentModifiers?.Invoke() ?? _modifiers.Pressed;
     public void ConfigureDoubleTap(DoubleTapSetting setting) => _doubleTap.Configure(setting);
@@ -106,6 +119,7 @@ public sealed class SharpHookInputService : IInputHookService, IHotkeyService, I
         lock (_inputGate)
         {
             _doubleTap.SetCapture(true);
+            _historyDoubleTap.SetCapture(true);
             _capture = onKey;
         }
     }
@@ -116,6 +130,7 @@ public sealed class SharpHookInputService : IInputHookService, IHotkeyService, I
         {
             _capture = null;
             _doubleTap.SetCapture(false);
+            _historyDoubleTap.SetCapture(false);
         }
     }
 
@@ -133,6 +148,7 @@ public sealed class SharpHookInputService : IInputHookService, IHotkeyService, I
             var modifier = ToModifierKey(e.Data.KeyCode);
             if (modifier is { } m) _modifiers.Update(m, true);
             _doubleTap.OnKey(KeyName(e.Data.KeyCode), modifier, true, e.EventTime.Ticks / TimeSpan.TicksPerMillisecond);
+            _historyDoubleTap.OnKey(KeyName(e.Data.KeyCode), modifier, true, e.EventTime.Ticks / TimeSpan.TicksPerMillisecond);
             if (modifier is not null) return;
             if (_capturedKeys.Contains(KeyName(e.Data.KeyCode))) { e.SuppressEvent = true; return; }
             if (_capture is { } capture)
@@ -145,6 +161,12 @@ public sealed class SharpHookInputService : IInputHookService, IHotkeyService, I
             var d = _detector.OnKeyDown(KeyName(e.Data.KeyCode), ToModifiers(e.RawEvent.Mask));
             if (d.Suppress) e.SuppressEvent = true;
             if (d.Fire) Pressed?.Invoke(Stopwatch.GetTimestamp());
+            if (!d.Suppress)
+            {
+                var history = _historyDetector.OnKeyDown(KeyName(e.Data.KeyCode), ToModifiers(e.RawEvent.Mask));
+                if (history.Suppress) e.SuppressEvent = true;
+                if (history.Fire) HistoryTriggered?.Invoke(null, Stopwatch.GetTimestamp());
+            }
         }
     }
 
@@ -156,7 +178,9 @@ public sealed class SharpHookInputService : IInputHookService, IHotkeyService, I
             var modifier = ToModifierKey(e.Data.KeyCode);
             if (modifier is { } m) _modifiers.Update(m, false);
             bool tapped = _doubleTap.OnKey(KeyName(e.Data.KeyCode), modifier, false, e.EventTime.Ticks / TimeSpan.TicksPerMillisecond);
+            bool historyTapped = _historyDoubleTap.OnKey(KeyName(e.Data.KeyCode), modifier, false, e.EventTime.Ticks / TimeSpan.TicksPerMillisecond);
             if (tapped) DoubleTapped?.Invoke(Stopwatch.GetTimestamp());
+            else if (historyTapped) HistoryTriggered?.Invoke(null, Stopwatch.GetTimestamp());
             if (modifier is not null) return;
             if (_capturedKeys.Remove(KeyName(e.Data.KeyCode)))
             {
@@ -165,6 +189,7 @@ public sealed class SharpHookInputService : IInputHookService, IHotkeyService, I
                 return;
             }
             if (_detector.OnKeyUp(KeyName(e.Data.KeyCode))) e.SuppressEvent = true;
+            if (_historyDetector.OnKeyUp(KeyName(e.Data.KeyCode))) e.SuppressEvent = true;
         }
     }
 
@@ -174,6 +199,7 @@ public sealed class SharpHookInputService : IInputHookService, IHotkeyService, I
         {
             if (e.IsEventSimulated) return;
             _doubleTap.OnMouseButton(ToButton(e.Data.Button), true);
+            _historyDoubleTap.OnMouseButton(ToButton(e.Data.Button), true);
             long ts = Stopwatch.GetTimestamp();
             var p = new ScreenPoint(e.Data.X, e.Data.Y);
             var mods = _currentModifiers?.Invoke() ?? ToModifiers(e.RawEvent.Mask);
@@ -181,7 +207,13 @@ public sealed class SharpHookInputService : IInputHookService, IHotkeyService, I
             DebugLog($"mouse down {e.Data.Button} mods={mods} hookMask={e.RawEvent.Mask} → {d}");
             if (d.Suppress) e.SuppressEvent = true;
             if (d.Fire) Triggered?.Invoke(p, ts);
-            if (d.PassedThrough) PassedThroughDown?.Invoke(p);
+            if (!d.Suppress)
+            {
+                var history = _historyDetector.OnMouseDown(ToButton(e.Data.Button), mods, allowFire: _capture is null);
+                if (history.Suppress) e.SuppressEvent = true;
+                if (history.Fire) HistoryTriggered?.Invoke(p, ts);
+                if (history.PassedThrough) PassedThroughDown?.Invoke(p);
+            }
         }
     }
 
@@ -191,10 +223,13 @@ public sealed class SharpHookInputService : IInputHookService, IHotkeyService, I
         {
             if (e.IsEventSimulated) return;
             _doubleTap.OnMouseButton(ToButton(e.Data.Button), false);
+            _historyDoubleTap.OnMouseButton(ToButton(e.Data.Button), false);
             var d = _detector.OnMouseUp(ToButton(e.Data.Button));
             DebugLog($"mouse up {e.Data.Button} → {d}");
             if (d.Suppress) e.SuppressEvent = true;
-            if (d.PassedThrough) PassedThroughUp?.Invoke(new ScreenPoint(e.Data.X, e.Data.Y));
+            var history = _historyDetector.OnMouseUp(ToButton(e.Data.Button));
+            if (history.Suppress) e.SuppressEvent = true;
+            if (d.PassedThrough && history.PassedThrough) PassedThroughUp?.Invoke(new ScreenPoint(e.Data.X, e.Data.Y));
         }
     }
 
@@ -204,6 +239,7 @@ public sealed class SharpHookInputService : IInputHookService, IHotkeyService, I
         {
             if (e.IsEventSimulated) return;
             _doubleTap.OnWheel();
+            _historyDoubleTap.OnWheel();
         }
     }
 
@@ -212,6 +248,8 @@ public sealed class SharpHookInputService : IInputHookService, IHotkeyService, I
         lock (_inputGate)
         {
             _doubleTap.Reset();
+            _historyDoubleTap.Reset();
+            _historyDetector.Reset();
             _modifiers.Reset();
             _detector.Reset();
             _capturedKeys.Clear();

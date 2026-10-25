@@ -50,7 +50,7 @@ UI 文字列（SPEC §7）の **英訳の正**。`src/CPClipboard.Desktop/Resour
 
 | 日本語 | English（推奨） | 備考 |
 |---|---|---|
-| 一般 / 表示 / 演出 / ポップアップ / トリガー / 貼り付け / データ / 詳細 | General / Appearance / Effects / Popup / Triggers / Paste / Data / Advanced | 8 タブ。設定本体620×600、独立した編集本体820×600 |
+| 一般 / 表示 / 演出 / ポップアップ / トリガー / 貼り付け / 履歴 / データ / 詳細 | General / Appearance / Effects / Popup / Triggers / Paste / History / Data / Advanced | 9 タブ。設定本体700×600、独立した編集本体820×600 |
 | 起動時のガイドを表示しない | Don't show the startup guide | |
 | 盤面の幅 / 最大行数 / 文字の大きさ | Board width / Maximum rows / Text size | |
 | 全文のプレビュー | Show full-text preview | |
@@ -122,3 +122,5 @@ Launcherと同じ機能は同じ呼称を使う。Clipboard固有のグループ
 
 - a〜zは翻訳しない。現在グループの先頭26件へ自動で割り当てるキー表示であり、定型文本文に含めない。
 - 設定や編集の入力欄では文字入力を優先する。既存の「貼り付け」「コピーだけ」の文言を再利用し、新しい手動割り当て項目を作らない。
+
+| 履歴… | History… | クリップボードのテキスト履歴・検索・再利用 |

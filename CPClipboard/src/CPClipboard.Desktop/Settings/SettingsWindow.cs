@@ -22,6 +22,7 @@ internal sealed class SettingsWindow : ChromeWindow
 {
     private const double LabelColumnWidth = 200;
     private readonly SettingsHub _hub;
+    private readonly List<HotkeyRecorder> _recorders = [];
     private readonly SettingsContext _ctx;
     private readonly Func<PixelPoint?> _boardPosition;
     private readonly Action<string> _openFolder;
@@ -42,9 +43,10 @@ internal sealed class SettingsWindow : ChromeWindow
 
         Title = AppInfo.TitlePrefix + Strings.Settings_Title;
         TagCode = "CFG";
-        BodyWidth = 620;
+        BodyWidth = 700;
         BodyHeight = 600;
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
+        Topmost = true;
         ShowInTaskbar = OperatingSystem.IsWindows(); // Win は通常のウィンドウとして Alt+Tab / タスクバーから戻れるように（SPEC §7）
 
         var tabs = new TabControl
@@ -57,6 +59,7 @@ internal sealed class SettingsWindow : ChromeWindow
                 Tab(Strings.Settings_Tab_Popup, PopupTab()),
                 Tab(Strings.Settings_Tab_Triggers, TriggersTab()),
                 Tab(Strings.Settings_Tab_Paste, PasteTab()),
+                Tab(Strings.Settings_Tab_History, HistoryTab()),
                 Tab(Strings.Settings_Tab_Data, DataTab()),
                 Tab(Strings.Settings_Tab_Advanced, AdvancedTab()),
             },
@@ -80,12 +83,15 @@ internal sealed class SettingsWindow : ChromeWindow
             DockPanel.SetDock(banner, Dock.Top);
             root.Children.Add(banner);
         }
+        tabs.SelectionChanged += (_, e) => { if (ReferenceEquals(e.Source, tabs)) foreach (var r in _recorders) r.Cancel(); };
+        Deactivated += (_, _) => { foreach (var r in _recorders) r.Cancel(); };
         root.Children.Add(tabs);
         Body = root;
 
         _hub.Changed += OnHubChanged;
         Closed += (_, _) =>
         {
+            foreach (var r in _recorders) r.Cancel();
             _hub.Changed -= OnHubChanged;
             _hub.Flush();
         };
@@ -555,36 +561,67 @@ internal sealed class SettingsWindow : ChromeWindow
     private Control TriggersTab()
     {
         var p = Panel();
+        p.Children.Add(Themed.Glow(new TextBlock { Text = Strings.Settings_Triggers_EditorHeading, FontWeight = FontWeight.SemiBold }));
+        TriggerRows(p, s => s.Triggers);
+        p.Children.Add(Themed.Glow(new TextBlock { Text = Strings.Settings_Triggers_HistoryHeading, FontWeight = FontWeight.SemiBold, Margin = new Thickness(0, 16, 0, 0) }));
+        TriggerRows(p, s => s.HistoryTriggers);
+        p.Children.Add(Themed.Note(new TextBlock { Text = Strings.History_TriggerNote, FontSize = 12, TextWrapping = TextWrapping.Wrap }));
+        return Scroll(p);
+    }
+
+    private void TriggerRows(StackPanel p, Func<AppSettings, TriggerSettings> get)
+    {
         // 修飾キーの 2 回押し（SPEC §4.1）
-        var doubleTap = Toggle(s => s.Triggers.DoubleTap.Enabled, (s, v) => s.Triggers.DoubleTap.Enabled = v, SettingsChange.Triggers);
+        var doubleTap = Toggle(s => get(s).DoubleTap.Enabled, (s, v) => get(s).DoubleTap.Enabled = v, SettingsChange.Triggers);
         p.Children.Add(Row(Strings.Settings_Triggers_DoubleTap, doubleTap, Strings.Settings_Triggers_DoubleTap_Note));
         var tapKey = Combo(Enum.GetValues<DoubleTapModifier>().Select(m => (Loc.Modifier(m), m)).ToArray(),
-            s => s.Triggers.DoubleTap.Modifier, (s, v) => s.Triggers.DoubleTap.Modifier = v, SettingsChange.Triggers);
+            s => get(s).DoubleTap.Modifier, (s, v) => get(s).DoubleTap.Modifier = v, SettingsChange.Triggers);
         p.Children.Add(Row(Sub(Strings.Settings_Triggers_DoubleTapKey), tapKey));
         var tapInterval = ValueSlider(200, 500, 10, "ms",
-            s => s.Triggers.DoubleTap.IntervalMs, (s, v) => s.Triggers.DoubleTap.IntervalMs = v, SettingsChange.Triggers);
+            s => get(s).DoubleTap.IntervalMs, (s, v) => get(s).DoubleTap.IntervalMs = v, SettingsChange.Triggers);
         p.Children.Add(Row(Sub(Strings.Settings_Triggers_DoubleTapInterval), tapInterval));
-        void UpdateTapEnabled() => tapKey.IsEnabled = tapInterval.IsEnabled = _hub.Current.Triggers.DoubleTap.Enabled;
+        void UpdateTapEnabled() => tapKey.IsEnabled = tapInterval.IsEnabled = get(_hub.Current).DoubleTap.Enabled;
         doubleTap.IsCheckedChanged += (_, _) => UpdateTapEnabled();
         _refreshers.Add(UpdateTapEnabled);
 
         p.Children.Add(Row(Strings.Settings_Triggers_UseHotkey, Toggle(
-            s => s.Triggers.Hotkey.Enabled, (s, v) => s.Triggers.Hotkey.Enabled = v, SettingsChange.Triggers)));
+            s => get(s).Hotkey.Enabled, (s, v) => get(s).Hotkey.Enabled = v, SettingsChange.Triggers)));
 
         var recorder = new HotkeyRecorder(_ctx.Platform);
-        _refreshers.Add(() => recorder.SetValue(_hub.Current.Triggers.Hotkey));
+        _recorders.Add(recorder);
+        recorder.RecordingStarted += () => { foreach (var other in _recorders) if (!ReferenceEquals(other, recorder)) other.Cancel(); };
+        _refreshers.Add(() => recorder.SetValue(get(_hub.Current).Hotkey));
         recorder.RecordingStarted += () => _ctx.Platform.Hotkey.Unregister();
         recorder.RecordingEnded += h =>
         {
-            if (h is not null) _hub.Update(s => s.Triggers.Hotkey = h, SettingsChange.Triggers);
+            if (h is not null) _hub.Update(s => get(s).Hotkey = h, SettingsChange.Triggers);
             else _ctx.Platform.Hotkey.Register(_hub.Current.Triggers.Hotkey, out _); // 中止: 元に戻す
         };
         p.Children.Add(Row(Strings.Settings_Triggers_Hotkey, recorder,
             Strings.Settings_Triggers_Hotkey_Note));
 
         p.Children.Add(Themed.Glow(new TextBlock { Text = Strings.Settings_Triggers_Mouse, FontWeight = FontWeight.SemiBold, Margin = new Thickness(0, 8, 0, 0) }));
-        p.Children.Add(new MouseTriggerList(_hub, _refreshers));
+        p.Children.Add(new MouseTriggerList(_hub, _refreshers, get));
         p.Children.Add(Themed.Note(new TextBlock { Text = Strings.Settings_Triggers_Mouse_Note, FontSize = 12, TextWrapping = TextWrapping.Wrap }));
+    }
+
+    private Control HistoryTab()
+    {
+        var p = Panel();
+        var clear = new Button { Content = Strings.History_Clear };
+        clear.Click += async (_, _) =>
+        {
+            if (await Confirm(Strings.History_Clear, Strings.History_ClearConfirm, Strings.History_Clear)) _ctx.ClearHistory?.Invoke();
+        };
+        p.Children.Add(Row(Strings.History_Clear, clear));
+        var auto = Toggle(s => s.History.AutoClear, (s, v) => s.History.AutoClear = v, SettingsChange.History);
+        p.Children.Add(Row(Strings.History_AutoClear, auto, Strings.History_AutoClear_Note));
+        var minutes = Number(1, int.MaxValue, s => s.History.AutoClearMinutes, (s, v) => s.History.AutoClearMinutes = v, SettingsChange.History);
+        p.Children.Add(Row(Strings.History_Minutes, minutes));
+        void UpdateMinutes() => minutes.IsEnabled = _hub.Current.History.AutoClear;
+        auto.IsCheckedChanged += (_, _) => UpdateMinutes();
+        _refreshers.Add(UpdateMinutes);
+        p.Children.Add(Row(Strings.History_MaxItems, Number(1, 1000, s => s.History.MaxItems, (s, v) => s.History.MaxItems = v, SettingsChange.History), Strings.History_MaxItems_Note));
         return Scroll(p);
     }
 

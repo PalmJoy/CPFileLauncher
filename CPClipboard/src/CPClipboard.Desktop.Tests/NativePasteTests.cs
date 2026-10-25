@@ -82,4 +82,17 @@ public class NativePasteTests
             return Activator.CreateInstance(targetMethod.ReturnType);
         }
     }
+    [Fact(SkipUnless = nameof(IsMacOS), Skip = "Requires macOS named pasteboards")]
+    public async Task MacHistorySkipsTransientData()
+    {
+        if (!OperatingSystem.IsMacOS()) return;
+        using var clipboard = new MacClipboardService("com.palmjoy.cpclipboard.tests." + Guid.NewGuid().ToString("N"));
+        await clipboard.SetTextAsync("normal", false);
+        Assert.Equal("normal", await clipboard.GetHistoryTextAsync());
+        await clipboard.SetTextAsync("transient", true);
+        Assert.Null(await clipboard.GetHistoryTextAsync());
+        await clipboard.SetTextAsync("normal again", false);
+        Assert.Equal("normal again", await clipboard.GetHistoryTextAsync());
+    }
+
 }

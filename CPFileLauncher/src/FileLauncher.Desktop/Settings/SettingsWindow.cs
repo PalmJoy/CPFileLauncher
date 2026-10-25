@@ -47,6 +47,7 @@ internal sealed class SettingsWindow : ChromeWindow
         BodyWidth = 620; // 8 タブを英語でも 1 行に収める（2026-10-07 に「演出」タブを足して 560 → 620）
         BodyHeight = 600;
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
+        Topmost = true;
         ShowInTaskbar = OperatingSystem.IsWindows(); // Win は通常のウィンドウとして Alt+Tab / タスクバーから戻れるように（SPEC §7）
 
         var tabs = new TabControl

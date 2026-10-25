@@ -28,6 +28,9 @@ public partial class App : Application
     private PopupController? _popup;
     private SettingsWindow? _settingsWindow;
     private TemplatesWindow? _templatesWindow;
+    private HistoryHub? _history;
+    private HistoryWindow? _historyWindow;
+    private PasteController? _historyPaste;
     private DataPaths? _paths;
     private AppDataStore? _store;
     private readonly BoardBackgroundLoader _backgroundLoader = new();
@@ -85,6 +88,15 @@ public partial class App : Application
         {
             Notice.Show(Strings.Notice_UnsupportedOs_Title, Strings.Notice_UnsupportedOs);
             return;
+        }
+
+        _history = new HistoryHub(store.Paths, _hub, _platform.Clipboard);
+        _history.Start();
+        _historyPaste = new PasteController(_platform, () => _historyWindow is null && _popup?.IsShown != true);
+        if (_platform.InputHook is IHistoryTriggerService historyTriggers)
+        {
+            historyTriggers.ConfigureHistory(settings.HistoryTriggers);
+            historyTriggers.HistoryTriggered += (_, _) => Dispatcher.UIThread.Post(() => OpenHistory(true));
         }
 
         _board = new BoardWindow { WheelSwitchesGroup = settings.Board.WheelSwitchesGroup };
@@ -155,6 +167,8 @@ public partial class App : Application
             Gesture = new KeyGesture(Key.OemComma, OperatingSystem.IsMacOS() ? Avalonia.Input.KeyModifiers.Meta : Avalonia.Input.KeyModifiers.Control),
         };
         settingsItem.Click += (_, _) => OpenSettings();
+        var historyItem = new NativeMenuItem(Strings.Menu_History);
+        historyItem.Click += (_, _) => OpenHistory();
         var editItem = new NativeMenuItem(Strings.Menu_Edit);
         editItem.Click += (_, _) => OpenEditor();
         _permissionItem = new NativeMenuItem(Strings.Tray_Permissions) { IsVisible = false }; // 未許可のときだけ出す（Mac）
@@ -169,20 +183,22 @@ public partial class App : Application
             // アプリメニュー（盤面がキーのときに ⌘Q を効かせる）
             var appSettings = new NativeMenuItem(Strings.Common_Settings) { Gesture = new KeyGesture(Key.OemComma, Avalonia.Input.KeyModifiers.Meta) };
             appSettings.Click += (_, _) => OpenSettings();
+            var appHistory = new NativeMenuItem(Strings.Menu_History);
+            appHistory.Click += (_, _) => OpenHistory();
             var appEdit = new NativeMenuItem(Strings.Menu_Edit);
             appEdit.Click += (_, _) => OpenEditor();
             var appQuit = new NativeMenuItem(Strings.Tray_Quit_Mac) { Gesture = new KeyGesture(Key.Q, Avalonia.Input.KeyModifiers.Meta) };
             appQuit.Click += (_, _) => Quit(desktop);
             var appUpdate = new NativeMenuItem(Strings.Update_Check);
             appUpdate.Click += (_, _) => _ = CheckForUpdatesAsync(true);
-            NativeMenu.SetMenu(this, new NativeMenu { Items = { appSettings, appEdit, appUpdate, new NativeMenuItemSeparator(), appQuit } });
+            NativeMenu.SetMenu(this, new NativeMenu { Items = { appSettings, appEdit, appHistory, appUpdate, new NativeMenuItemSeparator(), appQuit } });
         }
 
         _tray = new TrayIcon
         {
             Icon = AppIcon.Create(),
             ToolTipText = AppInfo.ProductName,
-            Menu = new NativeMenu { Items = { show, groupsItem, new NativeMenuItemSeparator(), settingsItem, editItem, _permissionItem, update, new NativeMenuItemSeparator(), quit } },
+            Menu = new NativeMenu { Items = { show, groupsItem, new NativeMenuItemSeparator(), settingsItem, editItem, historyItem, _permissionItem, update, new NativeMenuItemSeparator(), quit } },
             IsVisible = true,
         };
         MacOSProperties.SetIsTemplateIcon(_tray, AppIcon.IsTemplate(warning: false));
@@ -198,6 +214,9 @@ public partial class App : Application
         if (_quitting) return;
         _quitting = true;
         _popup?.Hide("quit", restoreFocus: false);
+        _history?.Dispose();
+        _historyWindow?.Close();
+        if (_historyPaste is not null) await _historyPaste.StopAsync();
         if (_popup is not null) await _popup.StopPastingAsync();
         _shutdownReady = true;
         _templates?.RemoveEmpty();
@@ -240,7 +259,8 @@ public partial class App : Application
                 ImportAndRestart: ImportAndRestart,
                 BackgroundStatus: () => _backgroundLoader.LastStatus,
                 BackgroundBitmap: () => _backgroundLoader.Current,
-                Restart: Restart));
+                Restart: Restart,
+                ClearHistory: () => _history?.Clear()));
             _settingsWindow.Closed += (_, _) =>
             {
                 _settingsWindow = null;
@@ -268,6 +288,48 @@ public partial class App : Application
         WindowActivation.ShowAndActivate(_templatesWindow, _platform);
     }
 
+    private void OpenHistory(bool toggle = false)
+    {
+        if (_quitting || _history is null || _hub is null || _platform is null) return;
+        if (_historyWindow is { IsVisible: true })
+        {
+            if (toggle) _historyWindow.Close();
+            else WindowActivation.ShowAndActivate(_historyWindow, _platform);
+            return;
+        }
+        nint target = _platform.Window.CaptureForeground();
+        _popup?.Hide("history", restoreFocus: false);
+        var window = new HistoryWindow(_history, _hub, () => _backgroundLoader.Current);
+        _historyWindow = window;
+        bool chosen = false;
+        var closed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        window.Chosen += async (text, copyOnly) =>
+        {
+            if (chosen) return;
+            chosen = true;
+            window.Close();
+            // Close may be delayed by the hide effect; wait until the Closed event clears the window.
+            await closed.Task;
+            if (_historyPaste is null) return;
+            var paste = _hub.Current.Paste;
+            await _historyPaste.ExecuteAsync(new CPClipboard.Core.Paste.PasteRequest(text, target, copyOnly,
+                paste.AutoPaste, paste.RestoreClipboard, paste.RestoreDelayMs));
+        };
+        window.Closed += (_, _) =>
+        {
+            if (ReferenceEquals(_historyWindow, window)) _historyWindow = null;
+            closed.TrySetResult();
+            if (!chosen && target != 0) _platform.Window.RestoreForeground(target);
+        };
+        window.Show();
+        if (window.TryGetPlatformHandle()?.Handle is { } handle)
+        {
+            _platform.Window.ConfigureBoardWindow(handle);
+            _platform.Window.BringToForeground(handle);
+        }
+        window.Activate();
+    }
+
     /// <summary>設定が変わったら、関係する所だけ反映し直す（即時反映）。</summary>
     private void OnSettingsChanged(SettingsChange change)
     {
@@ -285,6 +347,7 @@ public partial class App : Application
             _platform.Hotkey.Register(s.Triggers.Hotkey, out _);
             _platform.MouseTrigger.Configure(s.Triggers);
             _platform.InputHook.ConfigureDoubleTap(s.Triggers.DoubleTap);
+            if (_platform.InputHook is IHistoryTriggerService history) history.ConfigureHistory(s.HistoryTriggers);
         }
         if (change.HasFlag(SettingsChange.Logging)) AppLog.SetEnabled(s.Advanced.Logging);
         if (change.HasFlag(SettingsChange.Background)) _ = ApplyBackgroundAsync();
@@ -450,6 +513,8 @@ public partial class App : Application
         _templates?.RemoveEmpty();
         _templates?.Flush();
         _hub?.Flush();
+        _historyWindow?.Close();
+        _history?.Dispose();
         if (_tray is not null) _tray.IsVisible = false;
         if (_board is not null)
         {

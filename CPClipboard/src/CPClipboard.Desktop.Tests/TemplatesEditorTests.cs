@@ -257,7 +257,7 @@ public sealed class TemplatesEditorTests : IDisposable
         try
         {
             window.Show(); Dispatcher.UIThread.RunJobs();
-            Assert.Equal(8, window.GetVisualDescendants().OfType<TabControl>().Single().Items.Count);
+            Assert.Equal(9, window.GetVisualDescendants().OfType<TabControl>().Single().Items.Count);
             Assert.Empty(window.GetVisualDescendants().OfType<TemplatesEditor>());
             Text(first.TemplatesEditor).Text = "saved independently";
             window.Close(); Assert.True(first.IsVisible);

@@ -94,6 +94,20 @@ public sealed class WindowsClipboardService : IClipboardService, IDisposable
         Write(formats, formats.Count > 0);
         return true;
     });
+    public Task<string?> GetHistoryTextAsync() => Run(() =>
+    {
+        if (GetClipboardData(RegisterClipboardFormat("ExcludeClipboardContentFromMonitorProcessing")) != 0) return null;
+        nint flag = GetClipboardData(RegisterClipboardFormat("CanIncludeInClipboardHistory"));
+        if (flag != 0)
+        {
+            nint value = GlobalLock(flag);
+            if (value != 0) { try { if (GlobalSize(flag) >= 4 && Marshal.ReadInt32(value) == 0) return null; } finally { GlobalUnlock(flag); } }
+        }
+        nint memory = GetClipboardData(13), data = GlobalLock(memory);
+        if (data == 0) return null;
+        try { return Marshal.PtrToStringUni(data); }
+        finally { GlobalUnlock(memory); }
+    });
     public Task<string?> GetTextAsync() => Run(() =>
     {
         nint memory = GetClipboardData(13), data = GlobalLock(memory);

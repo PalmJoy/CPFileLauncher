@@ -140,4 +140,39 @@ public class InputHookRoutingTests
         Assert.Equal(physical, service.PressedModifiers);
     }
 
+    [Fact]
+    public void HistoryTriggersAreIndependentAndConflictsFireOnlyTheSnippetBoard()
+    {
+        using var service = new SharpHookInputService();
+        service.ConfigureHistory(new()
+        {
+            DoubleTap = new() { Enabled = true, Modifier = DoubleTapModifier.Alt },
+            Hotkey = new() { Enabled = true, Key = "H", Modifiers = KeyModifiers.Ctrl },
+            Mouse = [new() { Button = MouseButtonKind.Middle, Modifiers = KeyModifiers.Ctrl }],
+        });
+        service.Configure(new());
+        int history = 0, snippets = 0;
+        service.HistoryTriggered += (_, _) => history++;
+        service.DoubleTapped += _ => snippets++;
+        service.Pressed += _ => snippets++;
+        service.Triggered += (_, _) => snippets++;
+        Key(service, KeyCode.VcLeftAlt, true, 0); Key(service, KeyCode.VcLeftAlt, false, 40);
+        Key(service, KeyCode.VcLeftAlt, true, 100); Key(service, KeyCode.VcLeftAlt, false, 140);
+        Assert.Equal(1, history); Assert.Equal(0, snippets);
+        Assert.True(Key(service, KeyCode.VcH, true, 200, EventMask.Ctrl).SuppressEvent);
+        Assert.True(Key(service, KeyCode.VcH, false, 220).SuppressEvent);
+        Assert.Equal(2, history);
+        Assert.True(Mouse(service, true, EventMask.Ctrl).SuppressEvent);
+        Assert.True(Mouse(service, false, EventMask.None).SuppressEvent);
+        Assert.Equal(3, history);
+        service.Register(new() { Enabled = true, Key = "H", Modifiers = KeyModifiers.Ctrl }, out _);
+        Key(service, KeyCode.VcH, true, 300, EventMask.Ctrl); Key(service, KeyCode.VcH, false, 320);
+        Assert.Equal(3, history); Assert.Equal(1, snippets);
+        service.BeginCapture((_, _) => {});
+        Key(service, KeyCode.VcLeftAlt, true, 400); Key(service, KeyCode.VcLeftAlt, false, 440);
+        Key(service, KeyCode.VcLeftAlt, true, 500); Key(service, KeyCode.VcLeftAlt, false, 540);
+        Mouse(service, true, EventMask.Ctrl); Mouse(service, false, EventMask.None);
+        Assert.Equal(3, history); service.EndCapture();
+    }
+
 }

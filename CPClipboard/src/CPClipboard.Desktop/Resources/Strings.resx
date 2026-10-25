@@ -928,4 +928,52 @@ You can download the new version from the website.</value></data>
   <data name="Settings_Tab_Popup" xml:space="preserve">
     <value>Popup</value>
   </data>
+  <data name="Menu_History" xml:space="preserve">
+    <value>History…</value>
+  </data>
+  <data name="History_Title" xml:space="preserve">
+    <value>History</value>
+  </data>
+  <data name="Settings_Tab_History" xml:space="preserve">
+    <value>History</value>
+  </data>
+  <data name="History_Clear" xml:space="preserve">
+    <value>Clear history</value>
+  </data>
+  <data name="History_ClearConfirm" xml:space="preserve">
+    <value>Delete all saved clipboard history? This cannot be undone.</value>
+  </data>
+  <data name="History_AutoClear" xml:space="preserve">
+    <value>Automatically clear history</value>
+  </data>
+  <data name="History_AutoClear_Note" xml:space="preserve">
+    <value>Delete each entry after the specified number of minutes since it was copied.</value>
+  </data>
+  <data name="History_Minutes" xml:space="preserve">
+    <value>Retention time (minutes)</value>
+  </data>
+  <data name="History_MaxItems" xml:space="preserve">
+    <value>Maximum saved entries</value>
+  </data>
+  <data name="History_MaxItems_Note" xml:space="preserve">
+    <value>Up to 1000 entries.</value>
+  </data>
+  <data name="History_Filter" xml:space="preserve">
+    <value>Filter history… (Ctrl/⌘+F)</value>
+  </data>
+  <data name="History_Search" xml:space="preserve">
+    <value>Filter</value>
+  </data>
+  <data name="History_Empty" xml:space="preserve">
+    <value>No matching history.</value>
+  </data>
+  <data name="Settings_Triggers_EditorHeading" xml:space="preserve">
+    <value>Snippets</value>
+  </data>
+  <data name="Settings_Triggers_HistoryHeading" xml:space="preserve">
+    <value>History</value>
+  </data>
+  <data name="History_TriggerNote" xml:space="preserve">
+    <value>History triggers are off by default. If both sections use the same action, snippets take priority.</value>
+  </data>
 </root>

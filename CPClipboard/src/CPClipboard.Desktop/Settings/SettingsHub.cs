@@ -16,6 +16,7 @@ internal enum SettingsChange
     Popup = 1 << 4,
     Triggers = 1 << 5,
     // 1 << 6・1 << 7 は CPFileLauncher の表示モード・常駐（CPClipboard には無い）
+    History = 1 << 16,
     Paste = 1 << 14,
     Board = 1 << 15,
     Logging = 1 << 8,

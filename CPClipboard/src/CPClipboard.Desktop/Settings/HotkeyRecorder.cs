@@ -45,6 +45,7 @@ internal sealed class HotkeyRecorder : Button
     }
 
     internal bool IsRecording => _recording;
+    internal void Cancel() { if (_recording) Stop(null); }
 
     private void Start()
     {

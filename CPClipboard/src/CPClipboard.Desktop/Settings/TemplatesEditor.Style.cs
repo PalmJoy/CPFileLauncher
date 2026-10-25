@@ -14,7 +14,7 @@ namespace CPClipboard.App;
 internal sealed partial class TemplatesEditor
 {
     private double _fontSize = 13;
-    private static void StyleList(ListBox list)
+    internal static void StyleList(ListBox list)
     {
         list.Background = Brushes.Transparent;
         list.BorderThickness = new Thickness(1);

@@ -111,7 +111,7 @@ public sealed class SettingsUiTests : IDisposable
         try
         {
             SelectTab(w, Strings.Settings_Tab_Triggers);
-            var list = w.GetVisualDescendants().OfType<MouseTriggerList>().Single();
+            var list = w.GetVisualDescendants().OfType<MouseTriggerList>().First();
             var combos = list.GetVisualDescendants().OfType<ComboBox>().ToArray();
             var button = Assert.Single(combos);
             Assert.Equal(CoreModifiers.Alt, Assert.Single(_hub.Current.Triggers.Mouse).Modifiers);
@@ -139,7 +139,7 @@ public sealed class SettingsUiTests : IDisposable
             tabs.SelectedItem = tab;
             Dispatcher.UIThread.RunJobs();
         }
-        Assert.Equal(8, tabs.Items.Count);
+        Assert.Equal(9, tabs.Items.Count);
         w.Close();
     }
 
@@ -540,7 +540,7 @@ public sealed class SettingsUiTests : IDisposable
     [AvaloniaTheory]
     [InlineData("en")]
     [InlineData("ja")]
-    public void 設定画面のタブはアウトラインで_8つとも1行に収まる(string culture)
+    public void 設定画面のタブはアウトラインで_9つとも1行に収まる(string culture)
     {
         var saved = System.Globalization.CultureInfo.CurrentUICulture;
         System.Globalization.CultureInfo.CurrentUICulture = new System.Globalization.CultureInfo(culture);
@@ -553,13 +553,13 @@ public sealed class SettingsUiTests : IDisposable
                 Strings.Settings_Tab_General, Strings.Settings_Tab_Appearance,
                 Strings.Settings_Tab_Effects, Strings.Settings_Tab_Popup,
                 Strings.Settings_Tab_Triggers, Strings.Settings_Tab_Paste,
-                Strings.Settings_Tab_Data, Strings.Settings_Tab_Advanced,
+                Strings.Settings_Tab_History, Strings.Settings_Tab_Data, Strings.Settings_Tab_Advanced,
             };
             w = OpenSettings();
         }
         finally { System.Globalization.CultureInfo.CurrentUICulture = saved; }
         var tabs = w.GetVisualDescendants().OfType<TabItem>().ToList();
-        Assert.Equal(8, tabs.Count);
+        Assert.Equal(9, tabs.Count);
         Assert.Equal(expected, tabs.Select(t => ((TextBlock)t.Header!).Text));
         Assert.All(tabs, t => Assert.Equal(new Avalonia.Thickness(1), t.BorderThickness));
         double top = tabs[0].Bounds.Y;

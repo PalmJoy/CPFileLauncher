@@ -6,7 +6,7 @@ import {selectRelease} from '../../../Common/Web/release-selection.js';
 const code=readFileSync(new URL('../../../docs/CPClipboard/assets/site.js',import.meta.url),'utf8').replace(/^import .*;\n/, '');
 const base='https://github.com/PalmJoy/CPFileLauncher/releases/download/';
 const ids=['win-x64','win-arm64','macos-arm64'];
-const published='cpclipboard-v1.0.3';
+const published='cpclipboard-v1.0.4';
 function start(response,navigator={},lang='en'){
   const html=readFileSync(new URL(`../../../docs/CPClipboard/${lang==='ja'?'ja/':''}index.html`,import.meta.url),'utf8');
   const cards=ids.map(rid=>{
@@ -16,14 +16,14 @@ function start(response,navigator={},lang='en'){
     const card={rid,link,size,recommended:false,getAttribute:()=>rid,querySelector:s=>s==='a[href]'?link:size};
     card.classList={toggle(_,value){card.recommended=value;}};return card;
   });
-  const status={textContent:'Latest release: v1.0.3'},hero={href:'#download'},label={textContent:'Download'},other={hidden:true};
+  const status={textContent:'Latest release: v1.0.4'},hero={href:'#download'},label={textContent:'Download'},other={hidden:true};
   const elements={'[data-release-status]':status,'[data-hero-download]':hero,'[data-hero-label]':label,'[data-hero-other]':other};
   const document={documentElement:{lang},querySelector:s=>elements[s]??null,querySelectorAll:s=>s==='.dl-item[data-asset]'?cards:[],getElementById:()=>null};
   const fetch=typeof response==='function'?response:async()=>response;
   const completed=vm.runInNewContext(code,{document,navigator,URL,selectRelease,fetch});
   return {cards,status,hero,label,other,completed};
 }
-const responseFor=(tag='cpclipboard-v1.0.4',extra={})=>({ok:true,json:async()=>[
+const responseFor=(tag='cpclipboard-v1.0.5',extra={})=>({ok:true,json:async()=>[
   {tag_name:'v99.0.0',draft:false,prerelease:false,assets:[]},
   {tag_name:tag,draft:false,prerelease:false,assets:ids.map(rid=>({name:`CPClipboard-${rid}.zip`,browser_download_url:base+tag+`/CPClipboard-${rid}.zip`})),...extra}
 ]});
@@ -49,12 +49,12 @@ test('Windows x64 and ARM use direct ZIP links even when the API fails',async()=
 });
 test('complete valid Clipboard releases update links and version without crossing product streams',async()=>{
   const r=start(responseFor(),{platform:'MacIntel'});await r.completed;
-  assert.ok(r.cards.every(card=>card.link.href.includes('/cpclipboard-v1.0.4/')));
-  assert.ok(r.hero.href.includes('/cpclipboard-v1.0.4/'));assert.equal(r.status.textContent,'Latest release: v1.0.4');
+  assert.ok(r.cards.every(card=>card.link.href.includes('/cpclipboard-v1.0.5/')));
+  assert.ok(r.hero.href.includes('/cpclipboard-v1.0.5/'));assert.equal(r.status.textContent,'Latest release: v1.0.5');
 });
 test('draft, prerelease and untrusted assets cannot replace published fallback links',async()=>{
   for(const extra of [{draft:true},{prerelease:true},{assets:[{name:'CPClipboard-macos-arm64.zip',browser_download_url:'https://example.com/untrusted.zip'}]}]){
-    const r=start(responseFor('cpclipboard-v1.0.4',extra),{platform:'MacIntel'});await r.completed;
+    const r=start(responseFor('cpclipboard-v1.0.5',extra),{platform:'MacIntel'});await r.completed;
     assert.ok(r.cards.every(card=>card.link.href.includes('/'+published+'/')));
   }
 });

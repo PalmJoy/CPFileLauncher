@@ -6,6 +6,7 @@ using Avalonia.Layout;
 using Avalonia.Media.Imaging;
 using CPClipboard.Core.Model;
 using CPClipboard.Core.Popup;
+using CPClipboard.Core.Input;
 using CPClipboard.Platform;
 using Avalonia.Threading;
 using KeyModifiers = Avalonia.Input.KeyModifiers;
@@ -29,7 +30,7 @@ internal sealed class HistoryWindow : ChromeWindow
     internal ListBox HistoryList => _list;
     internal TextBox Filter => _filter;
 
-    public HistoryWindow(HistoryHub history, SettingsHub settings, Func<Bitmap?>? background = null, IWindowService? windowService = null)
+    public HistoryWindow(HistoryHub history, SettingsHub settings, Func<Bitmap?>? background = null, IWindowService? windowService = null, IAmbientLayerService? ambientLayers = null, Func<bool>? reducedMotion = null)
     {
         _history = history;
         _settings = settings;
@@ -37,18 +38,18 @@ internal sealed class HistoryWindow : ChromeWindow
         Title = AppInfo.TitlePrefix + Strings.History_Title;
         TagCode = "HIST";
         BodyWidth = 620; BodyHeight = 600;
-        WindowStartupLocation = WindowStartupLocation.CenterScreen;
+        WindowStartupLocation = WindowStartupLocation.Manual;
         ShowInTaskbar = OperatingSystem.IsWindows();
         TemplatesEditor.StyleList(_list);
-        var layout = new Grid { RowDefinitions = new RowDefinitions("*,Auto"), RowSpacing = 12 };
+        var layout = new Grid { RowDefinitions = new RowDefinitions("*,Auto"), RowSpacing = 0 };
         var rows = new Grid { Children = { _list, _empty } };
         layout.Children.Add(rows);
-        var search = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*"), ColumnSpacing = 12 };
+        var search = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*"), ColumnSpacing = 12, Margin = new Thickness(12) };
         search.Children.Add(new TextBlock { Text = Strings.History_Search, VerticalAlignment = VerticalAlignment.Center });
         Grid.SetColumn(_filter, 1); search.Children.Add(_filter);
         Grid.SetRow(search, 1); layout.Children.Add(search);
         Body = layout;
-        BoardWindowSurface.Attach(this, settings, background, a => { _fontSize = a.FontSize; Refresh(); });
+        BoardWindowSurface.Attach(this, settings, background, a => { _fontSize = a.FontSize; Refresh(); }, ambientLayers, reducedMotion);
         _filter.TextChanged += (_, _) => Refresh();
         _list.AddHandler(PointerReleasedEvent, (_, e) =>
         {
@@ -71,6 +72,24 @@ internal sealed class HistoryWindow : ChromeWindow
         Closed += (_, _) => { _leaveTimer.Stop(); settings.Changed -= OnSettingsChanged; };
         Refresh();
     }
+    internal void ApplyPopupPosition(PopupTriggerKind kind, ScreenPoint cursor)
+    {
+        var screen = Screens.ScreenFromPoint(new PixelPoint(cursor.X, cursor.Y)) ?? Screens.Primary;
+        double scaling = _windowService?.UsesLogicalScreenCoordinates == true ? 1.0 : screen?.Scaling ?? 1.0;
+        int width = (int)Math.Ceiling(Width * scaling), height = (int)Math.Ceiling(Height * scaling);
+        ScreenRect WorkAreaAt(ScreenPoint point)
+        {
+            var target = Screens.ScreenFromPoint(new PixelPoint(point.X, point.Y)) ?? Screens.Primary;
+            return target is null ? new(0, 0, 1920, 1080)
+                : new(target.WorkingArea.X, target.WorkingArea.Y, target.WorkingArea.Width, target.WorkingArea.Height);
+        }
+        var primary = Screens.Primary?.WorkingArea;
+        var primaryArea = primary is { } area ? new ScreenRect(area.X, area.Y, area.Width, area.Height) : WorkAreaAt(cursor);
+        var position = PopupPlacement.Compute(_settings.Current.Popup.PlacementFor(kind), cursor, width, height,
+            WorkAreaAt, primaryArea, _settings.Current.Popup.CursorAnchor, scaling);
+        Position = new PixelPoint(position.X, position.Y);
+    }
+
     private void UpdateDistanceMonitoring()
     {
         _leave.Reset();

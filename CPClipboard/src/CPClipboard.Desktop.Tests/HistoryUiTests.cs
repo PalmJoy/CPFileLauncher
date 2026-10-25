@@ -8,6 +8,8 @@ using Avalonia.Threading;
 using Avalonia.VisualTree;
 using CPClipboard.App;
 using CPClipboard.Core.Model;
+using CPClipboard.Core.Input;
+using CPClipboard.Core.Popup;
 using CPClipboard.Core.Paste;
 using CPClipboard.Core.Storage;
 using CPClipboard.Platform;
@@ -22,6 +24,7 @@ public sealed class HistoryUiTests : IDisposable
     {
         _paths = new(_dir, false); var store = new AppDataStore(_paths);
         _settings = new(store, store.LoadAll().Settings.Value);
+        _settings.Current.Appearance.Animation = false;
     }
     public void Dispose() { if (Directory.Exists(_dir)) Directory.Delete(_dir, true); }
     private sealed class Clipboard : IClipboardService
@@ -90,6 +93,9 @@ public sealed class HistoryUiTests : IDisposable
         {
             Assert.Single(window.GetVisualDescendants().OfType<BackdropLayer>());
             Assert.Single(window.GetVisualDescendants().OfType<GridLayer>());
+            Assert.Single(window.GetVisualDescendants().OfType<HologramEdges>());
+            Assert.Single(window.GetVisualDescendants().OfType<CircuitLayer>());
+            Assert.Equal(new Thickness(12), ((Grid)window.Filter.Parent!).Margin);
             Assert.Equal("a", ((SnippetRowContent)((ListBoxItem)window.HistoryList.Items[0]!).Content!).Shortcut.Text);
             Assert.True(window.Filter.Bounds.Width > 200);
             using var frame = window.CaptureRenderedFrame();
@@ -98,6 +104,22 @@ public sealed class HistoryUiTests : IDisposable
             { Directory.CreateDirectory(dir); frame.Save(Path.Combine(dir, $"history-{culture}.png")); }
         }
         finally { window.Close(); System.Globalization.CultureInfo.CurrentUICulture = saved; }
+    }
+    [AvaloniaFact]
+    public void HistoryAmbientUsesNativeLayersAndStopsWhenHiddenOrMotionReduced()
+    {
+        _settings.Current.Appearance.Animation = true;
+        using var history = new HistoryHub(_paths, _settings, new Clipboard());
+        var service = new FakeAmbientLayers();
+        bool reduced = false;
+        var window = new HistoryWindow(history, _settings, ambientLayers: service, reducedMotion: () => reduced);
+        window.WindowShowEffect = window.WindowHideEffect = CPClipboard.Core.Effects.EffectSpec.None;
+        window.Show(); Dispatcher.UIThread.RunJobs();
+        Assert.NotNull(service.Host); Assert.True(service.Host.Running);
+        window.Hide(); Assert.False(service.Host.Running);
+        reduced = true; window.Show(); Dispatcher.UIThread.RunJobs();
+        Assert.False(service.Host.Running);
+        window.Close(); Assert.True(service.Host.Disposed);
     }
     [AvaloniaFact]
     public void HistorySettingsUseFreeInputsClampAndClearAction()
@@ -227,6 +249,69 @@ public sealed class HistoryUiTests : IDisposable
             platform.CursorPosition = new(right + 301, insideY); window.CheckMouseDistance(); Assert.False(window.IsVisible);
         }
         finally { window.Close(); }
+    }
+
+    [AvaloniaTheory]
+    [InlineData(PopupTriggerKind.Keyboard, PopupPosition.Fixed)]
+    [InlineData(PopupTriggerKind.Mouse, PopupPosition.Fixed)]
+    [InlineData(PopupTriggerKind.Keyboard, PopupPosition.LastPosition)]
+    [InlineData(PopupTriggerKind.Mouse, PopupPosition.LastPosition)]
+    [InlineData(PopupTriggerKind.Keyboard, PopupPosition.ScreenCenter)]
+    [InlineData(PopupTriggerKind.Mouse, PopupPosition.Cursor)]
+    [InlineData(PopupTriggerKind.Keyboard, PopupPosition.Cursor)]
+    public void HistoryUsesTheSelectedPopupPlacementAndRetainsItAfterShow(PopupTriggerKind kind, PopupPosition mode)
+    {
+        using var history = new HistoryHub(_paths, _settings, new Clipboard());
+        var platform = new FakePlatform();
+        _settings.Current.Popup.Keyboard = new() { Position = PopupPosition.Fixed, X = 35, Y = 25 };
+        _settings.Current.Popup.Mouse = new() { Position = PopupPosition.Fixed, X = 160, Y = 95 };
+        var placement = _settings.Current.Popup.PlacementFor(kind); placement.Position = mode;
+        _settings.Current.Popup.CursorAnchor = CursorAnchor.BottomRight;
+        var window = new HistoryWindow(history, _settings, windowService: platform);
+        var area = window.Screens.Primary!.WorkingArea;
+        var work = new ScreenRect(area.X, area.Y, area.Width, area.Height);
+        var cursor = new ScreenPoint(area.X + area.Width / 2, area.Y + area.Height / 2);
+        var expected = PopupPlacement.Compute(placement, cursor, (int)window.Width, (int)window.Height,
+            _ => work, work, CursorAnchor.BottomRight);
+        try
+        {
+            window.ApplyPopupPosition(kind, cursor);
+            Assert.Equal(new PixelPoint(expected.X, expected.Y), window.Position);
+            window.Show(); Dispatcher.UIThread.RunJobs();
+            Assert.Equal(WindowStartupLocation.Manual, window.WindowStartupLocation);
+            Assert.Equal(new PixelPoint(expected.X, expected.Y), window.Position);
+        }
+        finally { window.Close(); }
+    }
+    [AvaloniaFact]
+    public void HistoryMenuUsesMousePlacementAndRemembersOnlyLastPositionSettings()
+    {
+        var platform = new FakePlatform { Foreground = 42 };
+        using var history = new HistoryHub(_paths, _settings, platform.Clipboard);
+        _settings.Current.Popup.Keyboard = new() { Position = PopupPosition.Fixed, X = 33, Y = 22 };
+        _settings.Current.Popup.Mouse = new() { Position = PopupPosition.LastPosition, X = 60, Y = 40 };
+        var app = new CPClipboard.App.App();
+        var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+        void Set(string name, object value) => typeof(CPClipboard.App.App).GetField(name, flags)!.SetValue(app, value);
+        HistoryWindow? Window() => (HistoryWindow?)typeof(CPClipboard.App.App).GetField("_historyWindow", flags)!.GetValue(app);
+        void Open() { typeof(CPClipboard.App.App).GetMethod("OpenHistory", flags)!.Invoke(app, [false]); Dispatcher.UIThread.RunJobs(); }
+        Set("_hub", _settings); Set("_platform", platform); Set("_history", history);
+        Open();
+        try
+        {
+            var work = Window()!.Screens.Primary!.WorkingArea;
+            var expected = PopupPlacement.ClampInto(new(60, 40), (int)Window()!.Width, (int)Window()!.Height,
+                new(work.X, work.Y, work.Width, work.Height));
+            Assert.Equal(new PixelPoint(expected.X, expected.Y), Window()!.Position);
+            Window()!.Position = new(80, 50); Window()!.Close(); Dispatcher.UIThread.RunJobs(); Assert.Null(Window());
+            Assert.Equal(80, _settings.Current.Popup.Mouse.X); Assert.Equal(50, _settings.Current.Popup.Mouse.Y);
+            Assert.Equal(33, _settings.Current.Popup.Keyboard.X); Assert.Equal(22, _settings.Current.Popup.Keyboard.Y);
+            Open();
+            expected = PopupPlacement.ClampInto(new(80, 50), (int)Window()!.Width, (int)Window()!.Height,
+                new(work.X, work.Y, work.Width, work.Height));
+            Assert.Equal(new PixelPoint(expected.X, expected.Y), Window()!.Position);
+        }
+        finally { Window()?.Close(); }
     }
 
 }

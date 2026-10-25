@@ -35,6 +35,7 @@ public sealed class TemplatesEditorTests : IDisposable
     private TemplatesEditor Open(int group = 1, Guid? id = null)
     {
         var settings = new SettingsHub(_store, _store.LoadAll().Settings.Value);
+        settings.Current.Appearance.Animation = false;
         _window = new(_hub, _platform.Clipboard);
         _window.SetTemplateTarget(new(group, id)); _window.Show(); Dispatcher.UIThread.RunJobs();
         return _window.TemplatesEditor;
@@ -240,6 +241,7 @@ public sealed class TemplatesEditorTests : IDisposable
     public void 設定と編集は独立し編集の再表示は同じ窓を使い閉じると作り直す()
     {
         var settings = new SettingsHub(_store, _store.LoadAll().Settings.Value);
+        settings.Current.Appearance.Animation = false;
         var app = new CPClipboard.App.App();
         var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
         void Set(string name, object value) => typeof(CPClipboard.App.App).GetField(name, flags)!.SetValue(app, value);

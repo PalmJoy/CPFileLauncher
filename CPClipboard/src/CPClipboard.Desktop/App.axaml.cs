@@ -6,6 +6,7 @@ using Avalonia.Markup.Xaml;
 using Avalonia.Styling;
 using Avalonia.Threading;
 using CPClipboard.Core.Model;
+using CPClipboard.Core.Input;
 using CPClipboard.Core.Storage;
 using CPClipboard.Platform;
 using CPClipboard.Platform.MacOS;
@@ -96,7 +97,8 @@ public partial class App : Application
         if (_platform.InputHook is IHistoryTriggerService historyTriggers)
         {
             historyTriggers.ConfigureHistory(settings.HistoryTriggers);
-            historyTriggers.HistoryTriggered += (_, _) => Dispatcher.UIThread.Post(() => OpenHistory(true));
+            historyTriggers.HistoryTriggered += (point, _) => Dispatcher.UIThread.Post(() =>
+                ShowHistory(point.HasValue ? PopupTriggerKind.Mouse : PopupTriggerKind.Keyboard, point, true));
         }
 
         _board = new BoardWindow { WheelSwitchesGroup = settings.Board.WheelSwitchesGroup };
@@ -276,7 +278,7 @@ public partial class App : Application
         _popup?.Hide("editor", restoreFocus: false);
         if (_templatesWindow is null)
         {
-            _templatesWindow = new TemplatesWindow(_templates, _platform.Clipboard, _hub, () => _backgroundLoader.Current);
+            _templatesWindow = new TemplatesWindow(_templates, _platform.Clipboard, _hub, () => _backgroundLoader.Current, Program.AvaloniaAmbient ? null : _platform.Ambient, () => _platform.Window.PrefersReducedMotion);
             _templatesWindow.SetTemplateTarget(target ?? new TemplateEditTarget(_board?.GroupKey ?? 0, null));
             _templatesWindow.Closed += (_, _) =>
             {
@@ -288,7 +290,9 @@ public partial class App : Application
         WindowActivation.ShowAndActivate(_templatesWindow, _platform);
     }
 
-    private void OpenHistory(bool toggle = false)
+    private void OpenHistory(bool toggle = false) => ShowHistory(PopupTriggerKind.Mouse, null, toggle);
+
+    private void ShowHistory(PopupTriggerKind kind, ScreenPoint? point, bool toggle)
     {
         if (_quitting || _history is null || _hub is null || _platform is null) return;
         if (_historyWindow is { IsVisible: true })
@@ -299,7 +303,7 @@ public partial class App : Application
         }
         nint target = _platform.Window.CaptureForeground();
         _popup?.Hide("history", restoreFocus: false);
-        var window = new HistoryWindow(_history, _hub, () => _backgroundLoader.Current, _platform.Window);
+        var window = new HistoryWindow(_history, _hub, () => _backgroundLoader.Current, _platform.Window, Program.AvaloniaAmbient ? null : _platform.Ambient, () => _platform.Window.PrefersReducedMotion);
         _historyWindow = window;
         bool chosen = false;
         var closed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -315,12 +319,17 @@ public partial class App : Application
             await _historyPaste.ExecuteAsync(new CPClipboard.Core.Paste.PasteRequest(text, target, copyOnly,
                 paste.AutoPaste, paste.RestoreClipboard, paste.RestoreDelayMs));
         };
+        var lastPosition = window.Position;
+        window.Closing += (_, _) => lastPosition = window.Position;
         window.Closed += (_, _) =>
         {
+            if (_hub.Current.Popup.Keyboard.Position == PopupPosition.LastPosition || _hub.Current.Popup.Mouse.Position == PopupPosition.LastPosition)
+                _hub.Update(s => s.Popup.RememberLastPosition(lastPosition.X, lastPosition.Y), SettingsChange.None);
             if (ReferenceEquals(_historyWindow, window)) _historyWindow = null;
             closed.TrySetResult();
             if (!chosen && target != 0) _platform.Window.RestoreForeground(target);
         };
+        window.ApplyPopupPosition(kind, point ?? _platform.Window.GetCursorPosition());
         window.Show();
         if (window.TryGetPlatformHandle()?.Handle is { } handle)
         {

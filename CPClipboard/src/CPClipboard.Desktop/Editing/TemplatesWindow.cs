@@ -12,7 +12,7 @@ internal sealed class TemplatesWindow : ChromeWindow
     internal TemplateEditTarget? TemplateTarget { get; private set; }
     internal Func<string, string, string, Task<bool>> Confirm { get; set; }
 
-    public TemplatesWindow(TemplatesHub templates, IClipboardService clipboard, SettingsHub? settings = null, Func<Bitmap?>? background = null)
+    public TemplatesWindow(TemplatesHub templates, IClipboardService clipboard, SettingsHub? settings = null, Func<Bitmap?>? background = null, IAmbientLayerService? ambientLayers = null, Func<bool>? reducedMotion = null)
     {
         Title = AppInfo.TitlePrefix + Strings.Editor_Title;
         TagCode = "EDIT";
@@ -23,7 +23,7 @@ internal sealed class TemplatesWindow : ChromeWindow
         Confirm = (title, message, ok) => Dialogs.ConfirmAsync(this, title, message, ok);
         TemplatesEditor = new TemplatesEditor(templates, clipboard, (title, text, ok) => Confirm(title, text, ok));
         Body = TemplatesEditor;
-        BoardWindowSurface.Attach(this, settings, background, TemplatesEditor.ApplyAppearance);
+        BoardWindowSurface.Attach(this, settings, background, TemplatesEditor.ApplyAppearance, ambientLayers, reducedMotion);
         AddHandler(KeyDownEvent, (_, e) =>
         {
             if (TemplatesEditor.HandleNavigation(e)) e.Handled = true;

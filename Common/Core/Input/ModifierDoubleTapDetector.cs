@@ -84,6 +84,17 @@ public sealed class ModifierDoubleTapDetector
     }
     public void OnWheel(bool simulated = false)
     { if (!simulated) lock (_gate) ClearCandidate(); }
+    /// <summary>OS が解放済みと確認した入力を除去する。欠落した離上をタップとして数えない。</summary>
+    public void ReconcilePressedInputs(Func<string, bool> isKeyPressed, Func<InputButton, bool> isButtonPressed)
+    {
+        lock (_gate)
+        {
+            int keys = _keys.RemoveWhere(key => !isKeyPressed(key));
+            int buttons = _buttons.RemoveWhere(button => !isButtonPressed(button));
+            if (keys != 0 || buttons != 0) ClearCandidate();
+        }
+    }
+
     public void Reset()
     { lock (_gate) { _keys.Clear(); _buttons.Clear(); ClearCandidate(); } }
     private void ClearCandidate() { _phase = 0; _candidate = null; }

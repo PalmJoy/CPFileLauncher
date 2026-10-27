@@ -24,15 +24,23 @@ public sealed class SharpHookInputService : IInputHookService, IHotkeyService, I
     private volatile bool _running;
 
     private readonly Func<KeyModifiers>? _currentModifiers;
+    private readonly Func<ushort, bool>? _isKeyPressed;
+    private readonly Func<InputButton, bool>? _isButtonPressed;
+    private readonly Dictionary<string, ushort> _nativeKeyCodes = new(StringComparer.Ordinal);
 
     /// <param name="currentModifiers">
     /// マウス押下時の修飾キーを OS から直接読む関数（任意）。macOS では自アプリが前面のときに押した ⌃ などを
     /// フックが修飾キーとして記録しないことがあるため（2026-10-03 確認）、Mac はこれを渡す。null ならフックの値を使う。
     /// </param>
-    public SharpHookInputService(Func<KeyModifiers>? currentModifiers = null)
+    /// <param name="isKeyPressed">OS 固有キーコードの押下照会。解放イベント欠落の補正に使う（任意）。</param>
+    /// <param name="isButtonPressed">マウスボタンの押下照会（任意）。</param>
+    public SharpHookInputService(Func<KeyModifiers>? currentModifiers = null,
+        Func<ushort, bool>? isKeyPressed = null, Func<InputButton, bool>? isButtonPressed = null)
     {
         _detector = new TriggerDetector();
         _currentModifiers = currentModifiers;
+        _isKeyPressed = isKeyPressed;
+        _isButtonPressed = isButtonPressed;
         _historyDoubleTap.Configure(new() { Enabled = false });
     }
 
@@ -146,6 +154,10 @@ public sealed class SharpHookInputService : IInputHookService, IHotkeyService, I
         {
             if (e.IsEventSimulated) return;
             var modifier = ToModifierKey(e.Data.KeyCode);
+            string key = KeyName(e.Data.KeyCode);
+            // Windows の非同期状態はフック中の当該イベントをまだ反映しないため、現在のキーは照合しない。
+            ReconcileDoubleTap(key);
+            _nativeKeyCodes[key] = e.Data.RawCode;
             if (modifier is { } m) _modifiers.Update(m, true);
             _doubleTap.OnKey(KeyName(e.Data.KeyCode), modifier, true, e.EventTime.Ticks / TimeSpan.TicksPerMillisecond);
             _historyDoubleTap.OnKey(KeyName(e.Data.KeyCode), modifier, true, e.EventTime.Ticks / TimeSpan.TicksPerMillisecond);
@@ -243,6 +255,16 @@ public sealed class SharpHookInputService : IInputHookService, IHotkeyService, I
         }
     }
 
+    private void ReconcileDoubleTap(string currentKey)
+    {
+        if (_isKeyPressed is null && _isButtonPressed is null) return;
+        bool KeyPressed(string key) => key == currentKey || _isKeyPressed is null
+            || !_nativeKeyCodes.TryGetValue(key, out ushort code) || code == 0 || _isKeyPressed(code);
+        bool ButtonPressed(InputButton button) => _isButtonPressed?.Invoke(button) ?? true;
+        _doubleTap.ReconcilePressedInputs(KeyPressed, ButtonPressed);
+        _historyDoubleTap.ReconcilePressedInputs(KeyPressed, ButtonPressed);
+    }
+
     private void ResetInput()
     {
         lock (_inputGate)
@@ -253,6 +275,7 @@ public sealed class SharpHookInputService : IInputHookService, IHotkeyService, I
             _modifiers.Reset();
             _detector.Reset();
             _capturedKeys.Clear();
+            _nativeKeyCodes.Clear();
         }
     }
 

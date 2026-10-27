@@ -182,4 +182,33 @@ public class ModifierDoubleTapDetectorTests
         Assert.False(Tap(d, 200, key));
         Assert.False(Tap(d, 300, key));
     }
+    [Fact]
+    public void OS照合で欠落した離上を発火せず除去する()
+    {
+        var d = new ModifierDoubleTapDetector();
+        Tap(d, 0);
+        Key(d, ModifierKey.LeftCtrl, true, 100); // 二度目の離上が欠落。
+        d.ReconcilePressedInputs(_ => false, _ => false);
+        Assert.False(Key(d, ModifierKey.LeftCtrl, false, 150));
+        Assert.False(Tap(d, 200));
+        Assert.True(Tap(d, 300));
+    }
+
+    [Fact]
+    public void OS照合で保持中のキーと候補を残す()
+    {
+        var d = new ModifierDoubleTapDetector();
+        Tap(d, 0);
+        d.ReconcilePressedInputs(_ => true, _ => true);
+        Assert.True(Tap(d, 100));
+        d.OnKey("A", null, true, 200);
+        d.OnMouseButton(InputButton.Left, true);
+        d.ReconcilePressedInputs(_ => true, _ => true);
+        Assert.False(Tap(d, 10_000));
+        Assert.False(Tap(d, 10_100));
+        d.ReconcilePressedInputs(_ => false, _ => false);
+        Assert.False(Tap(d, 20_000));
+        Assert.True(Tap(d, 20_100));
+    }
+
 }

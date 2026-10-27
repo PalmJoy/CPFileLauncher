@@ -1,6 +1,8 @@
 using System.Runtime.Versioning;
+using CPClipboard.Core.Input;
 using CPClipboard.Core.Model;
 using CPClipboard.Platform.Input;
+using CPClipboard.Platform.Windows.Native;
 using Microsoft.Win32;
 
 namespace CPClipboard.Platform.Windows;
@@ -12,8 +14,20 @@ public sealed class WindowsPlatformServices : IPlatformServices
 
     public WindowsPlatformServices()
     {
-        _input = new SharpHookInputService();
+        _input = new SharpHookInputService(
+            isKeyPressed: code => IsPressed(code),
+            isButtonPressed: button => button switch
+            {
+                InputButton.Left => IsPressed(0x01),
+                InputButton.Right => IsPressed(0x02),
+                InputButton.Middle => IsPressed(0x04),
+                InputButton.X1 => IsPressed(0x05),
+                InputButton.X2 => IsPressed(0x06),
+                _ => true, // OS 状態を照会できないボタンは推測で解除しない。
+            });
     }
+
+    private static bool IsPressed(int virtualKey) => (User32.GetAsyncKeyState(virtualKey) & 0x8000) != 0;
 
     public IInputHookService InputHook => _input;
     public IHotkeyService Hotkey => _input;

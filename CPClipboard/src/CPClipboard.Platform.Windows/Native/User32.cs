@@ -8,6 +8,7 @@ internal static class User32
     [StructLayout(LayoutKind.Sequential)]
     public struct POINT { public int X, Y; }
 
+    [DllImport("user32.dll")] public static extern short GetAsyncKeyState(int virtualKey);
     [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
     public const uint SPI_GETCLIENTAREAANIMATION = 0x1042;
     [DllImport("user32.dll", SetLastError = true)] public static extern bool SystemParametersInfo(uint uiAction, uint uiParam, out bool pvParam, uint fWinIni);

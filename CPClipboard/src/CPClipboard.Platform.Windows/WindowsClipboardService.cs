@@ -38,7 +38,8 @@ public sealed class WindowsClipboardService : IClipboardService, IDisposable
         }
         finally { DestroyWindow(owner); }
     }
-    private async Task<T> Run<T>(Func<T> operation)
+    /// <param name="afterClose">CloseClipboard の後に同じスレッドで結果を仕上げる（閉じる時に OS が形式を補って番号が進むため）。</param>
+    private async Task<T> Run<T>(Func<T> operation, Func<T, T>? afterClose = null)
     {
         await _ready.Task.ConfigureAwait(false);
         var task = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -53,8 +54,10 @@ public sealed class WindowsClipboardService : IClipboardService, IDisposable
                     if (attempt < 20) Thread.Sleep(10);
                 }
                 if (!opened) throw new IOException("Cannot open clipboard.");
-                try { task.SetResult(operation()); }
+                T result;
+                try { result = operation(); }
                 finally { CloseClipboard(); }
+                task.SetResult(afterClose is null ? result : afterClose(result));
             }
             catch (Exception ex) { task.TrySetException(ex); }
         });
@@ -85,8 +88,8 @@ public sealed class WindowsClipboardService : IClipboardService, IDisposable
         if (expectedToken is { } token && ChangeToken != token) return null;
         var data = Encoding.Unicode.GetBytes(TemplateBook.NormalizeNewlines(text).Replace("\n", "\r\n") + "\0");
         Write(new Dictionary<uint, byte[]> { [13] = data }, transient);
-        return ChangeToken;
-    });
+        return 0;
+    }, written => written is null ? null : ChangeToken);
     public Task<bool> RestoreAsync(ClipboardSnapshot snapshot, long expectedToken) => Run(() =>
     {
         if (ChangeToken != expectedToken || snapshot.ByteCount > ClipboardSnapshot.MaxBytes) return false;

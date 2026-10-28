@@ -9,6 +9,7 @@ using CPClipboard.Core.Popup;
 using CPClipboard.Core.Input;
 using CPClipboard.Platform;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using KeyModifiers = Avalonia.Input.KeyModifiers;
 
 namespace CPClipboard.App;
@@ -27,6 +28,11 @@ internal sealed class HistoryWindow : ChromeWindow
     private IReadOnlyList<HistoryEntry> _visible = [];
     private double _fontSize = 13;
     public event Action<string, bool>? Chosen;
+    public event Action? SettingsRequested;
+    public event Action? EditRequested;
+    public event Action? UpdateRequested;
+    public event Action? AboutRequested;
+    internal bool ContextMenuOpen { get; private set; }
     internal ListBox HistoryList => _list;
     internal TextBox Filter => _filter;
 
@@ -57,6 +63,14 @@ internal sealed class HistoryWindow : ChromeWindow
                 Choose(_list.SelectedIndex, e.KeyModifiers.HasFlag(KeyModifiers.Shift));
         }, RoutingStrategies.Bubble);
         AddHandler(KeyDownEvent, OnNavigation, RoutingStrategies.Tunnel);
+        // 右クリックで盤面と同じメニュー（行の上なら貼り付け・コピーも）
+        AddHandler(ContextRequestedEvent, (_, e) =>
+        {
+            if (e.Source is Visual source && source.FindAncestorOfType<TextBox>(includeSelf: true) is not null) return;
+            var row = (e.Source as Visual)?.FindAncestorOfType<ListBoxItem>(includeSelf: true);
+            if (row is not null) _list.SelectedItem = row;
+            ContextMenu = BuildMenu(row?.Tag as HistoryEntry);
+        }, RoutingStrategies.Tunnel);
         history.Changed += Refresh;
         Closed += (_, _) => history.Changed -= Refresh;
         Opened += (_, _) => { _list.Focus(); UpdateDistanceMonitoring(); };
@@ -98,6 +112,7 @@ internal sealed class HistoryWindow : ChromeWindow
     }
     internal void CheckMouseDistance()
     {
+        if (ContextMenuOpen) { _leave.Reset(); return; }
         if (!IsVisible || !IsHitTestVisible || _windowService is null || _pointerHeld || !_settings.Current.Popup.CloseOnMouseLeave) return;
         double scaling = _windowService.UsesLogicalScreenCoordinates ? 1.0 : RenderScaling;
         var bounds = new CPClipboard.Core.Input.ScreenRect(Position.X, Position.Y,
@@ -132,6 +147,31 @@ internal sealed class HistoryWindow : ChromeWindow
         { Choose((int)e.Key - (int)Key.A, e.KeyModifiers.HasFlag(KeyModifiers.Shift)); e.Handled = true; }
         else if (e.Key == Key.Enter)
         { Choose(_list.SelectedIndex, e.KeyModifiers.HasFlag(KeyModifiers.Shift)); e.Handled = true; }
+    }
+    private ContextMenu BuildMenu(HistoryEntry? entry)
+    {
+        var menu = new ContextMenu();
+        var items = new List<Control>();
+        void Add(string title, Action action)
+        {
+            var item = new MenuItem { Header = title };
+            item.Click += (_, _) => action();
+            items.Add(item);
+        }
+        if (entry is not null)
+        {
+            Add(Strings.Menu_Paste, () => Chosen?.Invoke(entry.Text, false));
+            Add(Strings.Menu_CopyOnly, () => Chosen?.Invoke(entry.Text, true));
+            items.Add(new Separator());
+        }
+        Add(Strings.Common_Settings, () => SettingsRequested?.Invoke());
+        Add(Strings.Menu_Edit, () => EditRequested?.Invoke());
+        Add(Strings.Update_Check, () => UpdateRequested?.Invoke());
+        Add(Strings.Menu_About, () => AboutRequested?.Invoke());
+        menu.ItemsSource = items;
+        menu.Opened += (_, _) => ContextMenuOpen = true;
+        menu.Closed += (_, _) => ContextMenuOpen = false;
+        return menu;
     }
     private void Choose(int index, bool copyOnly)
     {

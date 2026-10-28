@@ -201,7 +201,8 @@ public class AppDataStoreTests : IDisposable
         Assert.Equal((MouseButtonKind.Middle, KeyModifiers.Alt, true),
             (mouse.Button, mouse.Modifiers, mouse.Enabled));
         Assert.Equal((420, 12, 13), (s.Appearance.BoardWidth, s.Appearance.MaxRows, s.Appearance.FontSize));
-        Assert.True(s.Board.Preview && s.Board.WheelSwitchesGroup);
+        Assert.False(s.Board.Preview);
+        Assert.True(s.Board.WheelSwitchesGroup);
         Assert.Equal(1, s.Board.LastGroup);
         Assert.True(s.Paste.AutoPaste);
         Assert.False(s.Paste.RestoreClipboard);

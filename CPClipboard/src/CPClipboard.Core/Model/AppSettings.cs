@@ -371,7 +371,7 @@ public enum KeyModifiers
 public sealed class BoardSettings
 {
     /// <summary>行にとどまったら全文のプレビューを出す。</summary>
-    public bool Preview { get; set; } = true;
+    public bool Preview { get; set; }
 
     /// <summary>ホイールでグループを切り替える（一覧があふれているときの一覧の上ではスクロールが優先）。</summary>
     public bool WheelSwitchesGroup { get; set; } = true;

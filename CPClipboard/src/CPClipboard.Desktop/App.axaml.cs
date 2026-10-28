@@ -319,6 +319,16 @@ public partial class App : Application
             await _historyPaste.ExecuteAsync(new CPClipboard.Core.Paste.PasteRequest(text, target, copyOnly,
                 paste.AutoPaste, paste.RestoreClipboard, paste.RestoreDelayMs));
         };
+        // メニューから別の画面を開くときは、履歴を閉じても元のアプリへフォーカスを戻さない
+        bool restoreFocus = true;
+        void CloseThen(Action action) { restoreFocus = false; window.Close(); action(); }
+        window.SettingsRequested += () => CloseThen(OpenSettings);
+        window.EditRequested += () => CloseThen(() => OpenEditor());
+        window.UpdateRequested += () => CloseThen(() => _ = CheckForUpdatesAsync(true));
+        window.AboutRequested += () => CloseThen(() =>
+        {
+            if (_paths is not null) AboutWindow.Show(_platform.Shell, _paths.Root, _hub.Current.Appearance, _paths, _platform);
+        });
         var lastPosition = window.Position;
         window.Closing += (_, _) => lastPosition = window.Position;
         window.Closed += (_, _) =>
@@ -327,7 +337,7 @@ public partial class App : Application
                 _hub.Update(s => s.Popup.RememberLastPosition(lastPosition.X, lastPosition.Y), SettingsChange.None);
             if (ReferenceEquals(_historyWindow, window)) _historyWindow = null;
             closed.TrySetResult();
-            if (!chosen && target != 0) _platform.Window.RestoreForeground(target);
+            if (!chosen && restoreFocus && target != 0) _platform.Window.RestoreForeground(target);
         };
         window.ApplyPopupPosition(kind, point ?? _platform.Window.GetCursorPosition());
         window.Show();

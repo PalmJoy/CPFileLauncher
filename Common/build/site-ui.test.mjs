@@ -30,3 +30,15 @@ test('both product languages load shared styling and controls with unique sectio
     }
   }
 });
+test('header and footer link to the sibling product in the same language instead of GitHub',()=>{
+  for(const [product,sibling] of [['CPClipboard','CPFileLauncher'],['CPFileLauncher','CPClipboard']]){
+    for(const lang of ['','ja/']){
+      const html=readFileSync(new URL(`../../docs/${product}/${lang}index.html`,import.meta.url),'utf8');
+      const up=lang?'../../':'../',href=`${up}${sibling}/${lang}`;
+      const header=html.match(/<header[\s\S]*?<\/header>/)[0],footer=html.match(/<footer[\s\S]*?<\/footer>/)[0];
+      assert.ok(header.includes(`class="sibling" href="${href}"`),product+lang);assert.ok(header.includes(`src="${up}${sibling}/assets/icon.svg"`),product+lang);
+      assert.ok(footer.includes(`href="${href}"`),product+lang);
+      assert.ok(!/>GitHub</.test(header+footer),product+lang);
+    }
+  }
+});

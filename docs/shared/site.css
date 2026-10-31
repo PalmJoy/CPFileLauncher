@@ -93,12 +93,13 @@ img { max-width: 100%; height: auto; }
 .brand { display: flex; align-items: center; gap: 10px; color: var(--text); text-decoration: none; font-weight: 600; letter-spacing: .02em; }
 .brand img { width: 28px; height: 28px; }
 .nav { display: flex; gap: 20px; margin-left: auto; }
-.nav a, .langs a, .gh { color: var(--note); text-decoration: none; font-family: var(--mono); font-size: 14px; letter-spacing: .06em; text-transform: uppercase; }
-.nav a:hover, .langs a:hover, .gh:hover { color: var(--c1); }
+.nav a, .langs a, .sibling { color: var(--note); text-decoration: none; font-family: var(--mono); font-size: 14px; letter-spacing: .06em; }
+.nav a, .langs a { text-transform: uppercase; }
+.nav a:hover, .langs a:hover, .sibling:hover { color: var(--c1); }
 .langs { display: flex; gap: 6px; font-family: var(--mono); font-size: 14px; color: var(--note); }
 .langs [aria-current="page"] { color: var(--c1); }
-.gh { display: inline-flex; align-items: center; gap: 6px; }
-.gh svg { width: 18px; height: 18px; fill: currentColor; }
+.sibling { display: inline-flex; align-items: center; gap: 6px; }
+.sibling img { width: 18px; height: 18px; }
 
 /* ---------- タグ・チップ・ボタン ---------- */
 .tag {
@@ -351,7 +352,7 @@ footer a:hover { color: var(--c1); }
   .slot { font-size: 9px; }
   .status .mid { display: none; }
   .topbar .wrap { gap: 14px; }
-  .gh span { display: none; }
+  .sibling span { display: none; }
   .steps > li { padding-left: 52px; }
 }
 
